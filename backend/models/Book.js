@@ -32,12 +32,14 @@ const bookSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["available", "sold", "donated"],
+      enum: ["available", "sold", "donated", "pending"],
       default: "available",
     },
     forDonation: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
+
+bookSchema.index({ title: "text", author: "text", description: "text" });
 
 module.exports = mongoose.model("Book", bookSchema);

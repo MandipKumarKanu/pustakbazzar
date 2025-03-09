@@ -19,10 +19,14 @@ const createBook = async (req, res) => {
 
   try {
     const user = await User.findById(req.user._id);
-    if (!user || !user.isSeller.status) {
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    if (!forDonation && user.isSeller.status !== "approved") {
       return res
         .status(403)
-        .json({ message: "Only approved sellers can upload books." });
+        .json({ message: "Only approved sellers can upload books for sale." });
     }
 
     const styledDesc = addCustomClassesToHtml(description);
@@ -31,12 +35,13 @@ const createBook = async (req, res) => {
       description: styledDesc,
       author,
       category,
-      markedPrice,
-      sellingPrice,
+      markedPrice: forDonation ? 0 : markedPrice,
+      sellingPrice: forDonation ? 0 : sellingPrice,
       images,
       condition,
       addedBy: req.user._id,
-      status,
+      forDonation,
+      // status,
     });
 
     await book.save();
@@ -50,7 +55,12 @@ const createBook = async (req, res) => {
       await donation.save();
     }
 
-    res.status(201).json({ book });
+    res.status(201).json({
+      book,
+      message: forDonation
+        ? "Book added for donation."
+        : "Book added for sell.",
+    });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -80,6 +90,18 @@ const getBookById = async (req, res) => {
 };
 
 const updateBook = async (req, res) => {
+  const {
+    title,
+    description,
+    author,
+    category,
+    markedPrice,
+    sellingPrice,
+    images,
+    condition,
+    forDonation,
+  } = req.body;
+
   try {
     const book = await Book.findById(req.params.id);
     if (!book) return res.status(404).json({ message: "Book not found." });
@@ -93,11 +115,38 @@ const updateBook = async (req, res) => {
         .json({ message: "Unauthorized to update this book." });
     }
 
-    Object.assign(book, req.body);
-    await book.save();
-    res.status(200).json({ message: "Book updated successfully", book });
+    if (!forDonation && req.user.isSeller.status !== "approved") {
+      return res
+        .status(403)
+        .json({ message: "Only approved sellers can upload books for sale." });
+    }
+
+    const styledDesc = addCustomClassesToHtml(description);
+
+    const updatedBook = await Book.findByIdAndUpdate(
+      req.params.id,
+      {
+        title,
+        description: styledDesc,
+        author,
+        category,
+        markedPrice: forDonation ? 0 : markedPrice,
+        sellingPrice: forDonation ? 0 : sellingPrice,
+        images,
+        condition,
+        forDonation,
+      },
+      { new: true }
+    );
+
+    res.status(200).json({
+      message: "Book updated successfully",
+      book: updatedBook,
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error updating book." });
+    res
+      .status(500)
+      .json({ message: "Error updating book.", error: error.message });
   }
 };
 
@@ -148,15 +197,62 @@ const getBooksBySeller = async (req, res) => {
 const searchBooks = async (req, res) => {
   try {
     const { query } = req.query;
-    const books = await Book.find();
+    // const limit = 5; 
 
-    const filteredBooks = books.filter(
-      (book) =>
-        levenshtein.get(book.title.toLowerCase(), query.toLowerCase()) <= 3
-    );
+    if (!query) {
+      return res.status(400).json({ message: "Search query is required." });
+    }
 
-    res.status(200).json({ books: filteredBooks });
+    const searchTerm = query.toLowerCase();
+
+    const books = await Book.find({
+      $or: [
+        { title: { $regex: searchTerm, $options: "i" } },
+        { author: { $regex: searchTerm, $options: "i" } },
+      ],
+    })
+      .populate("category")
+      // .limit(limit);
+
+    if (books.length > 0) {
+      return res.status(200).json({ books });
+    }
+
+    const allBooks = await Book.find().populate("category");
+
+    const filteredBooks = allBooks
+      .filter((book) => {
+        const titleLower = book.title.toLowerCase();
+        const authorLower = book.author.toLowerCase();
+
+        if (
+          titleLower.includes(searchTerm) ||
+          authorLower.includes(searchTerm)
+        ) {
+          return true;
+        }
+
+        const titleWords = titleLower.split(/\s+/);
+        for (const word of titleWords) {
+          if (word.startsWith(searchTerm) || searchTerm.startsWith(word)) {
+            return true;
+          }
+        }
+
+        const authorWords = authorLower.split(/\s+/);
+        for (const word of authorWords) {
+          if (word.startsWith(searchTerm) || searchTerm.startsWith(word)) {
+            return true;
+          }
+        }
+
+        return false;
+      })
+      // .slice(0, limit); 
+
+    return res.status(200).json({ books: filteredBooks });
   } catch (error) {
+    console.error("Error searching books:", error);
     res.status(500).json({ message: "Error searching books." });
   }
 };

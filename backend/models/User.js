@@ -26,8 +26,12 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true },
     refreshToken: { type: String, default: null },
     isSeller: {
-      status: { type: Boolean, default: false },
-      profDoc: { type: String, default: null },
+      status: {
+        type: String,
+        enum: ["no", "applied", "approved", "rejected"],
+        default: "no",
+      },
+      proofDoc: { type: String, default: null },
       rating: { type: Number, default: 0, min: 0 },
     },
     bought: [{ type: mongoose.Schema.Types.ObjectId, ref: "Book" }],

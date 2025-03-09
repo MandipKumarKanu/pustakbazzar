@@ -11,6 +11,7 @@ const payoutSeller = async (sellerId) => {
     const payoutAmount = seller.balance;
     const payoutResponse = await initiatePayout(seller, payoutAmount);
     if (payoutResponse.success) {
+      // Reset balance and update earnings if payout was successful
       seller.balance = 0;
       seller.earning += payoutAmount;
       await seller.save();
@@ -20,6 +21,7 @@ const payoutSeller = async (sellerId) => {
     }
   } catch (error) {
     console.error("Payout error:", error.message);
+    throw error;
   }
 };
 

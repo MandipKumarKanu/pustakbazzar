@@ -3,7 +3,7 @@ const Book = require("../models/Book");
 
 const saveForLater = async (req, res) => {
   try {
-    const { bookId } = req.body;
+    const { id: bookId } = req.params;
 
     const book = await Book.findById(bookId);
     if (!book) {
@@ -44,7 +44,7 @@ const getSavedForLater = async (req, res) => {
 
 const removeFromSavedForLater = async (req, res) => {
   try {
-    const { bookId } = req.body;
+    const { id: bookId } = req.params;
 
     const user = await User.findById(req.user._id);
     if (!user) {

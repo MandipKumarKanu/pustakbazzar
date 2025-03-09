@@ -2,10 +2,9 @@ const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 
-
 const generateAccessToken = (user) => {
   return jwt.sign({ profile: user.profile }, process.env.ACCESS_TOKEN_SECRET, {
-    expiresIn: "15m",
+    expiresIn: "15d",
   });
 };
 
@@ -24,7 +23,7 @@ const register = async (req, res) => {
 
     const user = new User({ profile, password });
     await user.save();
-    res.status(201).json({ message: "User registered successfully." });
+    res.status(201).json({ message: "User registered successfully.", user });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -164,6 +163,57 @@ const refreshToken = async (req, res) => {
   }
 };
 
+const applyForSeller = async (req, res) => {
+  try {
+    const { proofDoc } = req.body;
+    const user = await User.findById(req.user._id);
+
+    if (user.isSeller.status === "approved")
+      return res.status(400).json({ message: "You are already a seller." });
+
+    user.isSeller = { status: "applied", proofDoc };
+    await user.save();
+
+    res.status(200).json({ message: "Seller application submitted." });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const approveSeller = async (req, res) => {
+  try {
+    if (req.user.profile.role !== "admin")
+      return res.status(403).json({ message: "Access denied." });
+
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found." });
+
+    user.isSeller.status = "approved";
+    await user.save();
+
+    res.status(200).json({ message: "Seller approved." });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const rejectSeller = async (req, res) => {
+  try {
+    if (req.user.profile.role !== "admin")
+      return res.status(403).json({ message: "Access denied." });
+
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found." });
+
+    user.isSeller.status = "rejected";
+    await user.save();
+
+    res.status(200).json({ message: "Seller application rejected." });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -175,4 +225,7 @@ module.exports = {
   addAddress,
   logout,
   refreshToken,
+  approveSeller,
+  applyForSeller,
+  rejectSeller,
 };
