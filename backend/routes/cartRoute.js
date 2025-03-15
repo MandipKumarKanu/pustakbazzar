@@ -5,14 +5,16 @@ const {
   getCart,
   removeItemFromCart,
   clearCart,
-  removeSellerItemsFromCart
+  removeSellerItemsFromCart,
+  isInCart
 } = require("../controllers/CartController");
 const authMiddleware = require("../middleware/authMiddleware");
 
-router.post("/", authMiddleware, addItemToCart);
+router.post("/add/:bookId", authMiddleware, addItemToCart);
+router.get("/incart/:bookId", authMiddleware, isInCart);
 router.get("/", authMiddleware, getCart);
-router.post("/remove", authMiddleware, removeItemFromCart);
+router.post("/remove/:bookId", authMiddleware, removeItemFromCart);
 router.post("/clear", authMiddleware, clearCart);
-router.post("/:sellerId", authMiddleware, removeSellerItemsFromCart);
+router.post("/seller/:sellerId", authMiddleware, removeSellerItemsFromCart);
 
 module.exports = router;

@@ -3,9 +3,11 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 
 const generateAccessToken = (user) => {
-  return jwt.sign({ profile: user.profile }, process.env.ACCESS_TOKEN_SECRET, {
-    expiresIn: "15d",
-  });
+  return jwt.sign(
+    { id: user._id, profile: user.profile, seller: user.isSeller },
+    process.env.ACCESS_TOKEN_SECRET,
+    { expiresIn: "15d" }
+  );
 };
 
 const generateRefreshToken = (user) => {
@@ -23,7 +25,22 @@ const register = async (req, res) => {
 
     const user = new User({ profile, password });
     await user.save();
-    res.status(201).json({ message: "User registered successfully.", user });
+
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "Strict",
+    });
+
+    res.status(201).json({
+      message: "User registered successfully.",
+      accessToken,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -10,6 +10,7 @@ const bookRoutes = require("./routes/bookRoutes");
 const saveForLaterRoutes = require("./routes/saveForLaterRoutes");
 const cartRoute = require("./routes/cartRoute");
 const orderRoutes = require("./routes/orderRoutes");
+const donationRoutes = require("./routes/donationRoutes");
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.use("/api/save", saveForLaterRoutes);
 app.use("/api/payouts", payoutRouter);
 app.use("/api/cart", cartRoute);
 app.use("/api/order", orderRoutes);
+app.use("/api/donation", donationRoutes);
 
 const PORT = process.env.PORT || 5000;
 

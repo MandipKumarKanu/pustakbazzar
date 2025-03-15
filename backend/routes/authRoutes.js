@@ -20,7 +20,7 @@ const roleMiddleware = require("../middleware/roleMiddleware");
 
 router.post("/register", register);
 router.post("/login", login);
-router.post("/refresh-token", authMiddleWare, refreshToken);
+router.get("/refresh", refreshToken);
 router.get("/profile", authMiddleWare, myProfile);
 router.get("/users", authMiddleWare, roleMiddleware(["admin"]), getUsers);
 router.get("/user/:id", authMiddleWare, getUserById);

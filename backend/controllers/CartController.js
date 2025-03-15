@@ -3,7 +3,8 @@ const Book = require("../models/Book");
 
 const addItemToCart = async (req, res) => {
   try {
-    const { bookId, quantity = 1, deliveryPrice = 0 } = req.body;
+    const { bookId } = req.params;
+    const { quantity = 1, deliveryPrice = 0 } = req.body;
     const userId = req.user.id;
 
     const book = await Book.findById(bookId);
@@ -76,9 +77,14 @@ const getCart = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const cart = await Cart.findOne({ userId }).populate({
+    const cart = await Cart.findOne({ userId })
+    .populate({
       path: "carts.books.bookId",
-      select: "title author sellingPrice coverImage",
+      select: "title author sellingPrice images",
+    })
+    .populate({
+      path: "carts.sellerId",
+      select: "profile.userName",
     });
 
     if (!cart) {
@@ -118,7 +124,7 @@ const getCart = async (req, res) => {
 
 const removeItemFromCart = async (req, res) => {
   try {
-    const { bookId } = req.body;
+    const { bookId } = req.params;
     const userId = req.user.id;
 
     const book = await Book.findById(bookId);
@@ -273,10 +279,42 @@ const removeSellerItemsFromCart = async (req, res) => {
   }
 };
 
+const isInCart = async (req, res) => {
+  try {
+    const { bookId } = req.params;
+    const userId = req.user.id;
+
+    const cart = await Cart.findOne({ userId });
+
+    if (!cart) {
+      return res.status(404).json({ error: "No cart found for this user" });
+    }
+
+    const isBookInCart = cart.carts.some((sellerOrder) =>
+      sellerOrder.books.some(
+        (book) => book.bookId.toString() === bookId.toString()
+      )
+    );
+
+    if (isBookInCart) {
+      return res.json({ message: "Book is in cart", inCart: true });
+    } else {
+      return res.json({ message: "Book is not in cart", inCart: false });
+    }
+  } catch (error) {
+    console.error("Check if book is in cart error:", error.message);
+    res.status(500).json({
+      error: "Failed to check if book is in cart",
+      details: error.message,
+    });
+  }
+};
+
 module.exports = {
   addItemToCart,
   getCart,
   removeItemFromCart,
   clearCart,
   removeSellerItemsFromCart,
+  isInCart,
 };

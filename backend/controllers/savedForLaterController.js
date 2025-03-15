@@ -29,6 +29,24 @@ const saveForLater = async (req, res) => {
   }
 };
 
+const isSaved = async (req, res) => {
+  try {
+    const { id: bookId } = req.params;
+
+    const book = await Book.findById(bookId);
+    if (!book) {
+      return res.status(404).json({ message: "Book not found." });
+    }
+
+    const user = await User.findById(req.user._id);
+    const isSaved = user.savedForLater.includes(bookId);
+
+    return res.status(200).json({ isSaved: isSaved });
+  } catch (err) {
+    res.status(500).json({ message: "Error saving book for later." });
+  }
+};
+
 const getSavedForLater = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).populate("savedForLater");
@@ -72,4 +90,5 @@ module.exports = {
   saveForLater,
   getSavedForLater,
   removeFromSavedForLater,
+  isSaved,
 };

@@ -3,6 +3,7 @@ const User = require("../models/User");
 const addCustomClassesToHtml = require("../utils/addCustomClass");
 const Donation = require("../models/Donation");
 const levenshtein = require("fast-levenshtein");
+const mongoose = require("mongoose");
 
 const createBook = async (req, res) => {
   const {
@@ -15,6 +16,9 @@ const createBook = async (req, res) => {
     images,
     condition,
     forDonation,
+    publishYear,
+    edition,
+    language,
   } = req.body;
 
   try {
@@ -41,6 +45,9 @@ const createBook = async (req, res) => {
       condition,
       addedBy: req.user._id,
       forDonation,
+      publishYear,
+      edition,
+      language,
       // status,
     });
 
@@ -68,8 +75,10 @@ const createBook = async (req, res) => {
 
 const getAllBooks = async (req, res) => {
   try {
-    const books = await Book.find()
-      .populate("category")
+    const books = await Book.find({ status: "available", forDonation: false })
+      .lean()
+      .sort({ createdAt: -1 })
+      .populate("category", "categoryName")
       .populate("addedBy", "profile.userName");
     res.status(200).json({ books });
   } catch (error) {
@@ -80,7 +89,7 @@ const getAllBooks = async (req, res) => {
 const getBookById = async (req, res) => {
   try {
     const book = await Book.findById(req.params.id)
-      .populate("category")
+      .populate("category", "categoryName")
       .populate("addedBy", "profile.userName");
     if (!book) return res.status(404).json({ message: "Book not found." });
     res.status(200).json({ book });
@@ -100,6 +109,9 @@ const updateBook = async (req, res) => {
     images,
     condition,
     forDonation,
+    publishYear,
+    edition,
+    language,
   } = req.body;
 
   try {
@@ -134,7 +146,11 @@ const updateBook = async (req, res) => {
         sellingPrice: forDonation ? 0 : sellingPrice,
         images,
         condition,
+        addedBy: req.user._id,
         forDonation,
+        publishYear,
+        edition,
+        language,
       },
       { new: true }
     );
@@ -173,10 +189,13 @@ const deleteBook = async (req, res) => {
 
 const getBooksByCategory = async (req, res) => {
   try {
-    const books = await Book.find({ category: req.params.categoryId }).populate(
-      "addedBy",
-      "profile.userName"
-    );
+    const books = await Book.find({
+      category: { $in: req?.params?.categoryId },
+      status: "available",
+      forDonation: false,
+    })
+      .lean()
+      .populate("addedBy", "profile.userName");
     res.status(200).json({ books });
   } catch (error) {
     res.status(500).json({ message: "Error fetching books." });
@@ -185,9 +204,9 @@ const getBooksByCategory = async (req, res) => {
 
 const getBooksBySeller = async (req, res) => {
   try {
-    const books = await Book.find({ addedBy: req.params.sellerId }).populate(
-      "category"
-    );
+    const books = await Book.find({ addedBy: req.params.sellerId })
+      .lean()
+      .populate("category");
     res.status(200).json({ books });
   } catch (error) {
     res.status(500).json({ message: "Error fetching books." });
@@ -197,7 +216,7 @@ const getBooksBySeller = async (req, res) => {
 const searchBooks = async (req, res) => {
   try {
     const { query } = req.query;
-    // const limit = 5; 
+    // const limit = 5;
 
     if (!query) {
       return res.status(400).json({ message: "Search query is required." });
@@ -211,8 +230,9 @@ const searchBooks = async (req, res) => {
         { author: { $regex: searchTerm, $options: "i" } },
       ],
     })
-      .populate("category")
-      // .limit(limit);
+      .lean()
+      .populate("category");
+    // .limit(limit);
 
     if (books.length > 0) {
       return res.status(200).json({ books });
@@ -220,35 +240,31 @@ const searchBooks = async (req, res) => {
 
     const allBooks = await Book.find().populate("category");
 
-    const filteredBooks = allBooks
-      .filter((book) => {
-        const titleLower = book.title.toLowerCase();
-        const authorLower = book.author.toLowerCase();
+    const filteredBooks = allBooks.filter((book) => {
+      const titleLower = book.title.toLowerCase();
+      const authorLower = book.author.toLowerCase();
 
-        if (
-          titleLower.includes(searchTerm) ||
-          authorLower.includes(searchTerm)
-        ) {
+      if (titleLower.includes(searchTerm) || authorLower.includes(searchTerm)) {
+        return true;
+      }
+
+      const titleWords = titleLower.split(/\s+/);
+      for (const word of titleWords) {
+        if (word.startsWith(searchTerm) || searchTerm.startsWith(word)) {
           return true;
         }
+      }
 
-        const titleWords = titleLower.split(/\s+/);
-        for (const word of titleWords) {
-          if (word.startsWith(searchTerm) || searchTerm.startsWith(word)) {
-            return true;
-          }
+      const authorWords = authorLower.split(/\s+/);
+      for (const word of authorWords) {
+        if (word.startsWith(searchTerm) || searchTerm.startsWith(word)) {
+          return true;
         }
+      }
 
-        const authorWords = authorLower.split(/\s+/);
-        for (const word of authorWords) {
-          if (word.startsWith(searchTerm) || searchTerm.startsWith(word)) {
-            return true;
-          }
-        }
-
-        return false;
-      })
-      // .slice(0, limit); 
+      return false;
+    });
+    // .slice(0, limit);
 
     return res.status(200).json({ books: filteredBooks });
   } catch (error) {
@@ -268,10 +284,114 @@ const filterBooks = async (req, res) => {
     if (maxPrice) filter.sellingPrice.$lte = maxPrice;
     if (condition) filter.condition = condition;
 
-    const books = await Book.find(filter).populate("category");
+    const books = await Book.find(filter)
+      .lean()
+      .populate("category");
     res.status(200).json({ books });
   } catch (error) {
     res.status(500).json({ message: "Error filtering books." });
+  }
+};
+
+const incrementBookViews = async (req, res) => {
+  try {
+    const { id: bookId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(bookId)) {
+      return res.status(400).json({ message: "Invalid book ID." });
+    }
+
+    const book = await Book.findByIdAndUpdate(
+      bookId,
+      { $inc: { views: 1 } },
+      { new: true }
+    );
+    if (!book) return res.status(404).json({ message: "Book not found." });
+    res.status(200).json({ views: book.views });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error incrementing book views.",
+      error: error.message,
+    });
+  }
+};
+
+const getWeeklyTopBooks = async (req, res) => {
+  try {
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+    const topBooks = await Book.find({
+      createdAt: { $gte: oneWeekAgo },
+      status: "available",
+    })
+      .lean()
+      .sort({ views: -1 })
+      .limit(6);
+
+    res.status(200).json({ data: topBooks });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getMonthlyTopBooks = async (req, res) => {
+  try {
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+    const topBooks = await Book.find({
+      createdAt: { $gte: oneMonthAgo },
+      status: "available",
+    })
+      .lean()
+      .sort({ views: -1 })
+      .limit(5);
+
+    res.json({ data: topBooks });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const toggleFeaturedBook = async (req, res) => {
+  try {
+    const bookId = req.params.id;
+    const book = await Book.findById(bookId);
+
+    if (!book) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Book not found" });
+    }
+
+    book.isFeatured = !book.isFeatured;
+    book.featuredDate = book.isFeatured ? new Date() : null;
+    await book.save();
+
+    res.status(201).json({
+      message: `Book ${
+        book.isFeatured ? "featured" : "unfeatured"
+      } successfully`,
+      data: book,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+const getFeaturedBooks = async (req, res) => {
+  try {
+    const featuredBooks = await Book.find({
+      isFeatured: true,
+      status: "available",
+    })
+      .lean()
+      .sort({ featuredDate: -1 });
+
+    res.status(200).json({ data: featuredBooks });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -285,4 +405,9 @@ module.exports = {
   getBooksBySeller,
   searchBooks,
   filterBooks,
+  incrementBookViews,
+  getWeeklyTopBooks,
+  getMonthlyTopBooks,
+  toggleFeaturedBook,
+  getFeaturedBooks,
 };

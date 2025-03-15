@@ -32,25 +32,20 @@ const createDonation = async (req, res) => {
 };
 
 const getLatestDonations = async (req, res) => {
-  let limit = 5;
+  let limit = 3;
 
   try {
-    const donations = await Donation.find()
+    const donations = await Donation.find({ status: "approved" || "completed" })
+      .lean()
       .populate("book")
-      .populate("donor", "profile.userName profile.email")
+      .populate("donor", "profile.userName profile.email profile.profileImg donated profile.firstName profile.lastName")
       .sort({ createdAt: -1 })
-      // .skip((page - 1) * limit)
       .limit(limit);
 
-    const totalDonations = await Donation.countDocuments();
+    // const totalDonations = await Donation.countDocuments();
 
     res.status(200).json({
       donations,
-      pagination: {
-        totalDonations,
-        totalPages: Math.ceil(totalDonations / limit),
-        currentPage: parseInt(page),
-      },
     });
   } catch (error) {
     handleError(res, error, "Error fetching latest donations.");

@@ -1,5 +1,5 @@
 const Category = require("../models/Category");
-const handleError = require("../utils/errorHandler"); 
+const handleError = require("../utils/errorHandler");
 
 const createCategory = async (req, res) => {
   const { categoryName } = req.body;
@@ -63,21 +63,11 @@ const updateCategory = async (req, res) => {
 };
 
 const getAllCategory = async (req, res) => {
-  const { page = 1, limit = 10 } = req.query;
-
   try {
-    const categories = await Category.find()
-      .skip((page - 1) * limit)
-      .limit(limit);
-    const totalCategories = await Category.countDocuments();
+    const categories = await Category.find().sort({ createdAt: -1 }).lean();
 
     res.status(200).json({
       categories,
-      pagination: {
-        totalCategories,
-        totalPages: Math.ceil(totalCategories / limit),
-        currentPage: parseInt(page),
-      },
     });
   } catch (error) {
     handleError(res, error, "Unable to fetch categories");
