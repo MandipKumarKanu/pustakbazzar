@@ -1,0 +1,124 @@
+@import url("https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+
+@font-face {
+  font-family: Inter;
+  font-style: normal;
+  font-weight: 200 700;
+  font-display: swap;
+  src: url("./assets/fonts/Inter.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: Meditative;
+  font-style: normal;
+  font-weight: 200 700;
+  font-display: swap;
+  src: url("./assets/fonts/Meditative.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: Sfpro;
+  font-style: normal;
+  font-weight: 200 700;
+  font-display: swap;
+  src: url("./assets/fonts/sfpro.OTF") format("OTF");
+}
+
+@font-face {
+  font-family: Suntage;
+  font-style: normal;
+  font-weight: 200 700;
+  font-display: swap;
+  src: url("./assets/fonts/Suntage.otf") format("OTF");
+}
+
+/* *{
+  } */
+
+* {
+  user-select: none;
+  /* font-family: Inter; */
+
+  /* cursor: none; */
+}
+
+.goto-top-btn {
+  --button-size: 3rem;
+  --button-radius: 50%;
+  --gradient-start: #8b5cf6;
+  --gradient-end: #4f46e5;
+  --hover-lift: -5px;
+  --tooltip-bg: rgba(0, 0, 0, 0.8);
+  --tooltip-text: #ffffff;
+  --tooltip-arrow-size: 6px;
+  --animation-duration: 0.3s;
+}
+
+.goto-top-btn {
+  width: var(--button-size);
+  height: var(--button-size);
+  border-radius: var(--button-radius);
+  background: linear-gradient(
+    135deg,
+    var(--gradient-start),
+    var(--gradient-end)
+  );
+  transition: all var(--animation-duration) ease;
+  cursor: pointer;
+}
+
+.goto-top-btn:hover {
+  transform: translateY(var(--hover-lift));
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.goto-top-btn .tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.5rem 1rem;
+  background-color: var(--tooltip-bg);
+  color: var(--tooltip-text);
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity var(--animation-duration) ease;
+}
+
+.goto-top-btn:hover .tooltip {
+  opacity: 1;
+}
+
+.goto-top-btn .tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: calc(var(--tooltip-arrow-size) * -1);
+  border-width: var(--tooltip-arrow-size);
+  border-style: solid;
+  border-color: var(--tooltip-bg) transparent transparent transparent;
+}
+
+@keyframes rocketFloat {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(-5deg);
+  }
+}
+
+.goto-top-btn .rocket {
+  animation: rocketFloat 2s ease-in-out infinite;
+}
+
+@media (max-width: 640px) {
+  .goto-top-btn {
+    --button-size: 2.5rem;
+  }
+}
