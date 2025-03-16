@@ -54,7 +54,7 @@ const BillingDetailsModal = ({ isOpen, onClose, onSubmit }) => {
 
   return (
     isOpen && (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-xs  flex items-center justify-center z-50 p-4">
         <div className="bg-greyColor p-8 rounded-2xl shadow-lg max-w-3xl w-full">
           <h2 className="text-3xl font-bold mb-6">Shipping Details</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -186,14 +186,14 @@ const BillingDetailsModal = ({ isOpen, onClose, onSubmit }) => {
             <div className="flex justify-end mt-4 gap-4">
               <button
                 type="button"
-                className="px-4 py-2  bg-gray-300  hover:bg-gray-400 rounded-full text-white text-lg font-bold"
+                className="px-4 py-2  bg-gray-400  hover:bg-gray-500 cursor-pointer rounded-full text-white text-lg font-bold"
                 onClick={onClose}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-full text-white text-lg font-bold"
+                className="px-4 py-2 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-full text-white text-lg font-bold cursor-pointer"
               >
                 Submit
               </button>

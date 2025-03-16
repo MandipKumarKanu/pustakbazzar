@@ -39,9 +39,9 @@ export const updateCartApi = (bookId, quantity) => {
 };
 
 // Remove item from cart
-export const removeFromCartApi = (bookId) => {
-  return axios.delete(`${baseURL}/cart/item/${bookId}`);
-};
+// export const removeFromCartApi = (bookId) => {
+//   return axios.delete(`${baseURL}/cart/item/${bookId}`);
+// };
 
 // Move item to wishlist
 export const moveToWishlistApi = (bookId) => {

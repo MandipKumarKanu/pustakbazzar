@@ -1,29 +1,36 @@
+import { addToCartApi } from "@/api/cart";
 import { getSaveForLaterApi, removeSaveForLaterApi } from "@/api/saveForLater";
 // import { addToCartApi } from "@/api/cart";
 import HeadingText from "@/components/Heading";
 import WishlistBookCard from "@/components/WishlistBookCard";
+import { useCartStore } from "@/store/useCartStore";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
+// import { addToCartApi } from "@/api/cart";
 
 const WishListPage = () => {
   const [wishList, setWishList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { incCart, cartCount: cCnt } = useCartStore();
+
+  let cartCount = typeof cCnt === "function" ? cCnt() : cCnt;
 
   useEffect(() => {
-    const fetchWishlist = async () => {
-      try {
-        setLoading(true);
-        const res = await getSaveForLaterApi();
-        setWishList(res.data.savedBooks);
-      } catch (error) {
-        console.log(error);
-        toast.error("Failed to load wishlist");
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchWishlist();
   }, []);
+
+  const fetchWishlist = async () => {
+    try {
+      setLoading(true);
+      const res = await getSaveForLaterApi();
+      setWishList(res.data.savedBooks);
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to load wishlist");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleRemoveFromWishlist = async (id) => {
     try {
@@ -38,10 +45,10 @@ const WishListPage = () => {
 
   const handleAddToCart = async (id) => {
     try {
-      // await addToCartApi(id);
+      await addToCartApi(id);
+      incCart(cartCount);
       await removeSaveForLaterApi(id);
-      setWishList(wishList.filter((book) => book._id !== id));
-
+      fetchWishlist();
       toast.success("Book added to cart");
     } catch (error) {
       console.log(error);

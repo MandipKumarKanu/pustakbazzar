@@ -2,8 +2,9 @@ import React, { useEffect, useState } from "react";
 import {
   getCartApi,
   updateCartApi,
-  removeFromCartApi,
+  // removeFromCartApi,
   moveToWishlistApi,
+  removeToCartApi,
 } from "@/api/cart";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -19,6 +20,9 @@ import CartSkeleton from "./CartSkeleton";
 import BillingDetailsModal from "./BillingDetailsModal";
 import PrimaryBtn from "@/components/PrimaryBtn";
 import { useCartStore } from "@/store/useCartStore";
+import { useIsSaved } from "@/hooks/useSaveLater";
+import { saveForLaterApi } from "@/api/saveForLater";
+import { toast } from "sonner";
 
 const SHIPPING_FEE_PER_SELLER = 100;
 const MAX_ADDRESSES = 5;
@@ -36,30 +40,24 @@ const CartPage = () => {
   const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);
   const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
 
-  const { fetchCart, cart: cartData, loading: isLoading } = useCartStore();
-  console.log(cartData);
+  const {
+    fetchCart,
+    cart: cartData,
+    loading: isLoading,
+    decCart,
+    cartCount: cCnt,
+  } = useCartStore();
+
+  let cartCount = typeof cCnt === "function" ? cCnt() : cCnt;
 
   useEffect(() => {
     fetchCart();
     fetchUserAddresses();
   }, []);
 
-  //   const fetchCart = async () => {
-  //     setIsLoading(true);
-  //     try {
-  //       const res = await getCartApi();
-  //       setCartData(res.data);
-  //     } catch (error) {
-  //       console.error("Error fetching cart:", error);
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
-
   const fetchUserAddresses = async () => {
     try {
-      // Replace with your actual API call
-      const addresses = []; // Get from your API
+      const addresses = [];
       if (addresses && addresses.length > 0) {
         setUserAddresses(addresses);
         setSelectedAddressIndex(0);
@@ -69,29 +67,32 @@ const CartPage = () => {
     }
   };
 
-  const handleRemoveItem = async (bookId, cartId) => {
-    setIsLoading(true);
+  const handleRemoveItem = async (bookId) => {
     try {
-      await removeFromCartApi(bookId);
+      await removeToCartApi(bookId);
+      decCart(cartCount);
       await fetchCart();
+      toast.success("Book removed from cart");
     } catch (error) {
       console.error("Error removing item:", error);
     } finally {
-      setIsLoading(false);
+      setIsDeleteDialogOpen(false);
     }
   };
 
   const handleMoveToWishlist = async () => {
     if (currentBook) {
-      setIsLoading(true);
       try {
-        await moveToWishlistApi(currentBook.bookId._id);
-        await removeFromCartApi(currentBook._id);
+        if (!(await useIsSaved(currentBook.bookId._id))) {
+          await saveForLaterApi(currentBook.bookId._id);
+        }
+        await removeToCartApi(currentBook.bookId._id);
+        decCart(cartCount);
         await fetchCart();
+        toast.success("Book added to wishlist");
       } catch (error) {
         console.error("Error moving to wishlist:", error);
       } finally {
-        setIsLoading(false);
         setIsWishlistDialogOpen(false);
       }
     }
@@ -99,20 +100,6 @@ const CartPage = () => {
 
   const calculateTotal = () => {
     return cartData?.totalPrice || 0;
-  };
-
-  const handleUpdateQuantity = async (bookId, cartId, newQuantity) => {
-    if (newQuantity < 1) return;
-
-    setIsLoading(true);
-    try {
-      await updateCartApi(bookId, newQuantity);
-      await fetchCart();
-    } catch (error) {
-      console.error("Error updating quantity:", error);
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const prepareCheckoutData = () => {
@@ -233,7 +220,11 @@ const CartPage = () => {
                           <div className="flex space-x-3">
                             <button
                               onClick={() =>
-                                handleRemoveItem(book._id, cart._id)
+                                // handleRemoveItem(book.bookId._id, cart._id)
+                                {
+                                  setCurrentBook(book);
+                                  setIsDeleteDialogOpen(true);
+                                }
                               }
                               className="text-red-500 hover:text-red-700 transition duration-300"
                               title="Remove from cart"
@@ -323,7 +314,11 @@ const CartPage = () => {
                       <div className="flex justify-between">
                         <span>Shipping Fee</span>
                         <span>
-                          ₹{cartData?.carts?.length * SHIPPING_FEE_PER_SELLER}
+                          ₹{cartData?.carts?.length * SHIPPING_FEE_PER_SELLER}{" "}
+                          <span className="text-[12px]">
+                            ({cartData?.carts?.length}x{SHIPPING_FEE_PER_SELLER}
+                            )
+                          </span>
                         </span>
                       </div>
                     </div>
@@ -341,7 +336,7 @@ const CartPage = () => {
                       <span>Total</span>
                       <span>
                         ₹
-                        {cartData.totalPrice +
+                        {cartData.calculatedTotal +
                           cartData.carts.length * SHIPPING_FEE_PER_SELLER}
                       </span>
                     </div>
@@ -385,7 +380,7 @@ const CartPage = () => {
       )}
 
       {isWishlistDialogOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs  flex items-center justify-center z-50 p-4">
           <div className="bg-white p-6 rounded-lg max-w-sm w-full">
             <h2 className="text-xl font-semibold mb-4">Move to Wishlist</h2>
             <p className="mb-6">
@@ -418,7 +413,7 @@ const CartPage = () => {
         </div>
       )}
       {isDeleteDialogOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
           <div className="bg-white p-6 rounded-lg max-w-sm w-full">
             <h2 className="text-xl font-semibold mb-4">Confirm Deletion</h2>
             <p className="mb-6">
@@ -434,9 +429,7 @@ const CartPage = () => {
               </button>
               <button
                 className="px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition duration-300 text-sm flex items-center"
-                onClick={() =>
-                  handleRemoveItem(currentBook._id, currentBook.cartId)
-                }
+                onClick={() => handleRemoveItem(currentBook.bookId._id)}
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -453,7 +446,7 @@ const CartPage = () => {
         </div>
       )}
       {isAddressDialogOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs  flex items-center justify-center z-50 p-4">
           <div className="bg-white p-6 rounded-lg max-w-md w-full">
             <h2 className="text-xl font-semibold mb-4">Your Addresses</h2>
             {userAddresses.map((address, index) => (

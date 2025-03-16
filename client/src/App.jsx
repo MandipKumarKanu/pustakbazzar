@@ -28,6 +28,7 @@ import ContactPage from "./pages/ContactPage";
 import WishListPage from "./pages/WishListPage";
 import CartPage from "./pages/CartPage";
 import { useCartStore } from "./store/useCartStore";
+import Loader from "./components/Loader";
 // import ContactPage from "./pages/ContactPage";
 
 function App() {
@@ -36,8 +37,7 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   const { token, setUser, setToken } = useAuthStore();
-  const { fetchCart} = useCartStore();
-
+  const { fetchCart } = useCartStore();
 
   const { fetchCategories } = useCategoryStore();
 
@@ -59,7 +59,7 @@ function App() {
         if (token) {
           setUser(decodedUser);
           setToken(token);
-          fetchCart()
+          fetchCart();
         }
       } catch (error) {
         localStorage.setItem("loggedIn", "");
@@ -76,7 +76,7 @@ function App() {
   }, [token, setToken, setUser]);
 
   if (loading) {
-    return <>Loading</>;
+    return <Loader />;
   }
 
   return (

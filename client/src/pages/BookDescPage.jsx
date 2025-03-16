@@ -21,6 +21,7 @@ import { removeSaveForLaterApi, saveForLaterApi } from "@/api/saveForLater";
 import { useAuthStore } from "@/store/useAuthStore";
 import { addToCartApi, removeToCartApi } from "@/api/cart";
 import { useIsInCart } from "@/hooks/useCart";
+import { useCartStore } from "@/store/useCartStore";
 
 const BookDescPage = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -34,7 +35,9 @@ const BookDescPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, token } = useAuthStore();
+  const { incCart, decCart, cartCount: cCnt } = useCartStore();
 
+  let cartCount = typeof cCnt === "function" ? cCnt() : cCnt;
   useEffect(() => {
     const fetchData = async () => {
       await fetchBook();
@@ -100,8 +103,10 @@ const BookDescPage = () => {
     try {
       if (isInCart) {
         await removeToCartApi(id);
+        decCart(cartCount);
       } else {
         await addToCartApi(id);
+        incCart(cartCount);
       }
       setIsInCart(!isInCart);
     } catch (error) {
@@ -110,7 +115,6 @@ const BookDescPage = () => {
       setIsCartLoading(false);
     }
   };
-
   const handleBuy = () => {
     let checkoutData = {
       selectedAddressIndex: 0,

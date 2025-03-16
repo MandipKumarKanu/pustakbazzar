@@ -19,10 +19,14 @@ const userSchema = new mongoose.Schema(
       address: {
         type: [
           {
-            name: { type: String, trim: true },
+            firstName: { type: String, trim: true },
+            lastName: { type: String, trim: true },
             street: { type: String, trim: true },
-            city: { type: String, trim: true },
-            district: { type: String, trim: true },
+            province: { type: String, trim: true },
+            town: { type: String, trim: true },
+            landmark: { type: String, trim: true },
+            phone: { type: String, trim: true },
+            email: { type: String, trim: true, lowercase: true },
             isDefault: { type: Boolean, default: false },
           },
         ],

@@ -12,9 +12,11 @@ import { NumberTicker } from "./magicui/number-ticker";
 const Navbar = () => {
   const { user } = useAuthStore();
   const { category: categories } = useCategoryStore();
-  const { cartCount } = useCartStore();
+  const { cartCount: cCnt } = useCartStore();
 
-  console.log(cartCount());
+  let cartCount = typeof cCnt === "function" ? cCnt() : cCnt;
+
+  console.log(cartCount);
 
   const cartLength = 0;
   const navigate = useNavigate();
@@ -184,7 +186,7 @@ const Navbar = () => {
             ) : (
               <>
                 <DropdownUser />
-                {!isCartPage && (
+                {
                   <NavLink
                     to="/cart"
                     className="hidden md:flex relative items-center justify-center group"
@@ -192,18 +194,18 @@ const Navbar = () => {
                     <div className="absolute -inset-1 bg-gradient-to-r from-red-500 to-orange-500 rounded-full blur opacity-0 group-hover:opacity-100 transition duration-300"></div>
                     <div className="relative p-2 bg-white rounded-full hover:shadow-md transition duration-200">
                       <FaShoppingCart className="text-gray-700 group-hover:text-primary text-lg" />
-                      {cartCount() > 0 && (
+                      {user && (
                         <span className="absolute -top-1 -right-1 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center text-white text-xs font-bold">
                           {/* {cartCount()} */}
                           <NumberTicker
-                            value={cartCount()}
+                            value={cartCount}
                             className="whitespace-pre-wrap font-medium tracking-tighter text-white"
                           />
                         </span>
                       )}
                     </div>
                   </NavLink>
-                )}
+                }
               </>
             )}
             <button
@@ -257,7 +259,7 @@ const Navbar = () => {
               </li>
               <li className="transform hover:translate-x-3 transition-transform duration-200 cursor-pointer">
                 <NavLink
-                  to="/categories"
+                  to="/category"
                   className={({ isActive }) =>
                     isActive
                       ? "text-primary font-semibold"

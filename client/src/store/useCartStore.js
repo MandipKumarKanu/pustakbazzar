@@ -8,7 +8,7 @@ export const useCartStore = create((set, get) => ({
 
   fetchCart: async () => {
     set({ loading: true, error: null });
-    try {
+    try { 
       const res = await getCartApi();
       set({
         cart: res.data.cart,
@@ -31,8 +31,7 @@ export const useCartStore = create((set, get) => ({
     );
   },
 
-  incCart: () => set((state) => ({ cartCount: state.cartCount() + 1 })),
-  decCart: () =>
-    set((state) => ({ cartCount: Math.max(state.cartCount() - 1, 0) })),
+  incCart: (cc) => set((state) => ({ cartCount: cc + 1 })),
+  decCart: (cc) => set((state) => ({ cartCount: Math.max(cc - 1, 0) })),
   clearCart: () => set({ cart: [], cartCount: 0 }),
 }));
