@@ -34,7 +34,7 @@ app.use("/api/cart", cartRoute);
 app.use("/api/order", orderRoutes);
 app.use("/api/donation", donationRoutes);
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8000;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
