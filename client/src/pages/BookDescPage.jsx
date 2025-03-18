@@ -146,7 +146,7 @@ const BookDescPage = () => {
 
   return (
     <div className="container mx-auto mt-5 mb-6 px-6 py-8 bg-purple-100 rounded-3xl">
-      <title>{book?.title}</title>
+      {/* <title>{book?.title}</title> */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-20">
         <div className="lg:relative">
           <div className="lg:sticky lg:top-24 space-y-4">

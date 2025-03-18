@@ -30,7 +30,7 @@ const AllBookPage = () => {
   }
   return (
     <>
-      <title>All Book | PustakBazzar</title>
+      {/* <title>All Book | PustakBazzar</title> */}
       <HeadingText fullName="All Books" bgName="ALL BOOKS" />
 
       <div className="container mx-auto px-4 mt-14">
