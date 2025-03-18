@@ -1,5 +1,6 @@
+import { useSpring, animated, config } from "@react-spring/web";
 import React, { useState, useEffect } from "react";
-import { useSpring, animated, config } from "react-spring";
+// import { useSpring, animated, config } from "react-spring";
 
 const GotoTop = () => {
   const [isVisible, setIsVisible] = useState(false);
