@@ -6,7 +6,7 @@ export const DEV_URL = import.meta.env.VITE_DEV_URL; //development api
 export const PROD_URL = "https://web-blogs-tau.vercel.app/api";
 
 // export const baseURL =  import.meta.env.MODE === "development" ? DEV_URL : PROD_URL;
-export const baseURL = "http://localhost:5000/api/";
+export const baseURL = "http://localhost:8000/api/";
 
 export const customAxios = axios.create({
   headers: {
