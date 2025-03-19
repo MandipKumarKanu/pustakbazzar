@@ -97,11 +97,13 @@ const AddBook = () => {
         images: uploadedImages,
       });
 
+      const categoryValue = selectedCategories.map((item) => item.value);
+
       const dataToSend = {
         title: data.bookName,
         description: desc,
         author: data.author,
-        category: selectedCategories,
+        category: categoryValue,
         markedPrice: data.bookFor === "donation" ? 0 : data.markedPrice,
         sellingPrice: data.bookFor === "donation" ? 0 : data.sellingPrice,
         images: uploadedImages,
@@ -325,7 +327,10 @@ const AddBook = () => {
                   </label>
 
                   {user?.seller?.status === "approved" && (
-                    <label htmlFor="bookFor" className="inline-flex items-center">
+                    <label
+                      htmlFor="bookFor"
+                      className="inline-flex items-center"
+                    >
                       <input
                         type="radio"
                         {...register("bookFor")}
