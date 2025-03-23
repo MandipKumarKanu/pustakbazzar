@@ -156,6 +156,9 @@ const AddBook = () => {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
+
+  
+
   return (
     <div className="container mx-auto px-2 py-4">
       <div className="max-w-4xl mt-10 mx-auto bg-gray-50 shadow-lg rounded-lg overflow-hidden">

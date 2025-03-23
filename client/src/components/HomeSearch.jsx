@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { FaTimes } from "react-icons/fa";
 import PrimaryBtn from "./PrimaryBtn";
 // import { homeSearchBook } from "../hooks/HomeSearchBook";
-// import SearchBookCard from "./SearchBookCard";
+import SearchBookCard from "./SearchBookCard";
+import { homeSearchBook } from "@/hooks/HomeSearchBook";
 
 function HomeSearch() {
   const [searchFields, setSearchFields] = useState({
@@ -15,6 +16,7 @@ function HomeSearch() {
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   const handleInputChange = (e) => {
@@ -35,13 +37,19 @@ function HomeSearch() {
     setLoading(true);
     setHasSearched(true);
     setShowResults(true);
+    setError(null);
 
     try {
-      // const results = await homeSearchBook(searchFields);
-      // setBooks(results.slice(0, 8));
-      console.log(searchFields)
+      const results = await homeSearchBook(searchFields);
+      setBooks(results);
+
+      console.log(
+        `Found ${results.length} books matching criteria:`,
+        searchFields
+      );
     } catch (error) {
       console.error("Search error:", error);
+      setError("An error occurred while searching. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -54,6 +62,17 @@ function HomeSearch() {
       author: "",
       year: "",
     });
+    setError(null);
+  };
+
+  const handleDeepSearch = () => {
+    // Pass the current search parameters to the advanced search page
+    const params = new URLSearchParams();
+    if (searchFields.title) params.append("title", searchFields.title);
+    if (searchFields.author) params.append("author", searchFields.author);
+    if (searchFields.year) params.append("year", searchFields.year);
+
+    navigate(`/search?${params.toString()}`);
   };
 
   return (
@@ -106,24 +125,52 @@ function HomeSearch() {
             <FaTimes className="text-gray-600 text-xl" />
           </button>
           <div>
+            
             {loading ? (
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primaryColor mx-auto"></div>
               </div>
+            ) : error ? (
+              <div className="text-center text-red-600">
+                <p>{error}</p>
+                <button
+                  onClick={handleSearch}
+                  className="mt-4 text-primaryColor"
+                >
+                  Try Again
+                </button>
+              </div>
             ) : books.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {books.map((book) => (
-                  <SearchBookCard key={book.id} book={book} />
-                ))}
+              <div>
+                <h2 className="text-xl font-semibold mb-4">
+                  Found {books.length} results
+                  {books.some((book) => book._fuzzyMatch) &&
+                    " (including similar matches)"}
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {books.map((book) => (
+                    <SearchBookCard key={book._id} book={book} />
+                  ))}
+                </div>
+                {books.length > 8 && (
+                  <div className="mt-6 text-center">
+                    <button
+                      onClick={handleDeepSearch}
+                      className="px-4 py-2 bg-primaryColor text-white rounded-lg hover:bg-primaryColorDark"
+                    >
+                      View All Results
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="text-center text-xl text-gray-600">
                 <p>
-                  No books found matching your exact criteria. Try adjusting
-                  your search terms or using fewer filters.
+                  No books found matching your criteria. Try adjusting your
+                  search terms or using fewer filters.
                 </p>
                 <button
-                  onClick={() => navigate("/search")}
+                  onClick={handleDeepSearch}
                   className="mt-4 text-primaryColor"
                 >
                   Go to Deep Search

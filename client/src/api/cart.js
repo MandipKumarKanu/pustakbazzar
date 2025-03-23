@@ -28,9 +28,6 @@ export async function clearCartABySellerIdApi(sid) {
   return customAxios.post(url);
 }
 
-// ..........
-
-// Update cart item quantity
 export const updateCartApi = (bookId, quantity) => {
   return axios.put(`${baseURL}/cart/update`, {
     bookId,

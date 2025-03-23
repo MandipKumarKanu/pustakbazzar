@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { toast } from "sonner";
 // import getErrorMessage from "../components/utils/getErrorMsg";
 import { jwtDecode } from "jwt-decode";
-import { authSignIn, authSignUp } from "@/api/auth";
+import { authSignIn, authSignUp, getAddressApi } from "@/api/auth";
 import getErrorMessage from "@/utils/getErrorMsg";
 
 export const useAuthStore = create((set) => ({
@@ -10,6 +10,9 @@ export const useAuthStore = create((set) => ({
   error: null,
   token: null,
   user: null,
+  adLoading: true,
+  adError: null,
+  addresses: [],
 
   setToken: (token) => set({ token }),
   setUser: (user) => set({ user }),
@@ -44,6 +47,16 @@ export const useAuthStore = create((set) => ({
       console.log(error);
       toast.error(getErrorMessage(error));
       set({ error: error, loading: false });
+    }
+  },
+
+  fetchAddress: async () => {
+    set({ adLoading: true, adError: null });
+    try {
+      const response = await getAddressApi();
+      set({ adLoading: false, addresses:response.data.addresses });
+    } catch (error) {
+      set({ adError: error, adLoading: false });
     }
   },
 

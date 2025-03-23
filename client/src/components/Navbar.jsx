@@ -16,7 +16,6 @@ const Navbar = () => {
 
   let cartCount = typeof cCnt === "function" ? cCnt() : cCnt;
 
-  console.log(cartCount);
 
   const cartLength = 0;
   const navigate = useNavigate();

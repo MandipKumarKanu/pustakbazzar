@@ -25,3 +25,13 @@ export async function updatePass(data) {
   const url = `auth/password`;
   return customAxios.patch(`/${url}`, data);
 }
+
+export async function addAddressApi(data) {
+  const url = `auth/profile/address`;
+  return customAxios.patch(`/${url}`, data);
+}
+
+export async function getAddressApi() {
+  const url = `auth/profile/address`;
+  return customAxios.get(`/${url}`);
+}

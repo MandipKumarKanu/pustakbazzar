@@ -1,3 +1,4 @@
+import MyBookPage from "@/pages/MyBookPage";
 import React, { useState } from "react";
 
 const ProfileBooks = ({ user }) => {
@@ -18,7 +19,11 @@ const ProfileBooks = ({ user }) => {
       case "bought":
         return <div>Your bought books will be listed here.</div>;
       case "list":
-        return <div>Your sold books will be listed here.</div>;
+        return (
+          <>
+            <MyBookPage />
+          </>
+        );
       // case "rented":
       //   return <div>Your rented books will be listed here.</div>;
       case "donated":

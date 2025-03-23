@@ -29,6 +29,8 @@ import WishListPage from "./pages/WishListPage";
 import CartPage from "./pages/CartPage";
 import { useCartStore } from "./store/useCartStore";
 import Loader from "./components/Loader";
+import MyBookPage from "./pages/MyBookPage";
+import EditBookPage from "./pages/EditBookPage";
 // import ContactPage from "./pages/ContactPage";
 
 function App() {
@@ -89,6 +91,7 @@ function App() {
           <Route path="/auth" element={<Auth />} />
           <Route path="/addbook" element={<AddBook />} />
           <Route path="/allbooks" element={<AllBookPage />} />
+          <Route path="/book/edit/:id" element={<EditBookPage />} />
           <Route path="/book/:id" element={<BookDescPage />} />
           <Route path="/users" element={<UserPage />} />
           <Route path="/profile" element={<ProfilePage />} />
@@ -97,6 +100,7 @@ function App() {
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/wishlist" element={<WishListPage />} />
           <Route path="/cart" element={<CartPage />} />
+          <Route path="/mybook" element={<MyBookPage />} />
 
           <Route element={<AdminLayout />}>
             <Route path="/admin/home" element={<AdminHome />} />

@@ -20,6 +20,11 @@ export async function getBookByCateId(id) {
   return axios.get(`${baseURL}${url}`);
 }
 
+export async function searchBookAPI(param) {
+  let url = `book/search?${param}`;
+  return axios.get(`${baseURL}${url}`);
+}
+
 export async function incView(id) {
   let url = `book/inc/${id}`;
   return axios.patch(`${baseURL}${url}`);
@@ -28,4 +33,9 @@ export async function incView(id) {
 export async function getWeeklyTopBook() {
   let url = `book/weeklytop`;
   return axios.get(`${baseURL}${url}`);
+}
+
+export async function updateBook(id, data) {
+  let url = `book/${id}`;
+  return customAxios.patch(`${baseURL}${url}`, data);
 }

@@ -39,17 +39,19 @@ const BillingDetailsModal = ({ isOpen, onClose, onSubmit }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
-    setFormData({
-      firstName: "",
-      lastName: "",
-      streetAddress: "",
-      town: "",
-      landmark: "",
-      phone: "",
-      email: "",
-    });
-    onClose();
+    try {
+      onSubmit(formData);
+      setFormData({
+        firstName: "",
+        lastName: "",
+        streetAddress: "",
+        town: "",
+        landmark: "",
+        phone: "",
+        email: "",
+      });
+    } catch (error) {}
+    // onClose();
   };
 
   return (

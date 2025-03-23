@@ -23,9 +23,12 @@ import { useCartStore } from "@/store/useCartStore";
 import { useIsSaved } from "@/hooks/useSaveLater";
 import { saveForLaterApi } from "@/api/saveForLater";
 import { toast } from "sonner";
+import { addAddressApi } from "@/api/auth";
+import getErrorMessage from "@/utils/getErrorMsg";
+import { useAuthStore } from "@/store/useAuthStore";
 
 const SHIPPING_FEE_PER_SELLER = 100;
-const MAX_ADDRESSES = 5;
+const MAX_ADDRESSES = 2;
 
 const CartPage = () => {
   const navigate = useNavigate();
@@ -39,6 +42,7 @@ const CartPage = () => {
   const [userAddresses, setUserAddresses] = useState([]);
   const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);
   const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
+  const [isAddressLoading, setIsAddressLoading] = useState(true);
 
   const {
     fetchCart,
@@ -48,22 +52,35 @@ const CartPage = () => {
     cartCount: cCnt,
   } = useCartStore();
 
+  const { fetchAddress, adLoading, adError, addresses, user, token } =
+    useAuthStore();
+
   let cartCount = typeof cCnt === "function" ? cCnt() : cCnt;
 
   useEffect(() => {
-    fetchCart();
-    fetchUserAddresses();
-  }, []);
+    console.log(addresses);
+    if (addresses && addresses.length > 0) {
+      setUserAddresses(addresses);
+    }
+  }, [addresses]);
+
+  useEffect(() => {
+    if (user) {
+      fetchCart();
+      fetchAddress();
+    }
+  }, [user]);
 
   const fetchUserAddresses = async () => {
+    setIsAddressLoading(true);
     try {
-      const addresses = [];
-      if (addresses && addresses.length > 0) {
-        setUserAddresses(addresses);
-        setSelectedAddressIndex(0);
-      }
+      await fetchAddress();
+      setUserAddresses(addresses);
+      setSelectedAddressIndex(0);
     } catch (error) {
       console.error("Error fetching user addresses: ", error);
+    } finally {
+      setIsAddressLoading(false);
     }
   };
 
@@ -121,19 +138,20 @@ const CartPage = () => {
   const handleBillingSubmit = async (billingData) => {
     try {
       if (userAddresses.length >= MAX_ADDRESSES) {
-        alert(
+        toast.error(
           "You've reached the maximum number of addresses. Please delete an address to add a new one."
         );
         return;
       }
-
-      // Replace with your API call to add address
-      // const response = await addAddressApi(billingData);
+      await addAddressApi(billingData);
 
       await fetchUserAddresses();
       setSelectedAddressIndex(userAddresses.length);
       setIsBillingModalOpen(false);
+
+      toast.success("Address Added");
     } catch (error) {
+      toast.error(getErrorMessage(error));
       console.error("Error adding address: ", error);
     }
   };
@@ -146,10 +164,6 @@ const CartPage = () => {
   const handleDeleteAddress = async (index) => {
     try {
       const updatedAddresses = userAddresses.filter((_, i) => i !== index);
-
-      // Replace with your API call to update addresses
-      // await updateAddressesApi(updatedAddresses);
-
       setUserAddresses(updatedAddresses);
       if (selectedAddressIndex === index) {
         setSelectedAddressIndex(0);
@@ -161,7 +175,7 @@ const CartPage = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading && adLoading) {
     return <CartSkeleton />;
   }
 
@@ -260,7 +274,8 @@ const CartPage = () => {
                       <h2 className="text-xl font-semibold">
                         Delivery Address
                       </h2>
-                      {userAddresses.length > 0 && (
+                      {/* {console.log(userAddresses)} */}
+                      {userAddresses && (
                         <button
                           className="text-blue-500 hover:underline text-sm flex items-center"
                           onClick={() => setIsAddressDialogOpen(true)}
@@ -270,13 +285,11 @@ const CartPage = () => {
                         </button>
                       )}
                     </div>
-                    {userAddresses.length > 0 ? (
+                    {!adLoading && userAddresses ? (
                       <div className="text-sm">
-                        <p className="font-medium">{`${userAddresses[selectedAddressIndex].firstName} ${userAddresses[selectedAddressIndex].lastName} (${userAddresses[selectedAddressIndex].phone})`}</p>
-                        <p>{`${userAddresses[selectedAddressIndex].landmark}, ${userAddresses[selectedAddressIndex].town}`}</p>
-                        <p>
-                          {userAddresses[selectedAddressIndex].streetAddress}
-                        </p>
+                        <p className="font-medium">{`${userAddresses[selectedAddressIndex]?.firstName} ${userAddresses[selectedAddressIndex]?.lastName} (${userAddresses[selectedAddressIndex]?.phone})`}</p>
+                        <p>{`${userAddresses[selectedAddressIndex]?.landmark}, ${userAddresses[selectedAddressIndex]?.town}`}</p>
+                        <p>{userAddresses[selectedAddressIndex]?.street}</p>
                       </div>
                     ) : (
                       <div
@@ -363,10 +376,7 @@ const CartPage = () => {
           <p className="text-gray-600 mb-6">
             Looks like you haven't added any books to your cart yet.
           </p>
-          <Link
-            to={"/"}
-            // className="px-8 py-3 bg-primaryColor text-white rounded-full hover:bg-blue-600 transition duration-300 flex items-center"
-          >
+          <Link to={"/"}>
             <PrimaryBtn
               name={
                 <>

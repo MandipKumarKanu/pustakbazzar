@@ -3,7 +3,7 @@ const getErrorMessage = (error) => {
     return "An unknown error occurred";
   }
 
-  const message = error.response.data.error;
+  const message = error.response.data.error || error.response.data.message;
   return Array.isArray(message) ? message.join(" ") : message;
 };
 

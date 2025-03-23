@@ -9,14 +9,10 @@ export const CategorySelector = ({
   categoryData,
 }) => (
   <div>
+    {/* {console.log(selectedCategories)} */}
     <label className="block text-sm font-medium text-gray-700 mb-1">
       Category
     </label>
-    {/* <MultiSelect
-      options={categoryData}
-      placeholder="Select up to 3 categories..."
-      maxCount={3}
-      /> */}
 
     <MultipleSelector
       defaultOptions={categoryData}
