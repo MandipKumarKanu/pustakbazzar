@@ -215,58 +215,229 @@ const getBooksBySeller = async (req, res) => {
 
 const searchBooks = async (req, res) => {
   try {
-    const { query } = req.query;
-    // const limit = 5;
+    const { query, title, author, publishYear } = req.query;
+    const limit = req.query.limit ? parseInt(req.query.limit) : 20;
+    const maxDistance = req.query.distance ? parseInt(req.query.distance) : 2;
 
-    if (!query) {
-      return res.status(400).json({ message: "Search query is required." });
+    // Check if at least one search parameter is provided
+    if (!query && !title && !author && !publishYear) {
+      return res
+        .status(400)
+        .json({ message: "At least one search parameter is required." });
     }
 
-    const searchTerm = query.toLowerCase();
+    // First attempt: Use MongoDB query with specified fields
+    const mongoQuery = {};
 
-    const books = await Book.find({
-      $or: [
-        { title: { $regex: searchTerm, $options: "i" } },
-        { author: { $regex: searchTerm, $options: "i" } },
-      ],
-    })
-      .lean()
-      .populate("category");
-    // .limit(limit);
+    // Build MongoDB query based on provided parameters
+    if (query) {
+      mongoQuery.$or = [
+        { title: { $regex: query, $options: "i" } },
+        { author: { $regex: query, $options: "i" } },
+      ];
+    } else {
+      // If specific fields are provided instead of general query
+      const conditions = [];
+
+      if (title) {
+        conditions.push({ title: { $regex: title, $options: "i" } });
+      }
+
+      if (author) {
+        conditions.push({ author: { $regex: author, $options: "i" } });
+      }
+
+      if (publishYear) {
+        // Assuming publishYear is stored as a number in the database
+        conditions.push({ publishYear: parseInt(publishYear) });
+      }
+
+      if (conditions.length > 0) {
+        mongoQuery.$and = conditions;
+      }
+    }
+
+    const books = await Book.find(mongoQuery).lean().populate("category");
 
     if (books.length > 0) {
-      return res.status(200).json({ books });
+      return res.status(200).json({ books: books.slice(0, limit) });
     }
 
-    const allBooks = await Book.find().populate("category");
+    // Second attempt: More advanced filtering with JS
+    const allBooks = await Book.find().lean().populate("category");
 
     const filteredBooks = allBooks.filter((book) => {
-      const titleLower = book.title.toLowerCase();
-      const authorLower = book.author.toLowerCase();
-
-      if (titleLower.includes(searchTerm) || authorLower.includes(searchTerm)) {
-        return true;
+      // If no specific parameters are provided, return false
+      if (!query && !title && !author && !publishYear) {
+        return false;
       }
 
-      const titleWords = titleLower.split(/\s+/);
-      for (const word of titleWords) {
-        if (word.startsWith(searchTerm) || searchTerm.startsWith(word)) {
-          return true;
-        }
+      // Match each provided parameter
+      let titleMatch = true;
+      let authorMatch = true;
+      let queryMatch = true;
+      let yearMatch = true;
+
+      if (title) {
+        const titleLower = book.title.toLowerCase();
+        const searchTitle = title.toLowerCase();
+        titleMatch =
+          titleLower.includes(searchTitle) ||
+          titleLower
+            .split(/\s+/)
+            .some(
+              (word) =>
+                word.startsWith(searchTitle) || searchTitle.startsWith(word)
+            );
       }
 
-      const authorWords = authorLower.split(/\s+/);
-      for (const word of authorWords) {
-        if (word.startsWith(searchTerm) || searchTerm.startsWith(word)) {
-          return true;
-        }
+      if (author) {
+        const authorLower = book.author.toLowerCase();
+        const searchAuthor = author.toLowerCase();
+        authorMatch =
+          authorLower.includes(searchAuthor) ||
+          authorLower
+            .split(/\s+/)
+            .some(
+              (word) =>
+                word.startsWith(searchAuthor) || searchAuthor.startsWith(word)
+            );
       }
 
-      return false;
+      if (publishYear) {
+        yearMatch = book.publishYear === parseInt(publishYear);
+      }
+
+      if (query) {
+        const queryLower = query.toLowerCase();
+        const titleLower = book.title.toLowerCase();
+        const authorLower = book.author.toLowerCase();
+
+        const titleQueryMatch =
+          titleLower.includes(queryLower) ||
+          titleLower
+            .split(/\s+/)
+            .some(
+              (word) =>
+                word.startsWith(queryLower) || queryLower.startsWith(word)
+            );
+
+        const authorQueryMatch =
+          authorLower.includes(queryLower) ||
+          authorLower
+            .split(/\s+/)
+            .some(
+              (word) =>
+                word.startsWith(queryLower) || queryLower.startsWith(word)
+            );
+
+        queryMatch = titleQueryMatch || authorQueryMatch;
+      }
+
+      // All provided parameters must match
+      return titleMatch && authorMatch && queryMatch && yearMatch;
     });
-    // .slice(0, limit);
 
-    return res.status(200).json({ books: filteredBooks });
+    if (filteredBooks.length > 0) {
+      return res.status(200).json({ books: filteredBooks.slice(0, limit) });
+    }
+
+    // Third attempt: Levenshtein fuzzy search
+    // Only use fuzzy search for text fields, not for year
+    const fuzzySearchNeeded = query || title || author;
+
+    if (!fuzzySearchNeeded) {
+      return res.status(200).json({ books: [] });
+    }
+
+    const fuzzyResults = allBooks
+      .map((book) => {
+        let minDistance = Infinity;
+        let matchField = "";
+
+        // Calculate distances for query parameter
+        if (query) {
+          const queryLower = query.toLowerCase();
+
+          // Check title distance
+          const titleDistance = Math.min(
+            ...book.title
+              .toLowerCase()
+              .split(/\s+/)
+              .map((word) => levenshtein.get(word, queryLower))
+          );
+
+          // Check author distance
+          const authorDistance = Math.min(
+            ...book.author
+              .toLowerCase()
+              .split(/\s+/)
+              .map((word) => levenshtein.get(word, queryLower))
+          );
+
+          const queryMinDistance = Math.min(titleDistance, authorDistance);
+
+          if (queryMinDistance < minDistance) {
+            minDistance = queryMinDistance;
+            matchField = titleDistance <= authorDistance ? "title" : "author";
+          }
+        }
+
+        // Calculate distance for title parameter
+        if (title) {
+          const titleLower = title.toLowerCase();
+          const titleDistance = Math.min(
+            ...book.title
+              .toLowerCase()
+              .split(/\s+/)
+              .map((word) => levenshtein.get(word, titleLower))
+          );
+
+          if (titleDistance < minDistance) {
+            minDistance = titleDistance;
+            matchField = "title";
+          }
+        }
+
+        // Calculate distance for author parameter
+        if (author) {
+          const authorLower = author.toLowerCase();
+          const authorDistance = Math.min(
+            ...book.author
+              .toLowerCase()
+              .split(/\s+/)
+              .map((word) => levenshtein.get(word, authorLower))
+          );
+
+          if (authorDistance < minDistance) {
+            minDistance = authorDistance;
+            matchField = "author";
+          }
+        }
+
+        // Check publishYear if provided - exact match only, no fuzzy matching for numbers
+        if (publishYear && book.publishYear !== parseInt(publishYear)) {
+          return { book, distance: Infinity, field: "" }; // No match for year
+        }
+
+        return {
+          book,
+          distance: minDistance,
+          field: matchField,
+        };
+      })
+      .filter((result) => result.distance <= maxDistance)
+      .sort((a, b) => a.distance - b.distance);
+
+    const fuzzyBooks = fuzzyResults.map((result) => ({
+      ...result.book,
+      _fuzzyMatch: {
+        distance: result.distance,
+        field: result.field,
+      },
+    }));
+
+    return res.status(200).json({ books: fuzzyBooks.slice(0, limit) });
   } catch (error) {
     console.error("Error searching books:", error);
     res.status(500).json({ message: "Error searching books." });
@@ -284,9 +455,7 @@ const filterBooks = async (req, res) => {
     if (maxPrice) filter.sellingPrice.$lte = maxPrice;
     if (condition) filter.condition = condition;
 
-    const books = await Book.find(filter)
-      .lean()
-      .populate("category");
+    const books = await Book.find(filter).lean().populate("category");
     res.status(200).json({ books });
   } catch (error) {
     res.status(500).json({ message: "Error filtering books." });

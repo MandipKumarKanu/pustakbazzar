@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const Book = require("../models/Book");
 
 const generateAccessToken = (user) => {
   return jwt.sign(
@@ -109,6 +110,19 @@ const myProfile = async (req, res) => {
   }
 };
 
+const myBook = async (req, res) => {
+  try {
+    const uid = req.user._id;
+    const books = await Book.find({ addedBy: uid }).populate(
+      "category",
+      "categoryName"
+    );
+    res.status(200).json(books);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 const updateUser = async (req, res) => {
   try {
     const user = await User.findByIdAndUpdate(req.user._id, req.body, {
@@ -129,19 +143,19 @@ const deleteUser = async (req, res) => {
   }
 };
 
-const addAddress = async (req, res) => {
-  try {
-    const { address } = req.body;
-    const user = await User.findByIdAndUpdate(
-      req.user._id,
-      { "profile.address": address },
-      { new: true }
-    );
-    res.status(200).json(user);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
+// const addAddress = async (req, res) => {
+//   try {
+//     const { address } = req.body;
+//     const user = await User.findByIdAndUpdate(
+//       req.user._id,
+//       { "profile.address": address },
+//       { new: true }
+//     );
+//     res.status(200).json(user);
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };
 
 const logout = async (req, res) => {
   try {
@@ -231,6 +245,68 @@ const rejectSeller = async (req, res) => {
   }
 };
 
+const addAddress = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const {
+      firstName,
+      lastName,
+      street,
+      province,
+      town,
+      landmark,
+      phone,
+      email,
+      isDefault,
+    } = req.body;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    if (user.profile.address.length >= 3) {
+      return res
+        .status(400)
+        .json({ message: "You can only add up to 3 addresses." });
+    }
+    const newAddress = {
+      firstName,
+      lastName,
+      street,
+      province,
+      town,
+      landmark,
+      phone,
+      email,
+      isDefault: isDefault || false,
+    };
+
+    user.profile.address.push(newAddress);
+
+    await user.save();
+
+    res.status(201).json({ message: "Address added successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const getUserAddresses = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId).select("profile.address");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ addresses: user.profile.address });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -245,4 +321,6 @@ module.exports = {
   approveSeller,
   applyForSeller,
   rejectSeller,
+  myBook,
+  getUserAddresses
 };

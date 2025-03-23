@@ -15,7 +15,8 @@ const {
   getWeeklyTopBooks,
   getMonthlyTopBooks,
   toggleFeaturedBook,
-  getFeaturedBooks
+  getFeaturedBooks,
+  // myBook
 } = require("../controllers/bookController");
 
 const authMiddleware = require("../middleware/authMiddleware");
