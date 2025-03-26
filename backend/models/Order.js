@@ -1,36 +1,41 @@
 const mongoose = require("mongoose");
 
+const shippingAddressSchema = new mongoose.Schema({
+  firstName: { type: String, required: true },
+  lastName: { type: String, required: true },
+  street: { type: String },
+  province: { type: String, required: true },
+  town: { type: String, required: true },
+  landmark: { type: String },
+  phone: { type: String, required: true },
+  email: { type: String, required: true },
+});
+
 const subOrderSchema = new mongoose.Schema({
   sellerId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    required: true,
   },
   books: [
     {
       bookId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Book",
-        required: true,
       },
       price: {
         type: Number,
-        required: true,
       },
       quantity: {
         type: Number,
-        required: true,
         default: 1,
       },
       sellerEarnings: {
         type: Number,
-        required: true,
       },
     },
   ],
-  deliveryPrice: {
+  shippingFee: {
     type: Number,
-    required: true,
   },
   status: {
     type: String,
@@ -47,15 +52,12 @@ const orderSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    required: true,
   },
   totalPrice: {
     type: Number,
-    required: true,
   },
-  deliveryPrice: {
+  shippingFee: {
     type: Number,
-    required: true,
   },
   discount: {
     type: Number,
@@ -63,7 +65,6 @@ const orderSchema = new mongoose.Schema({
   },
   netTotal: {
     type: Number,
-    required: true,
   },
   orderStatus: {
     type: String,
@@ -77,7 +78,7 @@ const orderSchema = new mongoose.Schema({
   },
   payment: {
     type: String,
-    enum: ["credit", "khalti", "paypal"],
+    enum: ["credit", "khalti"],
     default: "credit",
   },
   date: {
@@ -87,6 +88,10 @@ const orderSchema = new mongoose.Schema({
   khaltiPaymentId: {
     type: String,
     default: null,
+  },
+  shippingAddress: {
+    type: shippingAddressSchema, 
+    required: true,
   },
 });
 

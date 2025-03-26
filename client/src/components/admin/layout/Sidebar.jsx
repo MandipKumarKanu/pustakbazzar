@@ -64,6 +64,11 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             </NavItem>
           </li>
           <li>
+            <NavItem to="/admin/sellerorder" icon={FaListAlt}>
+              Order to Approve
+            </NavItem>
+          </li>
+          <li>
             <NavItem to="/admin/toapprove" icon={FaClock}>
               Pending Approval
             </NavItem>

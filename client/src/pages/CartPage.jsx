@@ -58,7 +58,6 @@ const CartPage = () => {
   let cartCount = typeof cCnt === "function" ? cCnt() : cCnt;
 
   useEffect(() => {
-    console.log(addresses);
     if (addresses && addresses.length > 0) {
       setUserAddresses(addresses);
     }
@@ -76,7 +75,6 @@ const CartPage = () => {
     try {
       await fetchAddress();
       setUserAddresses(addresses);
-      setSelectedAddressIndex(0);
     } catch (error) {
       console.error("Error fetching user addresses: ", error);
     } finally {
@@ -130,9 +128,18 @@ const CartPage = () => {
     return checkoutData;
   };
 
+  const shipFEEE = (cartData?.carts?.length || 0) * SHIPPING_FEE_PER_SELLER;
+
+  console.log(shipFEEE)
+
+
   const handleCheckout = () => {
-    const checkoutData = prepareCheckoutData();
-    navigate("/billing", { state: { checkoutData } });
+    navigate("/billing", {
+      state: {
+        address: userAddresses[selectedAddressIndex],
+        shippingCharge: shipFEEE,
+      },
+    });
   };
 
   const handleBillingSubmit = async (billingData) => {
@@ -185,6 +192,7 @@ const CartPage = () => {
     cartData?.carts?.reduce((total, cart) => {
       return total + cart.books.reduce((sum, book) => sum + book.quantity, 0);
     }, 0) || 0;
+
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -327,7 +335,8 @@ const CartPage = () => {
                       <div className="flex justify-between">
                         <span>Shipping Fee</span>
                         <span>
-                          ₹{cartData?.carts?.length * SHIPPING_FEE_PER_SELLER}{" "}
+                        
+                          ₹{shipFEEE}
                           <span className="text-[12px]">
                             ({cartData?.carts?.length}x{SHIPPING_FEE_PER_SELLER}
                             )

@@ -1,9 +1,10 @@
 const Transaction = require("../models/Transaction");
 const Order = require("../models/Order");
+const Book = require("../models/Book");
 const User = require("../models/User");
 const { khaltiRequest } = require("../utils/khaltiRequest");
 
-const platformFeePercentage = 0.2; // 20% platform fee
+const platformFeePercentage = 0.2;
 
 const initiateTransaction = async (req, res) => {
   try {
@@ -62,15 +63,16 @@ const initiateTransaction = async (req, res) => {
 
 const verifyTransaction = async (req, res) => {
   try {
+    // Extract the Khalti payment id from the request body
     const { pidx } = req.body;
     if (!pidx) {
       return res.status(400).json({ error: "Payment ID (pidx) is required" });
     }
 
-    // Call Khalti lookup API to verify payment status
+    // Call Khalti's lookup API to retrieve payment details for this pidx
     const data = await khaltiRequest("lookup/", { pidx });
 
-    // Retrieve the transaction record using Khalti payment id
+    // Find the corresponding transaction record by Khalti payment id
     const transaction = await Transaction.findOne({ khaltiPaymentId: pidx });
     if (!transaction) {
       return res.status(404).json({ error: "Transaction not found" });
@@ -79,28 +81,39 @@ const verifyTransaction = async (req, res) => {
     // Retrieve the order associated with this transaction
     const order = await Order.findById(transaction.orderId);
 
-    // Update order's payment status based on Khalti response
+    // Update order's payment status based on the Khalti response.
+    // If the status is "Completed", mark as "paid", otherwise mark as "cancelled"
     order.paymentStatus = data.status === "Completed" ? "paid" : "cancelled";
     await order.save();
 
-    // Update the transaction record with Khalti details
+    // Update the transaction record with detailed payment information from Khalti
     transaction.status = data.status === "Completed" ? "completed" : "failed";
     transaction.paymentDetails = data;
     await transaction.save();
 
-    // If payment is successful, update each seller's balance with their earnings
+    // If payment is successful, update each seller's balance and book status
     if (data.status === "Completed") {
       for (const sellerOrder of order.orders) {
+        // For each seller sub-order, update seller balance and book status
         for (const book of sellerOrder.books) {
+          // Update seller balance
           const seller = await User.findById(sellerOrder.sellerId);
           if (seller) {
             seller.balance += book.sellerEarnings;
             await seller.save();
           }
+
+          // Update book status to "sold"
+          const bookToUpdate = await Book.findById(book.bookId);
+          if (bookToUpdate) {
+            bookToUpdate.status = "sold";
+            await bookToUpdate.save();
+          }
         }
       }
     }
 
+    // Respond with the Khalti lookup data (payment details)
     res.json(data);
   } catch (error) {
     console.error("Transaction verification error:", error.message);
