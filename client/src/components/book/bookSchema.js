@@ -2,7 +2,9 @@ import { z } from "zod";
 
 export const bookSchema = z
   .object({
-    bookName: z.string().min(1, "Book name is required"),
+    bookName: z.string()
+    .min(1, "Book name is required")
+    .regex(/^[A-Za-z]+(\s[A-Za-z]+)*(\d*)$/, "Enter a valid book name"),  
     bookLanguage: z.string().min(1, "Language is required"),
     author: z.string().min(1, "Author is required"),
     edition: z.string().min(1, "Edition is required"),

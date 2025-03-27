@@ -1,6 +1,7 @@
 import { getBooks } from "@/api/book";
 import BookCard from "@/components/BookCard";
 import HeadingText from "@/components/Heading";
+import Loader from "@/components/Loader";
 import SkeletonCard from "@/components/SkeletonCard";
 import React, { useEffect, useState } from "react";
 
@@ -26,7 +27,7 @@ const AllBookPage = () => {
   };
 
   if (loading) {
-    return <>Loading....</>;
+    return <><Loader/></>;
   }
   return (
     <>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { set, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import UploadImg from "../assets/image/addbook.png";
 import { ImageUploader } from "./book/ImageUploader";
@@ -27,6 +27,7 @@ const AddBook = () => {
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [cateError, setCateError] = useState(null);
   const [desc, setDesc] = useState("");
+  const [descError, setDescError] = useState(null);
   // const [loading, setLoading] = useState(false);
   // const [error, setError] = useState(null);
 
@@ -124,10 +125,19 @@ const AddBook = () => {
       setPreviewImages([]);
       setSelectedFiles([]);
       setSelectedCategories([]);
+      setDesc("");
       reset();
     } catch (error) {
-      console.error("Error adding book:", error);
+      console.error("Error adding book:", error.response.data.message);
+      if (error.response.data.message) {
+        if(error.response.data.message === "Book validation failed: description: Path `description` is required.")
+        {
+          setDescError("Description is required");
+        }
+        toast.error(error.response.data.message);
+      } else {
       toast.error("Error adding book. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -373,12 +383,14 @@ const AddBook = () => {
                 ></textarea> */}
 
                 <CKEditorComp content={desc} setContent={setDesc} />
-
                 {/* {errors.description && (
                   <p className="text-red-500 text-xs mt-1">
                     {errors.description.message}
                   </p>
                 )} */}
+                {descError && (
+                  <p className="text-red-500 text-xs mt-1">{descError}</p>
+                )}
               </div>
               <button
                 type="submit"

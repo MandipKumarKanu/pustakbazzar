@@ -84,7 +84,7 @@ function App() {
   return (
     <>
       {!pathname.includes("/admin") && <Navbar />}
-      <Pointer />
+      {/* <Pointer /> */}
       <div className="min-h-[100dvh]">
         <Routes>
           <Route path="/" element={<HomePage />} />
