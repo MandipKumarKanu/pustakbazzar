@@ -31,6 +31,11 @@ import { useCartStore } from "./store/useCartStore";
 import Loader from "./components/Loader";
 import MyBookPage from "./pages/MyBookPage";
 import EditBookPage from "./pages/EditBookPage";
+import BillingAndOrderSummary from "./components/BillingAndOrderSummary";
+import PaymentVerification from "./components/PaymentVerification";
+import OrderSuccessPage from "./pages/OrderSuccessPage";
+import MyOrders from "./pages/MyOrders";
+import SellerOrder from "./pages/SellerOrder";
 // import ContactPage from "./pages/ContactPage";
 
 function App() {
@@ -101,10 +106,17 @@ function App() {
           <Route path="/wishlist" element={<WishListPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/mybook" element={<MyBookPage />} />
+          <Route path="/billing" element={<BillingAndOrderSummary />} />
+          <Route path="/payment/verify/" element={<PaymentVerification />} />
+          <Route path="/order-success" element={<OrderSuccessPage />} />
+          <Route path="/MyOrders" element={<MyOrders />} />
+
+
 
           <Route element={<AdminLayout />}>
             <Route path="/admin/home" element={<AdminHome />} />
             <Route path="/admin/managecategory" element={<ManageCategory />} />
+            <Route path="/admin/sellerorder" element={<SellerOrder />} />
           </Route>
         </Routes>
       </div>

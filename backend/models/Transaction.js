@@ -23,6 +23,9 @@ const transactionSchema = new mongoose.Schema(
     paymentDetails: {
       type: Object,
     },
+    khaltiResponse: {
+      type: Object,
+    },
   },
   { timestamps: true }
 );

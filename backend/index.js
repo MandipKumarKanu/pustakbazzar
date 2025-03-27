@@ -11,6 +11,7 @@ const saveForLaterRoutes = require("./routes/saveForLaterRoutes");
 const cartRoute = require("./routes/cartRoute");
 const orderRoutes = require("./routes/orderRoutes");
 const donationRoutes = require("./routes/donationRoutes");
+const transactionRoutes = require("./routes/transactionRoutes");
 
 const app = express();
 
@@ -22,6 +23,8 @@ app.use(
   cors({
     origin: [process.env.CLIENT_URL || "http://localhost:5173"],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
@@ -33,6 +36,7 @@ app.use("/api/payouts", payoutRouter);
 app.use("/api/cart", cartRoute);
 app.use("/api/order", orderRoutes);
 app.use("/api/donation", donationRoutes);
+app.use("/api/khaltipay", transactionRoutes);
 
 const PORT = process.env.PORT || 8000;
 

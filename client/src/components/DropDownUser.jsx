@@ -40,7 +40,6 @@ const DropdownUser = () => {
               alt="User Avatar"
               className="object-cover"
             />
-            {/* {console.log(user)} */}
             <AvatarFallback>
               {user?.profile?.firstName?.charAt(0) || "U"}
             </AvatarFallback>
@@ -92,6 +91,15 @@ const DropdownUser = () => {
                 onClick={() => setDropdownOpen(false)}
               >
                 <FaBoxOpen className="text-lg" /> My Books
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/myorders"
+                className="flex items-center gap-3.5 text-sm font-medium hover:text-primary lg:text-base"
+                onClick={() => setDropdownOpen(false)}
+              >
+                <FaBoxOpen className="text-lg" /> My Orders
               </Link>
             </li>
             <li>

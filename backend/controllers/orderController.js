@@ -1,22 +1,35 @@
 const Order = require("../models/Order");
 const Cart = require("../models/Cart");
+const { khaltiRequest } = require("../utils/khaltiRequest");
+const Transaction = require("../models/Transaction");
 
 /**
  * Create a new order by splitting the user's cart into seller-specific sub-orders.
  */
 const createOrder = async (req, res) => {
   try {
+    // Extract user info and request body details
     const userId = req.user.id;
-    const { payment = "credit", discount = 0 } = req.body;
+    // Default to "credit" payment if none is provided
+    const {
+      payment = "credit",
+      discount = 0,
+      shippingFee,
+      shippingAddress,
+    } = req.body;
 
+    // Retrieve the user's cart and populate each book reference
     const cart = await Cart.findOne({ userId }).populate("carts.books.bookId");
     if (!cart || !cart.carts || cart.carts.length === 0) {
       return res.status(400).json({ error: "Cart is empty" });
     }
 
+    // Create seller-specific orders by splitting the cart
     const orders = cart.carts.map((sellerCart) => {
+      // Map each book item to include its calculated seller earnings
       const books = sellerCart.books.map((bookItem) => {
         const currentPrice = bookItem.bookId.sellingPrice;
+        // Assuming seller earns 80% of the selling price
         const sellerEarningRate = 0.8;
         return {
           bookId: bookItem.bookId._id,
@@ -29,42 +42,89 @@ const createOrder = async (req, res) => {
       return {
         sellerId: sellerCart.sellerId,
         books,
-        deliveryPrice: sellerCart.deliveryPrice,
-        status: "pending",
+        shippingFee,
+        status: "pending", // default status for each sub-order
       };
     });
 
+    // Calculate total price for all items in the order
     let totalPrice = 0;
-    let totalDeliveryPrice = 0;
     orders.forEach((subOrder) => {
       subOrder.books.forEach((book) => {
         totalPrice += book.price * book.quantity;
       });
-      totalDeliveryPrice += subOrder.deliveryPrice;
     });
-    const netTotal = totalPrice + totalDeliveryPrice - discount;
+    // netTotal includes shipping fee and deducts any discount
+    const netTotal = totalPrice + +shippingFee - discount;
 
+    // Create and save a new order
     const newOrder = new Order({
       orders,
       userId,
       totalPrice,
-      deliveryPrice: totalDeliveryPrice,
+      shippingFee,
       discount,
       netTotal,
       payment,
       orderStatus: "pending",
       paymentStatus: "pending",
+      shippingAddress,
     });
-
     await newOrder.save();
 
+    // Clear the user's cart after creating the order
     cart.carts = [];
     await cart.save();
 
-    return res.status(201).json({
-      message: "Order created successfully",
-      order: newOrder,
-    });
+    // Check if the payment method is Khalti and auto-initiate the transaction
+    if (payment === "khalti") {
+      // Prepare payload for Khalti's initiate endpoint
+      const payload = {
+        // URL where Khalti will redirect after payment completion
+        return_url: `${process.env.FRONTEND_URL}/payment/verify`,
+        website_url: process.env.FRONTEND_URL,
+        // Convert amount to smallest currency unit (e.g., paisa)
+        amount: netTotal * 100,
+        // Use order ID as the purchase order identifier
+        purchase_order_id: newOrder._id,
+        purchase_order_name: "Book Purchase",
+        customer_info: {
+          name: `${shippingAddress.firstName} ${shippingAddress.lastName}`,
+          email: shippingAddress.email,
+          phone: "9811209589",
+        },
+      };
+
+      // Call Khalti's initiate API with the payload
+      const khaltiResponse = await khaltiRequest("initiate/", payload);
+
+      // Save the transaction information and update the order with Khalti payment id
+      newOrder.khaltiPaymentId = khaltiResponse.pidx;
+      newOrder.paymentStatus = "pending";
+      await newOrder.save();
+
+      // Optionally, you could also save a separate transaction record
+      const transaction = new Transaction({
+        orderId: newOrder._id,
+        amount: netTotal / 100,
+        khaltiPaymentId: khaltiResponse.pidx,
+        khaltiResponse,
+      });
+      await transaction.save();
+
+      // Respond with the order and Khalti transaction details
+      return res.status(201).json({
+        message: "Order created and Khalti transaction initiated successfully",
+        order: newOrder,
+        khaltiResponse,
+      });
+    } else {
+      // If not Khalti, simply respond with the created order
+      return res.status(201).json({
+        message: "Order created successfully",
+        order: newOrder,
+      });
+    }
   } catch (error) {
     console.error("Error in createOrder:", error);
     return res.status(500).json({
@@ -73,7 +133,6 @@ const createOrder = async (req, res) => {
     });
   }
 };
-
 /**
  * Retrieve all orders for the authenticated user.
  */
@@ -82,7 +141,9 @@ const getOrdersForUser = async (req, res) => {
     const userId = req.user.id;
     const orders = await Order.find({ userId })
       .populate("orders.sellerId", "profile.userName _id")
-      .populate("orders.books.bookId");
+      .populate("orders.books.bookId")
+      .sort({ date: -1 })
+      .lean()
 
     if (!orders || orders.length === 0) {
       return res.status(404).json({ message: "No orders found for this user" });
@@ -111,8 +172,8 @@ const getOrdersForSeller = async (req, res) => {
         "-totalPrice -deliveryPrice -discount -netTotal -payment -paymentStatus -orderStatus"
       )
       .populate("orders.sellerId", "profile.userName _id")
-      .populate("orders.books.bookId")
-      // .populate("userId", "profile.userName _id");
+      .populate("orders.books.bookId");
+    // .populate("userId", "profile.userName _id");
 
     if (!orders || orders.length === 0) {
       return res
