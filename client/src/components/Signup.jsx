@@ -26,13 +26,28 @@ const formatPhoneNumber = (value) => {
 
 const signupSchema = z
   .object({
-    firstName: z.string().min(2, "First name must be at least 2 characters"),
-    lastName: z.string().min(2, "Last name must be at least 2 characters"),
-    userName: z.string().min(3, "Username must be at least 3 characters"),
+    firstName: z
+      .string()
+      .min(2, "First name must be at least 2 characters")
+      .regex(/^[a-zA-Z]+$/, "First name must contain only letters"),
+    lastName: z
+      .string()
+      .min(2, "Last name must be at least 2 characters")
+      .regex(/^[a-zA-Z]+$/, "Last name must contain only letters"),
+    userName: z
+      .string()
+      .min(3, "Username must be at least 3 characters")
+      .regex(
+        /^[a-zA-Z]+[a-zA-Z0-9]*$/,
+        "Username can only contain letters or letters followed by numbers, no spaces or special characters"
+      ),
     email: z
       .string()
       .min(1, "Email is required")
-      .email("Invalid email address"),
+      .regex(
+        /^[a-zA-Z]+[a-zA-Z0-9]*@[a-zA-Z]+\.[a-zA-Z]{2,}$/,
+        "Invalid email address (e.g., ram@abc.com or ram12@abc)"
+      ),
     phoneNumber: z
       .string()
       .min(10, "Phone number must be at least 10 digits")

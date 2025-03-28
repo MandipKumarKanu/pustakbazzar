@@ -31,7 +31,9 @@ const AddBook = () => {
   // const [loading, setLoading] = useState(false);
   // const [error, setError] = useState(null);
 
-  const { user } = useAuthStore();
+  const { user,token } = useAuthStore();
+  console.log(token,"addbook token")
+  console.log(user.profile.role,"addbook user")
 
   const { category: categoryData } = useCategoryStore();
 

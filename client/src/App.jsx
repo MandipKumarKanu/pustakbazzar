@@ -36,6 +36,9 @@ import PaymentVerification from "./components/PaymentVerification";
 import OrderSuccessPage from "./pages/OrderSuccessPage";
 import MyOrders from "./pages/MyOrders";
 import SellerOrder from "./pages/SellerOrder";
+import {ProtectedRoute} from "./utils/protectedRoute";
+import {AdminProtectedRoute} from "./utils/protectedRoute";
+
 // import ContactPage from "./pages/ContactPage";
 
 function App() {
@@ -94,29 +97,31 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/auth" element={<Auth />} />
-          <Route path="/addbook" element={<AddBook />} />
+          <Route path="" element={<ProtectedRoute />}>
+            <Route path="/addbook" element={<AddBook />} />
+            <Route path="/cart" element={<CartPage />} />
+            <Route path="/MyOrders" element={<MyOrders />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/mybook" element={<MyBookPage />} />
+            <Route path="/book/edit/:id" element={<EditBookPage />} />
+            <Route path="/users" element={<UserPage />} />
+            <Route path="/billing" element={<BillingAndOrderSummary />} />
+            <Route path="/payment/verify/" element={<PaymentVerification />} />
+            <Route path="/order-success" element={<OrderSuccessPage />} />
+            <Route path="/wishlist" element={<WishListPage />} />
+          </Route>
           <Route path="/allbooks" element={<AllBookPage />} />
-          <Route path="/book/edit/:id" element={<EditBookPage />} />
           <Route path="/book/:id" element={<BookDescPage />} />
-          <Route path="/users" element={<UserPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
           <Route path="/category" element={<CategoryPage />} />
           <Route path="/category/:cname" element={<ParticularCategory />} />
           <Route path="/contact" element={<ContactPage />} />
-          <Route path="/wishlist" element={<WishListPage />} />
-          <Route path="/cart" element={<CartPage />} />
-          <Route path="/mybook" element={<MyBookPage />} />
-          <Route path="/billing" element={<BillingAndOrderSummary />} />
-          <Route path="/payment/verify/" element={<PaymentVerification />} />
-          <Route path="/order-success" element={<OrderSuccessPage />} />
-          <Route path="/MyOrders" element={<MyOrders />} />
 
-
-
+          <Route element={<AdminProtectedRoute />}>
           <Route element={<AdminLayout />}>
             <Route path="/admin/home" element={<AdminHome />} />
             <Route path="/admin/managecategory" element={<ManageCategory />} />
             <Route path="/admin/sellerorder" element={<SellerOrder />} />
+          </Route>
           </Route>
         </Routes>
       </div>
