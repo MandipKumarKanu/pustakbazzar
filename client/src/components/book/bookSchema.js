@@ -2,9 +2,13 @@ import { z } from "zod";
 
 export const bookSchema = z
   .object({
-    bookName: z.string()
-    .min(1, "Book name is required")
-    .regex(/^[A-Za-z]+(\s[A-Za-z]+)*(\d*)$/, "Enter a valid book name"),  
+    bookName: z
+      .string()
+      .min(1, "Book name is required")
+      .regex(
+        /^[A-Za-z][A-Za-z0-9\s!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]*$/,
+        "Book name must start with a letter and can contain letters, numbers, spaces, and symbols"
+      ),
     bookLanguage: z.string().min(1, "Language is required"),
     author: z.string().min(1, "Author is required"),
     edition: z.string().min(1, "Edition is required"),
@@ -33,7 +37,6 @@ export const bookSchema = z
       })
       .nonnegative("Price cannot be negative")
       .optional(),
-    // description: z.string().optional(),
   })
   .refine(
     (data) => {
@@ -47,6 +50,18 @@ export const bookSchema = z
     },
     {
       message: "Marked price and selling price are required for selling books",
+      path: ["sellingPrice"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.bookFor === "sell" && data.markedPrice && data.sellingPrice) {
+        return data.sellingPrice < data.markedPrice;
+      }
+      return true;
+    },
+    {
+      message: "Selling price must be less than marked price",
       path: ["sellingPrice"],
     }
   );

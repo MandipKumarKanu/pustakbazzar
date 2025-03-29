@@ -10,8 +10,8 @@ export const CategorySelector = ({
 }) => (
   <div>
     {/* {console.log(selectedCategories)} */}
-    <label className="block text-sm font-medium text-gray-700 mb-1">
-      Category
+    <label className="block text-sm font-medium text-gray-700 mb-2">
+    Categories
     </label>
 
     <MultipleSelector

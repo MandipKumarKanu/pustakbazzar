@@ -21,12 +21,12 @@ const bookSchema = new mongoose.Schema(
     images: {
       type: [String],
       required: true,
-      validate: {
-        validator: function (arr) {
-          return arr.length >= 3;
-        },
-        message: "At least 3 images are required.",
-      },
+      // validate: {
+      //   validator: function (arr) {
+      //     return arr.length >= 3;
+      //   },
+      //   message: "At least 3 images are required.",
+      // },
     },
     condition: {
       type: String,

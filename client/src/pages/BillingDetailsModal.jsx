@@ -21,7 +21,7 @@ const BillingDetailsModal = ({ isOpen, onClose, onSubmit }) => {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
-    streetAddress: "",
+    street: "",
     town: "",
     landmark: "",
     phone: "",
@@ -44,7 +44,7 @@ const BillingDetailsModal = ({ isOpen, onClose, onSubmit }) => {
       setFormData({
         firstName: "",
         lastName: "",
-        streetAddress: "",
+        street: "",
         town: "",
         landmark: "",
         phone: "",
@@ -94,8 +94,8 @@ const BillingDetailsModal = ({ isOpen, onClose, onSubmit }) => {
               </label>
               <input
                 type="text"
-                name="streetAddress"
-                value={formData.streetAddress}
+                name="street"
+                value={formData.street}
                 onChange={handleChange}
                 className="w-full bg-transparent border border-black px-4 py-2 rounded-full focus:outline-none focus:border-primaryColor transition"
                 required

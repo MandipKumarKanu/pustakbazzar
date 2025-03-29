@@ -6,10 +6,17 @@ export async function addBook(data) {
   return customAxios.post(url, data);
 }
 
-export async function getBooks() {
-  let url = "book/";
+export async function getBooks(
+  cursorId = null,
+  limit = 10,
+  direction = "down"
+) {
+  let url = `book/?limit=${limit}&direction=${direction}`;
+  if (cursorId)
+    url += `&${direction === "down" ? "lastId" : "firstId"}=${cursorId}`;
   return axios.get(`${baseURL}${url}`);
 }
+
 export async function getBookById(id) {
   let url = `book/${id}`;
   return axios.get(`${baseURL}${url}`);

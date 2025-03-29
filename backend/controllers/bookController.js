@@ -75,14 +75,54 @@ const createBook = async (req, res) => {
 
 const getAllBooks = async (req, res) => {
   try {
-    const books = await Book.find({ status: "available", forDonation: false })
-      .lean()
-      .sort({ createdAt: -1 })
+    const { firstId, lastId, limit = 10, direction = "down" } = req.query;
+
+    // Validate query parameters
+    const fetchLimit = Math.min(parseInt(limit, 10), 50); // Cap limit at 50
+    const query = { status: "available", forDonation: false };
+
+    // Build query based on direction
+    if (direction === "down" && lastId) {
+      if (!mongoose.Types.ObjectId.isValid(lastId)) {
+        return res.status(400).json({ message: "Invalid lastId" });
+      }
+      query._id = { $lt: lastId };
+    } else if (direction === "up" && firstId) {
+      if (!mongoose.Types.ObjectId.isValid(firstId)) {
+        return res.status(400).json({ message: "Invalid firstId" });
+      }
+      query._id = { $gt: firstId };
+    }
+
+    const sortOrder = direction === "down" ? -1 : 1; // -1 for descending, 1 for ascending
+
+    // Fetch books
+    const books = await Book.find(query)
+      .sort({ _id: sortOrder })
+      .limit(fetchLimit)
       .populate("category", "categoryName")
-      .populate("addedBy", "profile.userName");
-    res.status(200).json({ books });
+      .populate("addedBy", "profile.userName")
+      .lean();
+
+    // Adjust order for up direction to maintain descending order in frontend
+    const adjustedBooks = direction === "up" ? books.reverse() : books;
+
+    // Determine firstId and lastId
+    const response = {
+      books: adjustedBooks,
+      firstId: adjustedBooks.length > 0 ? adjustedBooks[0]._id : null,
+      lastId:
+        adjustedBooks.length > 0
+          ? adjustedBooks[adjustedBooks.length - 1]._id
+          : null,
+    };
+
+    return res.status(200).json(response);
   } catch (error) {
-    res.status(500).json({ message: "Unable to fetch books." });
+    console.error("Error fetching books:", error);
+    return res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
   }
 };
 
