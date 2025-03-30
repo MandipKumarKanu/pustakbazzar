@@ -32,13 +32,18 @@ const createDonation = async (req, res) => {
 };
 
 const getLatestDonations = async (req, res) => {
-  let limit = 3;
+  let limit = 9;
 
   try {
-    const donations = await Donation.find({ status: "approved" || "completed" })
+    const donations = await Donation.find({
+      status: { $in: ["approved", "completed"] },
+    })
       .lean()
       .populate("book")
-      .populate("donor", "profile.userName profile.email profile.profileImg donated profile.firstName profile.lastName")
+      .populate(
+        "donor",
+        "profile.userName profile.email profile.profileImg donated profile.firstName profile.lastName"
+      )
       .sort({ createdAt: -1 })
       .limit(limit);
 
@@ -168,6 +173,34 @@ const deleteDonation = async (req, res) => {
   }
 };
 
+const getPendingDonations = async (req, res) => {
+  try {
+    // const { page = 1, limit = 10 } = req.query;
+
+    const pendingDonations = await Donation.find({ status: "pending" })
+      .populate("book")
+      .populate("donor", "profile.userName profile.email")
+      .sort({ createdAt: -1 });
+    // .skip((page - 1) * limit)
+    // .limit(limit);
+
+    const totalPendingDonations = await Donation.countDocuments({
+      status: "pending",
+    });
+
+    res.status(200).json({
+      donations: pendingDonations,
+      // pagination: {
+      //   totalPendingDonations,
+      //   totalPages: Math.ceil(totalPendingDonations / limit),
+      //   currentPage: parseInt(page),
+      // },
+    });
+  } catch (error) {
+    handleError(res, error, "Error fetching pending donations.");
+  }
+};
+
 module.exports = {
   createDonation,
   getLatestDonations,
@@ -176,4 +209,5 @@ module.exports = {
   getAllDonations,
   getUserDonations,
   deleteDonation,
+  getPendingDonations,
 };

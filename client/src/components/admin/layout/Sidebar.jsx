@@ -69,6 +69,11 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             </NavItem>
           </li>
           <li>
+            <NavItem to="/admin/pendingDonation" icon={FaListAlt}>
+            Donation
+            </NavItem>
+          </li>
+          <li>
             <NavItem to="/admin/toapprove" icon={FaClock}>
               Pending Approval
             </NavItem>

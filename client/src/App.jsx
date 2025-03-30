@@ -38,6 +38,7 @@ import MyOrders from "./pages/MyOrders";
 import SellerOrder from "./pages/SellerOrder";
 import {ProtectedRoute} from "./utils/protectedRoute";
 import {AdminProtectedRoute} from "./utils/protectedRoute";
+import DonationPending from "./pages/DonationPending";
 
 // import ContactPage from "./pages/ContactPage";
 
@@ -121,6 +122,7 @@ function App() {
             <Route path="/admin/home" element={<AdminHome />} />
             <Route path="/admin/managecategory" element={<ManageCategory />} />
             <Route path="/admin/sellerorder" element={<SellerOrder />} />
+            <Route path="/admin/pendingDonation" element={<DonationPending />} />
           </Route>
           </Route>
         </Routes>
