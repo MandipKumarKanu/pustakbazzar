@@ -65,7 +65,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
           </li>
           <li>
             <NavItem to="/admin/sellerorder" icon={FaListAlt}>
-              Order to Approve
+              Orders
             </NavItem>
           </li>
           <li>

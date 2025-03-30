@@ -234,6 +234,7 @@ const getBooksByCategory = async (req, res) => {
       status: "available",
       forDonation: false,
     })
+      .sort({ createdAt: -1 })
       .lean()
       .populate("addedBy", "profile.userName");
     res.status(200).json({ books });

@@ -293,11 +293,11 @@ const CartPage = () => {
                         </button>
                       )}
                     </div>
-                    {!adLoading && userAddresses ? (
+                    {userAddresses && userAddresses.length > 0 ? (
                       <div className="text-sm">
-                        <p className="font-medium">{`${userAddresses[selectedAddressIndex]?.firstName} ${userAddresses[selectedAddressIndex]?.lastName} (${userAddresses[selectedAddressIndex]?.phone})`}</p>
-                        <p>{`${userAddresses[selectedAddressIndex]?.landmark}, ${userAddresses[selectedAddressIndex]?.town}`}</p>
-                        <p>{userAddresses[selectedAddressIndex]?.street}</p>
+                        <p className="font-medium">{`${userAddresses[selectedAddressIndex]?.firstName || ''} ${userAddresses[selectedAddressIndex]?.lastName || ''} (${userAddresses[selectedAddressIndex]?.phone || ''})`}</p>
+                        <p>{`${userAddresses[selectedAddressIndex]?.landmark || ''}, ${userAddresses[selectedAddressIndex]?.town || ''}`}</p>
+                        <p>{userAddresses[selectedAddressIndex]?.street || ''}</p>
                       </div>
                     ) : (
                       <div
