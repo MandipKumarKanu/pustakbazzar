@@ -38,6 +38,7 @@ import MyOrders from "./pages/MyOrders";
 import SellerOrder from "./pages/SellerOrder";
 import {ProtectedRoute} from "./utils/protectedRoute";
 import {AdminProtectedRoute} from "./utils/protectedRoute";
+import DonationPending from "./pages/DonationPending";
 
 // import ContactPage from "./pages/ContactPage";
 

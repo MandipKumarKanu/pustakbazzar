@@ -82,11 +82,11 @@ const OrderDetailsDialog = ({ order, onClose, onAccept, onCancel }) => {
                     orderStatus.charAt(0).toUpperCase() + orderStatus.slice(1)}
                 </span>
               </div>
-              {orderDetails?.cancelReason && (
+              {orderDetails?.message && (
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Reason:</span>
                   <span className="text-rose-800 capitalize line-clamp-2">
-                    {orderDetails.cancelReason}
+                    {orderDetails.message}
                   </span>
                 </div>
               )}
@@ -211,7 +211,7 @@ const SellerOrder = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isAcceptDialogOpen, setIsAcceptDialogOpen] = useState(false);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
-  const [cancelReason, setCancelReason] = useState("");
+  const [message, setmessage] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
   useEffect(() => {
@@ -259,7 +259,7 @@ const SellerOrder = () => {
 
   const handleCancel = async () => {
     try {
-      if (!cancelReason.trim()) {
+      if (!message.trim()) {
         alert("Please provide a reason for cancellation");
         return;
       }
@@ -271,7 +271,7 @@ const SellerOrder = () => {
           if (order._id === selectedOrder._id) {
             const updatedOrder = { ...order };
             updatedOrder.orders[0].status = "rejected";
-            updatedOrder.orders[0].cancelReason = cancelReason;
+            updatedOrder.orders[0].message = message;
             return updatedOrder;
           }
           return order;
@@ -280,7 +280,7 @@ const SellerOrder = () => {
 
       setIsCancelDialogOpen(false);
       setIsDialogOpen(false);
-      setCancelReason("");
+      setmessage("");
 
     } catch (error) {
       console.error("Error cancelling order:", error);
@@ -656,8 +656,8 @@ const SellerOrder = () => {
             <textarea
               className="w-full p-2 border bg-white border-gray-300 rounded-md mb-4"
               rows="3"
-              value={cancelReason}
-              onChange={(e) => setCancelReason(e.target.value)}
+              value={message}
+              onChange={(e) => setmessage(e.target.value)}
               placeholder="Enter cancellation reason"
             ></textarea>
             <div className="flex justify-end space-x-2">
@@ -670,7 +670,7 @@ const SellerOrder = () => {
               <button
                 onClick={handleCancel}
                 className="px-4 py-2 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition-colors"
-                disabled={!cancelReason.trim()}
+                disabled={!message.trim()}
               >
                 Cancel Order
               </button>

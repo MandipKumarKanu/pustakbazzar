@@ -11,7 +11,7 @@ const Footer = () => {
     <footer className="bg-gradient-to-b from-purple-900 to-purple-700 text-white z-50 rounded-t-3xl mt-8 md:mt-0">
       <div className="flex flex-col md:flex-row justify-between p-8 md:px-32 px-5">
         <div className="flex flex-col mb-6">
-          <h1 className="font-semibold text-3xl pb-4">Kitab Kunj</h1>
+          <h1 className="font-semibold text-3xl pb-4">PustakBazzar</h1>
           <div className="flex gap-5">
             <FaFacebook
               size={32}

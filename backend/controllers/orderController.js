@@ -1,5 +1,6 @@
 const Order = require("../models/Order");
 const Cart = require("../models/Cart");
+const Book = require("../models/Book");
 const { khaltiRequest } = require("../utils/khaltiRequest");
 const Transaction = require("../models/Transaction");
 
@@ -143,7 +144,7 @@ const getOrdersForUser = async (req, res) => {
       .populate("orders.sellerId", "profile.userName _id")
       .populate("orders.books.bookId")
       .sort({ date: -1 })
-      .lean()
+      .lean();
 
     if (!orders || orders.length === 0) {
       return res.status(404).json({ message: "No orders found for this user" });
@@ -172,6 +173,7 @@ const getOrdersForSeller = async (req, res) => {
         "-totalPrice -deliveryPrice -discount -netTotal -payment -paymentStatus -orderStatus"
       )
       .populate("orders.sellerId", "profile.userName _id")
+      .sort({ date: -1 })
       .populate("orders.books.bookId");
     // .populate("userId", "profile.userName _id");
 
@@ -233,9 +235,8 @@ const getOrdersForAdmin = async (req, res) => {
  */
 const approveRejectOrder = async (req, res) => {
   try {
-    const { orderId, status } = req.body;
-
-    let sellerId = req.user.id;
+    const { orderId, status, message } = req.body; // Added message field
+    const sellerId = req.user.id;
 
     if (!["approved", "rejected"].includes(status)) {
       return res
@@ -243,7 +244,7 @@ const approveRejectOrder = async (req, res) => {
         .json({ error: "Invalid status. Must be 'approved' or 'rejected'." });
     }
 
-    const order = await Order.findById(orderId);
+    const order = await Order.findById(orderId).populate("orders.books.bookId");
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
     }
@@ -259,6 +260,39 @@ const approveRejectOrder = async (req, res) => {
 
     sellerSubOrder.status = status;
 
+    if (status === "rejected") {
+      // If rejected, cancel the entire order
+      order.orderStatus = "cancelled by seller";
+      order.cancellationMessage =
+        message || "Order was cancelled by one of the sellers."; // Add cancellation message
+
+      // Mark all books in the entire order as available
+      const bookUpdatePromises = order.orders.flatMap((subOrder) =>
+        subOrder.books.map(async (bookItem) => {
+          const book = await Book.findById(bookItem.bookId._id);
+          if (book) {
+            book.status = "available"; // Set the book status to available
+            await book.save();
+          }
+        })
+      );
+      await Promise.all(bookUpdatePromises);
+
+      // Update all sub-orders to "rejected" since the entire order is canceled
+      order.orders.forEach((subOrder) => {
+        subOrder.status = "rejected";
+      });
+
+      await order.save();
+
+      return res.status(200).json({
+        message:
+          "Order has been cancelled by the seller. All books are now available.",
+        order,
+      });
+    }
+
+    // Check the overall status of the order
     const allApproved = order.orders.every(
       (subOrder) => subOrder.status === "approved"
     );
