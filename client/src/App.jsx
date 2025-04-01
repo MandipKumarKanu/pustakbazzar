@@ -116,12 +116,12 @@ function App() {
           <Route path="/category/:cname" element={<ParticularCategory />} />
           <Route path="/contact" element={<ContactPage />} />
 
-          <Route element={<AdminProtectedRoute />}>
+          {/* <Route element={<AdminProtectedRoute />}> */}
           <Route element={<AdminLayout />}>
             <Route path="/admin/home" element={<AdminHome />} />
             <Route path="/admin/managecategory" element={<ManageCategory />} />
             <Route path="/admin/sellerorder" element={<SellerOrder />} />
-          </Route>
+          {/* </R8oute> */}
           </Route>
         </Routes>
       </div>
