@@ -96,6 +96,10 @@ const Footer = () => {
             >
               +977 980-111-1234
             </Link>
+
+            <div className="flex justify-start">
+              <CreatedBy />
+            </div>
           </div>
         </div>
       </div>

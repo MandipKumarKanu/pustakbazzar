@@ -43,7 +43,7 @@ function PaymentVerification() {
         setStatus("success");
 
         setTimeout(() => {
-          navigate("/order-success");
+          navigate("/myorders");
         }, 2000);
       } else {
         throw new Error("Payment was not completed");

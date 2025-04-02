@@ -121,13 +121,12 @@ function App() {
           <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
-          <Route element={<AdminProtectedRoute />}>
+          {/* <Route element={<AdminProtectedRoute />}> */}
           <Route element={<AdminLayout />}>
             <Route path="/admin/home" element={<AdminHome />} />
             <Route path="/admin/managecategory" element={<ManageCategory />} />
             <Route path="/admin/sellerorder" element={<SellerOrder />} />
-            <Route path="/admin/pendingDonation" element={<DonationPending />} />
-          </Route>
+          {/* </R8oute> */}
           </Route>
         </Routes>
       </div>

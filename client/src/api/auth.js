@@ -1,6 +1,13 @@
 import axios from "axios";
 import { baseURL, customAxios } from "../config/axios.js";
 
+export async function appySeller(doc) {
+  const url = "auth/seller";
+  return customAxios.post(`/${url}`,{
+    proofDoc: doc
+  });
+}
+
 export async function authSignUp(data) {
   const url = "auth/register";
   return customAxios.post(`/${url}`, data);

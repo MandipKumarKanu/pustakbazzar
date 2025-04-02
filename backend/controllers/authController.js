@@ -113,7 +113,9 @@ const myProfile = async (req, res) => {
 const myBook = async (req, res) => {
   try {
     const uid = req.user._id;
-    const books = await Book.find({ addedBy: uid }).populate(
+    const forDonation = req.params.forDonation === "true" ? true : false;
+    const books = await Book.find({ addedBy: uid, forDonation })
+    .populate(
       "category",
       "categoryName"
     );
@@ -322,5 +324,5 @@ module.exports = {
   applyForSeller,
   rejectSeller,
   myBook,
-  getUserAddresses
+  getUserAddresses,
 };

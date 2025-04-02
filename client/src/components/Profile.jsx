@@ -11,11 +11,21 @@ import {
   FaTrash,
   FaTimes,
 } from "react-icons/fa";
+import { Cloudinary } from "cloudinary-core";
+import { appySeller } from "@/api/auth";
 
-const Profile = ({user}) => {
+const cloudinary = new Cloudinary({
+  cloud_name: import.meta.env.VITE_CLOUD_NAME,
+  secure: true,
+});
+
+const Profile = ({ user }) => {
   const { profile } = user;
 
+  const {user:usr}=useAuthStore();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [IsModalOpenForSeller, setIsModalOpenForSeller] = useState(false);
   const [profileData, setProfileData] = useState({
     name: `${profile.firstName} ${profile.lastName}`,
     phone: profile.phNo || "",
@@ -32,12 +42,20 @@ const Profile = ({user}) => {
       : 0
   );
 
+  const [docFile, setDocFile] = useState(null);
+
   const handleOpenModal = () => {
     setIsModalOpen(true);
+  };
+  const handleOpenModalForSeller = () => {
+    setIsModalOpenForSeller(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+  };
+  const handleCloseModalForSeller = () => {
+    setIsModalOpenForSeller(false);
   };
 
   const handleInputChange = (e) => {
@@ -134,6 +152,29 @@ const Profile = ({user}) => {
     handleCloseModal();
   };
 
+  const handleSaveDoc = async () => {
+    const formData = new FormData();
+    formData.append("file", docFile);
+    formData.append("upload_preset", "pustakbazar");
+
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${
+        cloudinary.config().cloud_name
+      }/image/upload`,
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+    const imageData = await response.json();
+
+    const res = await appySeller(imageData.secure_url);
+  };
+
+  const handleProfDocumentChange = () => {
+    console.log("Prof Document Change");
+  };
+
   const navigate = useNavigate();
 
   const getInitials = () => {
@@ -174,6 +215,16 @@ const Profile = ({user}) => {
                 onClick={() => navigate("/addbook")}
               />
             </div>
+            {console.log(usr)}
+            {usr?.seller?.status !== "approved" && (
+              <div className="w-[190px] sm:absolute sm:top-20 sm:right-20 sm:w-auto">
+                <PrimaryBtn
+                  name="Become a Seller"
+                  style="max-w-[180px]"
+                  onClick={handleOpenModalForSeller}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -414,6 +465,54 @@ const Profile = ({user}) => {
                   name="Save"
                   style="max-w-[150px]"
                   onClick={handleSave}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {IsModalOpenForSeller && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50">
+          <div className="bg-white p-8 rounded-lg max-w-lg w-full shadow-lg mx-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-3xl font-semibold text-gray-900">
+                Apply For Seller
+              </h2>
+              <button
+                onClick={handleCloseModalForSeller}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <FaTimes size={24} />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-6">
+              <label className="block">
+                <span className="text-lg font-medium">
+                  Upload PAN/VAT document
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setDocFile(e.target.files[0])}
+                  // value={docFile}
+                  className="mt-2 block w-full border border-gray-300 rounded-lg px-4 py-2 text-lg"
+                />
+              </label>
+
+              <div className="flex justify-end gap-4 mt-8">
+                <button
+                  onClick={handleCloseModalForSeller}
+                  className="text-lg bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition duration-150"
+                >
+                  Cancel
+                </button>
+
+                <PrimaryBtn
+                  name="Apply"
+                  style="max-w-[150px]"
+                  onClick={handleSaveDoc}
                 />
               </div>
             </div>

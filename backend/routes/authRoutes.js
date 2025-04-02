@@ -24,7 +24,7 @@ router.post("/register", register);
 router.post("/login", login);
 router.get("/refresh", refreshToken);
 router.get("/profile", authMiddleWare, myProfile);
-router.get("/mybooks", authMiddleWare, myBook);
+router.get("/mybooks/:forDonation", authMiddleWare, myBook);
 router.get("/users", authMiddleWare, roleMiddleware(["admin"]), getUsers);
 router.get("/user/:id", authMiddleWare, getUserById);
 router.patch("/profile", authMiddleWare, updateUser);
