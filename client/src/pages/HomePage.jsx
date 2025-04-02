@@ -18,7 +18,6 @@ const HomePage = () => {
       <FeaturedBook />
       <HeadingText fullName="New Arrival" bgName="New Arrival" />
       <ArrivalBooks />
-      <CreatedBy />
       <HeadingText fullName="Recent Donors" bgName="Donors" />
       <DonationSection />
     </>

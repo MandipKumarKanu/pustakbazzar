@@ -5,19 +5,19 @@ import HeadingText from "../components/Heading";
 import MyBookCard from "../components/MyBookCard";
 import SkeletonCard from "../components/SkeletonCard";
 
-const MyBookPage = () => {
+const MyBookPage = ({isDonation}) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [books, setBooks] = useState([]);
 
   useEffect(() => {
     fetch();
-  }, []);
+  }, [isDonation]);
 
   const fetch = async () => {
     setLoading(true);
     try {
-      const res = await getMyBook();
+      const res = await getMyBook(isDonation);
       setBooks(res?.data);
     } catch (error) {
       setError(getErrorMessage(error));

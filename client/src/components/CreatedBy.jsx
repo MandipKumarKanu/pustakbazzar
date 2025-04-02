@@ -22,7 +22,7 @@ const people = [
 
 export function CreatedBy() {
   return (
-    <div className="flex flex-row items-center justify-center mb-10 w-full">
+    <div className="flex flex-row items-center justify-start mt-4 w-full">
       <AnimatedTooltip items={people} />
     </div>
   );

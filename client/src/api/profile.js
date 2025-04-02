@@ -6,7 +6,7 @@ export async function getBookBySeller(id) {
   return await axios.get(`${baseURL}${url}`);
 }
 
-export async function getMyBook() {
-  const url = `auth/mybooks`;
+export async function getMyBook(fn) {
+  const url = `auth/mybooks/${fn}`;
   return await customAxios.get(`${baseURL}${url}`);
 }

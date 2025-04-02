@@ -21,13 +21,17 @@ const ProfileBooks = ({ user }) => {
       case "list":
         return (
           <>
-            <MyBookPage />
+            <MyBookPage isDonation={false} />
           </>
         );
       // case "rented":
       //   return <div>Your rented books will be listed here.</div>;
       case "donated":
-        return <div>Your donated books will be listed here.</div>;
+        return (
+          <>
+            <MyBookPage isDonation={true} />
+          </>
+        );
       default:
         return null;
     }
