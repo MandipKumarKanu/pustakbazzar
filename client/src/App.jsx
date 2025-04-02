@@ -39,6 +39,8 @@ import SellerOrder from "./pages/SellerOrder";
 import {ProtectedRoute} from "./utils/protectedRoute";
 import {AdminProtectedRoute} from "./utils/protectedRoute";
 import DonationPending from "./pages/DonationPending";
+import TermsAndConditions from "./pages/TermsAndConditions";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 // import ContactPage from "./pages/ContactPage";
 
@@ -116,6 +118,8 @@ function App() {
           <Route path="/category" element={<CategoryPage />} />
           <Route path="/category/:cname" element={<ParticularCategory />} />
           <Route path="/contact" element={<ContactPage />} />
+          <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
           <Route element={<AdminProtectedRoute />}>
           <Route element={<AdminLayout />}>
