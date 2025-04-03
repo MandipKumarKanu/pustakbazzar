@@ -7,14 +7,16 @@ export async function addBook(data) {
 }
 
 export async function getBooks(
-  cursorId = null,
-  limit = 10,
-  direction = "down"
+  page = 1,
+  limit = 30,
+  order,
+  minPrice = "",
+  maxPrice = ""
 ) {
-  let url = `book/?limit=${limit}&direction=${direction}`;
-  if (cursorId)
-    url += `&${direction === "down" ? "lastId" : "firstId"}=${cursorId}`;
-  return axios.get(`${baseURL}${url}`);
+  let url = `book/get/?page=${page}&limit=${limit}`;
+  if (minPrice) url += `&minPrice=${minPrice}`;
+  if (maxPrice) url += `&maxPrice=${maxPrice}`;
+  return axios.post(`${baseURL}${url}`, { order });
 }
 
 export async function getBookById(id) {

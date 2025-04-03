@@ -76,7 +76,9 @@ const AddBook = () => {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: "image/*",
+    accept: {
+      "image/*": [".jpeg", ".jpg", ".png", ".gif", ".webp"], 
+    },
     multiple: true,
   });
 

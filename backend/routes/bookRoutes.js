@@ -22,7 +22,7 @@ const {
 const authMiddleware = require("../middleware/authMiddleware");
 
 router.post("/", authMiddleware, createBook);
-router.get("/", getAllBooks);
+router.post("/get", getAllBooks);
 router.get("/weeklytop", getWeeklyTopBooks);
 router.get("/featured", getFeaturedBooks);
 router.get("/search", searchBooks);

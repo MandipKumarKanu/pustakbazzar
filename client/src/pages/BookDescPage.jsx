@@ -146,7 +146,7 @@ const BookDescPage = () => {
 
   return (
     <div className=" flex items-center">
-      <div className="container mx-auto mt-5 mb-6 px-6 py-8 bg-purple-100 rounded-3xl">
+      <div className="container mx-auto mt-12 mb-6 px-6 py-8 bg-purple-100 rounded-3xl">
         {/* <title>{book?.title}</title> */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-20">
           <div className="lg:relative">
@@ -167,7 +167,7 @@ const BookDescPage = () => {
                   />
                 </Lens>
               </div>
-              {book.images.length > 1 && (
+              {
                 <div className="mt-4 flex gap-2 justify-center">
                   {book.images.map((image, index) => (
                     <button
@@ -187,7 +187,7 @@ const BookDescPage = () => {
                     </button>
                   ))}
                 </div>
-              )}
+              }
             </div>
           </div>
 
@@ -228,7 +228,7 @@ const BookDescPage = () => {
               <div className="flex space-x-4">
                 <button
                   onClick={handleWishlist}
-                  disabled={isWishlistLoading}
+                  disabled={isWishlistLoading || user?.id === book.addedBy._id}
                   className="p-2 text-gray-500 hover:text-red-400 transition-colors duration-200 relative"
                 >
                   {isWishlistLoading ? (
@@ -335,57 +335,64 @@ const BookDescPage = () => {
               </div>
 
               <div className="mt-6 bg-yellow-50 rounded-lg p-6 shadow">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                  Delivery Information
-                </h2>
-                <div className="flex items-center mb-3">
-                  <FaTruck className="text-gray-400 w-5 mr-2" />
-                  <span className="text-gray-700">
-                    Delivery Charge: ₹50 on all orders
-                  </span>
-                </div>
-                {book.availability !== "rent" && (
-                  <div className="mb-3">
-                    <span className="text-gray-700">
-                      No return policy is available.
-                    </span>
-                  </div>
-                )}
-
-                {book.availability !== "rent" && (
-                  <button
-                    onClick={handleAddToCart}
-                    disabled={isCartLoading}
-                    className={`w-full px-6 py-3 mb-3 rounded-3xl text-white text-xl font-bold shadow-lg transition-colors duration-300 ease-in-out ${
-                      !isInCart
-                        ? "bg-gradient-to-t from-blue-500 to-blue-600 hover:bg-gradient-to-t hover:from-blue-600 hover:to-blue-500"
-                        : "bg-gray-400"
-                    }`}
-                  >
-                    {isCartLoading ? (
-                      <FaSpinner className="animate-spin" />
-                    ) : (
-                      <>
-                        <FaShoppingCart className="mr-2 inline" />
-                        {isInCart ? "Remove from Cart" : "Add to Cart"}
-                      </>
+                {user?.id != book.addedBy._id ? (
+                  <>
+                    <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                      Delivery Information
+                    </h2>
+                    <div className="flex items-center mb-3">
+                      <FaTruck className="text-gray-400 w-5 mr-2" />
+                      <span className="text-gray-700">
+                        Delivery Charge: ₹50 on all orders
+                      </span>
+                    </div>
+                    {book.availability !== "rent" && (
+                      <div className="mb-3">
+                        <span className="text-gray-700">
+                          No return policy is available.
+                        </span>
+                      </div>
                     )}
-                  </button>
-                )}
 
-                <button
-                  className="w-full px-6 py-3 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-3xl text-white text-xl font-bold shadow-lg transition-colors duration-300 ease-in-out hover:bg-gradient-to-t hover:from-secondaryColor hover:to-primaryColor"
-                  onClick={handleBuy}
-                >
-                  <FaShoppingCart className="mr-2 inline" />
-                  {book.availability === "rent" ? "Rent Now" : "Buy Now"}
-                </button>
+                    {book.availability !== "rent" && (
+                      <button
+                        onClick={handleAddToCart}
+                        disabled={isCartLoading}
+                        className={`w-full px-6 py-3 mb-3 rounded-3xl text-white text-xl font-bold shadow-lg transition-colors duration-300 ease-in-out ${
+                          !isInCart
+                            ? "bg-gradient-to-t from-blue-500 to-blue-600 hover:bg-gradient-to-t hover:from-blue-600 hover:to-blue-500"
+                            : "bg-gray-400"
+                        }`}
+                      >
+                        {isCartLoading ? (
+                          <FaSpinner className="animate-spin" />
+                        ) : (
+                          <>
+                            <FaShoppingCart className="mr-2 inline" />
+                            {isInCart ? "Remove from Cart" : "Add to Cart"}
+                          </>
+                        )}
+                      </button>
+                    )}
 
-                {book.availability === "rent" && (
-                  <p className="mt-4 text-sm text-gray-600">
-                    Enjoy reading with our flexible rental option. Rent the book
-                    for ₹{book.perWeekPrice}/week and return it anytime!
-                  </p>
+                    <button
+                      className="w-full px-6 py-3 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-3xl text-white text-xl font-bold shadow-lg transition-colors duration-300 ease-in-out hover:bg-gradient-to-t hover:from-secondaryColor hover:to-primaryColor"
+                      onClick={handleBuy}
+                    >
+                      <FaShoppingCart className="mr-2 inline" />
+                      {book.availability === "rent" ? "Rent Now" : "Buy Now"}
+                    </button>
+
+                    {book.availability === "rent" && (
+                      <p className="mt-4 text-sm text-gray-600">
+                        Enjoy reading with our flexible rental option. Rent the
+                        book for ₹{book.perWeekPrice}/week and return it
+                        anytime!
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <>Book is Listed By You</>
                 )}
               </div>
             </div>

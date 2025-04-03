@@ -75,49 +75,50 @@ const createBook = async (req, res) => {
 
 const getAllBooks = async (req, res) => {
   try {
-    const { firstId, lastId, limit = 10, direction = "down" } = req.query;
+    const { page = 1, limit = 10, minPrice, maxPrice } = req.query;
 
-    // Validate query parameters
-    const fetchLimit = Math.min(parseInt(limit, 10), 50); // Cap limit at 50
+    const { order = {} } = req.body;
+
+    const fetchLimit = Math.min(parseInt(limit, 10), 50);
+    const skip = (parseInt(page, 10) - 1) * fetchLimit;
+
+    // Base query to fetch only available books not marked for donation
     const query = { status: "available", forDonation: false };
 
-    // Build query based on direction
-    if (direction === "down" && lastId) {
-      if (!mongoose.Types.ObjectId.isValid(lastId)) {
-        return res.status(400).json({ message: "Invalid lastId" });
-      }
-      query._id = { $lt: lastId };
-    } else if (direction === "up" && firstId) {
-      if (!mongoose.Types.ObjectId.isValid(firstId)) {
-        return res.status(400).json({ message: "Invalid firstId" });
-      }
-      query._id = { $gt: firstId };
-    }
+    // Apply price filters if provided
+    if (minPrice)
+      query.sellingPrice = {
+        ...query.sellingPrice,
+        $gte: parseInt(minPrice, 10),
+      };
+    if (maxPrice)
+      query.sellingPrice = {
+        ...query.sellingPrice,
+        $lte: parseInt(maxPrice, 10),
+      };
 
-    const sortOrder = direction === "down" ? -1 : 1; // -1 for descending, 1 for ascending
+    // Determine sorting criteria based on the `order` object
+    const sortField = order.type === "price" ? "sellingPrice" : "createdAt";
+    const sortOrder = order.order === "asc" ? 1 : -1;
+    const sortCriteria = { [sortField]: sortOrder };
 
-    // Fetch books
+    // Fetch books with pagination
     const books = await Book.find(query)
-      .sort({ _id: sortOrder })
+      .sort(sortCriteria)
+      .skip(skip)
       .limit(fetchLimit)
       .populate("category", "categoryName")
       .populate("addedBy", "profile.userName")
       .lean();
 
-    // Adjust order for up direction to maintain descending order in frontend
-    const adjustedBooks = direction === "up" ? books.reverse() : books;
+    // Get total count for pagination
+    const totalBooks = await Book.countDocuments(query);
 
-    // Determine firstId and lastId
-    const response = {
-      books: adjustedBooks,
-      firstId: adjustedBooks.length > 0 ? adjustedBooks[0]._id : null,
-      lastId:
-        adjustedBooks.length > 0
-          ? adjustedBooks[adjustedBooks.length - 1]._id
-          : null,
-    };
-
-    return res.status(200).json(response);
+    return res.status(200).json({
+      books,
+      totalPages: Math.ceil(totalBooks / fetchLimit),
+      currentPage: parseInt(page, 10),
+    });
   } catch (error) {
     console.error("Error fetching books:", error);
     return res

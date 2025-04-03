@@ -13,6 +13,7 @@ import {
 } from "react-icons/fa";
 import { Cloudinary } from "cloudinary-core";
 import { appySeller } from "@/api/auth";
+import Badge from "@assets/image/badge.png";
 
 const cloudinary = new Cloudinary({
   cloud_name: import.meta.env.VITE_CLOUD_NAME,
@@ -22,7 +23,7 @@ const cloudinary = new Cloudinary({
 const Profile = ({ user }) => {
   const { profile } = user;
 
-  const {user:usr}=useAuthStore();
+  const { user: usr } = useAuthStore();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [IsModalOpenForSeller, setIsModalOpenForSeller] = useState(false);
@@ -186,16 +187,23 @@ const Profile = ({ user }) => {
   return (
     <>
       <div className="m-auto flex flex-col items-center gap-4 relative mt-10 px-4">
-        <Avatar className="w-32 h-32 sm:w-48 sm:h-48 md:w-60 md:h-60">
-          <AvatarImage
-            src={profile.profileImg}
-            alt={`${profile.firstName} ${profile.lastName}`}
-            className="object-cover"
-          />
-          <AvatarFallback className="text-4xl sm:text-5xl md:text-6xl font-medium bg-primary/10 text-primary">
-            {getInitials()}
-          </AvatarFallback>
-        </Avatar>
+        <div className="w-32 h-32 sm:w-48 sm:h-48 md:w-60 md:h-60 relative">
+          <Avatar className="w-full h-full">
+            <AvatarImage
+              src={profile.profileImg}
+              alt={`${profile.firstName} ${profile.lastName}`}
+              className="object-cover"
+            />
+            <AvatarFallback className="text-4xl sm:text-5xl md:text-6xl font-medium bg-primary/10 text-primary">
+              {getInitials()}
+            </AvatarFallback>
+          </Avatar>
+          {usr?.seller?.status === "approved" && (
+            <div className="absolute bottom-2 right-4 w-14 h-14 bg-white rounded-full border-4 border-primaryColor" title="Verified Seller">
+              <img src={Badge} alt="Seller Badge" className="w-full" />
+            </div>
+          )}
+        </div>
 
         <div className="flex flex-col gap-2 items-center">
           <h1 className="text-3xl sm:text-4xl font-bold font-sfpro text-center">
