@@ -1,6 +1,13 @@
 import React, { useEffect } from "react";
 import { NavLink } from "react-router-dom";
-import { FaBars, FaTimes, FaHome, FaClock, FaBook, FaListAlt } from "react-icons/fa";
+import {
+  FaBars,
+  FaTimes,
+  FaHome,
+  FaClock,
+  FaBook,
+  FaListAlt,
+} from "react-icons/fa";
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
   useEffect(() => {
@@ -39,7 +46,9 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       }`}
     >
       <div className="flex items-center justify-between p-4">
-        {isOpen && <h2 className="text-xl font-bold text-white">Kitab Kunj</h2>}
+        {isOpen && (
+          <h2 className="text-xl font-bold text-white">PustakBazzar</h2>
+        )}
         <button
           onClick={toggleSidebar}
           className="p-2 rounded-lg bg-purple-800 text-white hover:bg-purple-700 transition-colors"
@@ -70,42 +79,22 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
           </li>
           <li>
             <NavItem to="/admin/pendingDonation" icon={FaListAlt}>
-            Donation
+              Donation
             </NavItem>
           </li>
           <li>
-            <NavItem to="/admin/toapprove" icon={FaClock}>
-              Pending Approval
+            <NavItem to="/admin/allUsers" icon={FaListAlt}>
+              Users
             </NavItem>
           </li>
           <li>
-            <NavItem to="/admin/approvedbooks" icon={FaBook}>
-              Approved Books
+            <NavItem to="/admin/admin-order" icon={FaListAlt}>
+              Admin Order
             </NavItem>
           </li>
           <li>
-            <NavItem to="/admin/mydeclined" icon={FaBook}>
-              My Declined Books
-            </NavItem>
-          </li>
-          <li>
-            <NavItem to="/admin/myapproved" icon={FaBook}>
-              My Approved Books
-            </NavItem>
-          </li>
-          <li>
-            <NavItem to="/admin/orderconfirmation" icon={FaBook}>
-              Order Confirmation
-            </NavItem>
-          </li>
-          <li>
-            <NavItem to="/admin/ordercanceled" icon={FaBook}>
-              Order Canceled
-            </NavItem>
-          </li>
-          <li>
-            <NavItem to="/admin/myorder" icon={FaBook}>
-              My Order
+            <NavItem to="/admin/payout" icon={FaListAlt}>
+              Payout
             </NavItem>
           </li>
         </ul>

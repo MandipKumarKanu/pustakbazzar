@@ -61,7 +61,7 @@ export const setupInterceptors = (getToken, setToken, updateUser) => {
           if (originalRequest.headers) {
             originalRequest.headers.Authorization = `Bearer ${accessToken}`;
           }
-          return customAxios(originalRequest);
+          return await customAxios(originalRequest);
         } catch (refreshError) {
           console.error("Error refreshing token:", refreshError);
           return Promise.reject(error);

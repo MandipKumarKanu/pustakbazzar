@@ -17,8 +17,8 @@ function PaymentVerification() {
   const { user } = useAuthStore();
 
   useEffect(() => {
-    if (user) verifyPayment();
-  }, [location, navigate, user]);
+    verifyPayment();
+  }, []);
 
   const verifyPayment = async () => {
     const params = new URLSearchParams(location.search);
@@ -37,7 +37,7 @@ function PaymentVerification() {
 
       console.log(response);
 
-      const verificationResult =  response.data;
+      const verificationResult = response.data;
 
       if (verificationResult.status === "Completed") {
         setStatus("success");

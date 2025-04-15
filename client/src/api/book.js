@@ -3,7 +3,7 @@ import axios from "axios";
 
 export async function addBook(data) {
   let url = "book/";
-  return customAxios.post(url, data);
+  return await customAxios.post(url, data);
 }
 
 export async function getBooks(
@@ -46,5 +46,5 @@ export async function getWeeklyTopBook() {
 
 export async function updateBook(id, data) {
   let url = `book/${id}`;
-  return customAxios.patch(`${baseURL}${url}`, data);
+  return await customAxios.patch(`${baseURL}${url}`, data);
 }

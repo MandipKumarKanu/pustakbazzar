@@ -87,16 +87,6 @@ const OrderCard = React.memo(({ order, onClick }) => {
       className="bg-white rounded-xl overflow-hidden cursor-pointer transition-all duration-300 group shadow-lg border border-gray-200 relative"
       onClick={() => onClick(order)}
     >
-      {order.paymentStatus === "pending" && (
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="absolute top-4 right-4 bg-red-300/40  text-xs px-3 py-1 rounded-full font-semibold shadow-md z-10"
-        >
-          Pay Now
-        </motion.button>
-      )}
-
       <div className="relative h-48 overflow-hidden bg-gray-100">
         {renderImages()}
         <motion.div
@@ -111,8 +101,19 @@ const OrderCard = React.memo(({ order, onClick }) => {
           <h2 className="text-xl font-bold text-black">
             Order #{order._id.slice(-8)}
           </h2>
-          <span
-            className={`px-2 py-1 rounded-full text-xs font-semibold 
+          {/* <div className="flex "> */}
+
+          {order.paymentStatus === "pending" ? (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className=" bg-red-300/40  text-xs px-3 py-1 rounded-full font-semibold shadow-md z-10"
+            >
+              Pay Now
+            </motion.button>
+          ) : (
+            <span
+              className={`px-2 py-1 rounded-full text-xs font-semibold capitalize 
               ${
                 order.orderStatus === "pending"
                   ? "bg-yellow-100 text-yellow-800"
@@ -120,9 +121,11 @@ const OrderCard = React.memo(({ order, onClick }) => {
                   ? "bg-green-100 text-green-800"
                   : "bg-gray-200 text-black"
               }`}
-          >
-            {order.orderStatus}
-          </span>
+            >
+              {order.orderStatus}
+            </span>
+          )}
+          {/* </div> */}
         </div>
         <div className="flex items-center text-gray-600 text-sm mb-1">
           <FiPackage className="mr-1" />
@@ -232,7 +235,7 @@ const OrderDetail = ({ order, onClose, onPayNow }) => {
             <div>
               <p className="text-sm text-gray-500">Status</p>
               <p
-                className={`font-semibold 
+                className={`font-semibold capitalize
                   ${
                     order.orderStatus === "pending"
                       ? "text-yellow-600"
@@ -250,7 +253,7 @@ const OrderDetail = ({ order, onClose, onPayNow }) => {
             <div>
               <p className="text-sm text-gray-500">Payment</p>
               <div className="flex items-center">
-                <p className="font-semibold mr-2">{order.payment}</p>
+                <p className="font-semibold mr-2 capitalize">{order.payment}</p>
                 {order.paymentStatus === "pending" && (
                   <motion.button
                     onClick={onPayNow}
@@ -457,7 +460,7 @@ const MyOrders = () => {
                       Total: ₹{parseFloat(order.netTotal).toFixed(2)}
                     </p>
                     <div className="flex items-center mt-1">
-                      <p className="text-sm text-gray-700 mr-2">
+                      <p className="text-sm text-gray-700 mr-2 capitalize">
                         {order.orderStatus}
                       </p>
                       {order.paymentStatus === "pending" && (

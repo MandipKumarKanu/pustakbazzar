@@ -32,12 +32,10 @@ const UserPage = () => {
   };
 
   const toggleUserStatus = (userId) => {
-    // Implement toggle logic here
     console.log("Toggling status for user:", userId);
   };
 
   const deleteUser = (userId) => {
-    // Implement delete logic here
     console.log("Deleting user:", userId);
   };
 
@@ -93,10 +91,7 @@ const UserPage = () => {
   return (
     <div className="container mx-auto mt-5">
       <h1 className="text-2xl font-bold mb-4">User List</h1>
-      <DataTable
-        columns={columns}
-        data={users}
-      />
+      <DataTable columns={columns} data={users} />
       {selectedUser && (
         <UserDialog
           open={dialogOpen}

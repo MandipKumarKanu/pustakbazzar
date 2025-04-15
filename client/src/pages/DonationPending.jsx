@@ -276,7 +276,7 @@ const DonationPending = () => {
             </div>
           </div>
         </td>
-        <td className="px-4 py-3 text-sm">{donation.donor.profile.userName}</td>
+        <td className="px-4 py-3 text-sm">{donation?.donor?.profile?.userName}</td>
         <td className="px-4 py-3">
           <span
             className={`px-2 py-1 text-xs rounded-full ${
@@ -549,7 +549,7 @@ const DonationPending = () => {
         />
       )}
 
-      {/* You can implement your Accept/Reject confirmation dialogs here */}
+
 
       {isAcceptDialogOpen && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50 backdrop-blur-sm">

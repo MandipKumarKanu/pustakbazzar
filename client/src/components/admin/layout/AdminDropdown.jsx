@@ -3,16 +3,17 @@ import { Link, useNavigate } from "react-router-dom";
 import { FaUser, FaUsers, FaBook, FaSignOutAlt, FaCog } from "react-icons/fa";
 import ClickOutside from "@/hooks/ClickOutside";
 import { useAuthStore } from "@/store/useAuthStore";
+import { logoutApi } from "@/api/auth";
 
 const AdminDropdown = () => {
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
-      console.log("logout");
+      logout();
       navigate("/");
     } catch (e) {
       console.error(e);

@@ -18,7 +18,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-export const DataTable = ({ columns, data, customCss, extraHtml }) => {
+export const DataTable = ({
+  columns,
+  data,
+  customCss,
+  extraHtml,
+  getRowClassName, 
+}) => {
   const [sorting, setSorting] = useState([]);
   const [filtering, setFiltering] = useState("");
 
@@ -96,7 +102,9 @@ export const DataTable = ({ columns, data, customCss, extraHtml }) => {
             {table.getRowModel().rows.map((row) => (
               <tr
                 key={row.id}
-                className="border-t border-border hover:bg-muted"
+                className={`border-t border-border hover:bg-muted ${
+                  getRowClassName ? getRowClassName(row) : ""
+                }`}
               >
                 {row.getVisibleCells().map((cell) => (
                   <td

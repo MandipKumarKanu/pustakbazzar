@@ -13,9 +13,11 @@ import SkeletonCard from "@/components/SkeletonCard";
 
 const CategoryPage = () => {
   const { category: categories } = useCategoryStore();
-  const [selected, setSelected] = useState(categories?.[0].value);
+  const [selected, setSelected] = useState("all");
   const [categoryData, setCategoryData] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const extendedCategories = [{ value: "all", label: "All" }, ...categories];
 
   useEffect(() => {
     fetch();
@@ -39,7 +41,7 @@ const CategoryPage = () => {
       <div className="container mx-auto px-4 mt-14">
         <Carousel>
           <CarouselContent>
-            {categories.map((category, index) => (
+            {extendedCategories.map((category, index) => (
               <CarouselItem
                 key={index}
                 className="basis-1/3 md:basis-1/4 lg:basis-1/5"

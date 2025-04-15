@@ -47,7 +47,6 @@ const getLatestDonations = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(limit);
 
-    // const totalDonations = await Donation.countDocuments();
 
     res.status(200).json({
       donations,
@@ -175,14 +174,12 @@ const deleteDonation = async (req, res) => {
 
 const getPendingDonations = async (req, res) => {
   try {
-    // const { page = 1, limit = 10 } = req.query;
 
     const pendingDonations = await Donation.find({ status: "pending" })
       .populate("book")
       .populate("donor", "profile.userName profile.email")
       .sort({ createdAt: -1 });
-    // .skip((page - 1) * limit)
-    // .limit(limit);
+   
 
     const totalPendingDonations = await Donation.countDocuments({
       status: "pending",

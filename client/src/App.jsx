@@ -41,6 +41,10 @@ import {AdminProtectedRoute} from "./utils/protectedRoute";
 import DonationPending from "./pages/DonationPending";
 import TermsAndConditions from "./pages/TermsAndConditions";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import ManageUser from "./pages/AllUsers";
+import AdminOrder from "./pages/AdminOrder";
+import PayOut from "./pages/PayOut";
+// import AdminOrder from "./pages/AdminOrder";
 
 // import ContactPage from "./pages/ContactPage";
 
@@ -126,6 +130,10 @@ function App() {
             <Route path="/admin/home" element={<AdminHome />} />
             <Route path="/admin/managecategory" element={<ManageCategory />} />
             <Route path="/admin/sellerorder" element={<SellerOrder />} />
+            <Route path="/admin/pendingDonation" element={<DonationPending />} />
+            <Route path="/admin/allUsers" element={<ManageUser />} />
+            <Route path="/admin/admin-order" element={<AdminOrder />} />
+            <Route path="/admin/payout" element={<PayOut />} />
           {/* </R8oute> */}
           </Route>
         </Routes>

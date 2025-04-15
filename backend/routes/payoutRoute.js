@@ -1,9 +1,18 @@
 const express = require("express");
 const router = express.Router();
-const { createPayout,getPayout } = require("../controllers/payoutController");
+const {
+  createPayout,
+  getAllPayouts,
+  getMyEarnings,
+  getPayoutById,
+} = require("../controllers/payoutController");
 const authMiddleware = require("../middleware/authMiddleware");
+const roleMiddleware = require("../middleware/roleMiddleware");
 
-router.post("/", authMiddleware, createPayout);
-router.get("/", authMiddleware, getPayout);
+router.post("/", authMiddleware, roleMiddleware(["admin"]), createPayout);
+router.get("/", authMiddleware, roleMiddleware(["admin"]), getAllPayouts);
+router.get("/earnings", authMiddleware, getMyEarnings);
+router.get("/:sellerId", authMiddleware, getPayoutById);
+
 
 module.exports = router;

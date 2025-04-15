@@ -2,55 +2,66 @@ const User = require("../models/User");
 const { initiatePayout } = require("../utils/payoutService");
 
 const payoutSeller = async (sellerId) => {
-  try {
-    const seller = await User.findById(sellerId);
-    if (!seller) {
-      throw new Error("Seller not found");
-    }
+  const seller = await User.findById(sellerId);
+  if (!seller) throw new Error("Seller not found");
 
-    const payoutAmount = seller.balance;
-    const payoutResponse = await initiatePayout(seller, payoutAmount);
-    if (payoutResponse.success) {
-      // Reset balance and update earnings if payout was successful
-      seller.balance = 0;
-      seller.earning += payoutAmount;
-      await seller.save();
-      console.log("Payout successful");
-    } else {
-      console.error("Payout failed");
-    }
-  } catch (error) {
-    console.error("Payout error:", error.message);
-    throw error;
-  }
-};
+  if (seller.balance <= 0) throw new Error("No balance to payout");
 
-const getAllSellersPayoutDue = async () => {
-  try {
-    const sellers = await User.find({});
+  const payoutAmount = seller.balance;
 
-    const payoutDetails = sellers.map((seller) => {
-      const totalPaidOut = seller.payoutHistory.reduce(
-        (acc, payout) => acc + payout.payoutAmount,
-        0
-      );
+  const payoutResponse = await initiatePayout(seller, payoutAmount);
 
-      const remainingPayout = seller.balance - totalPaidOut;
+  if (payoutResponse.success) {
+    seller.earning += payoutAmount;
+    seller.balance = 0;
 
-      return {
-        sellerId: seller._id,
-        name: seller.name,
-        totalBalance: seller.balance,
-        totalPaidOut,
-        remainingPayout,
-      };
+    seller.payoutHistory.push({
+      payoutAmount,
+      transactionId: payoutResponse.transactionId,
+      status: "success",
     });
 
-    return payoutDetails;
-  } catch (error) {
-    console.error("Error getting all seller payout due:", error.message);
-    throw error;
+    await seller.save();
+    return {
+      message: "Payout successful",
+      transactionId: payoutResponse.transactionId,
+    };
+  } else {
+    throw new Error("Payout failed");
   }
 };
 
-module.exports = { payoutSeller, getAllSellersPayoutDue };
+const getAllSellersWithBalance = async () => {
+  const sellers = await User.find({
+    balance: { $gt: 0 },
+    "isSeller.status": "approved",
+  });
+
+  return sellers.map((seller) => ({
+    sellerId: seller._id,
+    name: `${seller.profile.firstName} ${seller.profile.lastName}`,
+    userName: seller.profile.userName,
+    balance: seller.balance,
+    totalEarning: seller.earning,
+    payoutHistory: seller.payoutHistory,
+  }));
+};
+
+const getSellerPayoutDetails = async (sellerId) => {
+  const seller = await User.findById(sellerId);
+  if (!seller) throw new Error("Seller not found");
+
+  return {
+    sellerId: seller._id,
+    name: `${seller.profile.firstName} ${seller.profile.lastName}`,
+    balance: seller.balance,
+    totalEarning: seller.earning,
+    payoutHistory: seller.payoutHistory,
+  };
+};
+
+module.exports = {
+  payoutSeller,
+  getAllSellersWithBalance,
+  getSellerPayoutDetails,
+};

@@ -4,6 +4,14 @@ const addCustomClassesToHtml = require("../utils/addCustomClass");
 const Donation = require("../models/Donation");
 const levenshtein = require("fast-levenshtein");
 const mongoose = require("mongoose");
+// const { recordEvent } = require("../controllers/statsController");
+const {
+  recordSale,
+  recordDonation,
+  recordBookAdded,
+  recordUserSignup,
+  recordVisit,
+} = require("./statsController");
 
 const createBook = async (req, res) => {
   const {
@@ -60,6 +68,14 @@ const createBook = async (req, res) => {
         status: "pending",
       });
       await donation.save();
+
+      user.donated.push(book._id);
+      await user.save();
+      await recordDonation();
+    } else {
+      user.sold.push(book._id);
+      await user.save();
+      await recordBookAdded();
     }
 
     res.status(201).json({
@@ -82,10 +98,8 @@ const getAllBooks = async (req, res) => {
     const fetchLimit = Math.min(parseInt(limit, 10), 50);
     const skip = (parseInt(page, 10) - 1) * fetchLimit;
 
-    // Base query to fetch only available books not marked for donation
     const query = { status: "available", forDonation: false };
 
-    // Apply price filters if provided
     if (minPrice)
       query.sellingPrice = {
         ...query.sellingPrice,
@@ -97,12 +111,10 @@ const getAllBooks = async (req, res) => {
         $lte: parseInt(maxPrice, 10),
       };
 
-    // Determine sorting criteria based on the `order` object
     const sortField = order.type === "price" ? "sellingPrice" : "createdAt";
     const sortOrder = order.order === "asc" ? 1 : -1;
     const sortCriteria = { [sortField]: sortOrder };
 
-    // Fetch books with pagination
     const books = await Book.find(query)
       .sort(sortCriteria)
       .skip(skip)
@@ -111,7 +123,6 @@ const getAllBooks = async (req, res) => {
       .populate("addedBy", "profile.userName")
       .lean();
 
-    // Get total count for pagination
     const totalBooks = await Book.countDocuments(query);
 
     return res.status(200).json({
@@ -230,14 +241,28 @@ const deleteBook = async (req, res) => {
 
 const getBooksByCategory = async (req, res) => {
   try {
-    const books = await Book.find({
-      category: { $in: req?.params?.categoryId },
-      status: "available",
-      forDonation: false,
-    })
-      .sort({ createdAt: -1 })
-      .lean()
-      .populate("addedBy", "profile.userName");
+    const cateId = req?.params?.categoryId || "all";
+
+    let books;
+
+    if (cateId === "all") {
+      books = await Book.find({
+        status: "available",
+        forDonation: false,
+      })
+        .sort({ createdAt: -1 })
+        .lean()
+        .populate("addedBy", "profile.userName");
+    } else {
+      books = await Book.find({
+        category: { $in: req?.params?.categoryId },
+        status: "available",
+        forDonation: false,
+      })
+        .sort({ createdAt: -1 })
+        .lean()
+        .populate("addedBy", "profile.userName");
+    }
     res.status(200).json({ books });
   } catch (error) {
     res.status(500).json({ message: "Error fetching books." });
@@ -261,24 +286,20 @@ const searchBooks = async (req, res) => {
     const limit = req.query.limit ? parseInt(req.query.limit) : 20;
     const maxDistance = req.query.distance ? parseInt(req.query.distance) : 2;
 
-    // Check if at least one search parameter is provided
     if (!query && !title && !author && !publishYear) {
       return res
         .status(400)
         .json({ message: "At least one search parameter is required." });
     }
 
-    // First attempt: Use MongoDB query with specified fields
     const mongoQuery = {};
 
-    // Build MongoDB query based on provided parameters
     if (query) {
       mongoQuery.$or = [
         { title: { $regex: query, $options: "i" } },
         { author: { $regex: query, $options: "i" } },
       ];
     } else {
-      // If specific fields are provided instead of general query
       const conditions = [];
 
       if (title) {
@@ -290,7 +311,6 @@ const searchBooks = async (req, res) => {
       }
 
       if (publishYear) {
-        // Assuming publishYear is stored as a number in the database
         conditions.push({ publishYear: parseInt(publishYear) });
       }
 
@@ -305,16 +325,13 @@ const searchBooks = async (req, res) => {
       return res.status(200).json({ books: books.slice(0, limit) });
     }
 
-    // Second attempt: More advanced filtering with JS
     const allBooks = await Book.find().lean().populate("category");
 
     const filteredBooks = allBooks.filter((book) => {
-      // If no specific parameters are provided, return false
       if (!query && !title && !author && !publishYear) {
         return false;
       }
 
-      // Match each provided parameter
       let titleMatch = true;
       let authorMatch = true;
       let queryMatch = true;
@@ -376,7 +393,6 @@ const searchBooks = async (req, res) => {
         queryMatch = titleQueryMatch || authorQueryMatch;
       }
 
-      // All provided parameters must match
       return titleMatch && authorMatch && queryMatch && yearMatch;
     });
 
@@ -384,8 +400,7 @@ const searchBooks = async (req, res) => {
       return res.status(200).json({ books: filteredBooks.slice(0, limit) });
     }
 
-    // Third attempt: Levenshtein fuzzy search
-    // Only use fuzzy search for text fields, not for year
+
     const fuzzySearchNeeded = query || title || author;
 
     if (!fuzzySearchNeeded) {
@@ -397,11 +412,9 @@ const searchBooks = async (req, res) => {
         let minDistance = Infinity;
         let matchField = "";
 
-        // Calculate distances for query parameter
         if (query) {
           const queryLower = query.toLowerCase();
 
-          // Check title distance
           const titleDistance = Math.min(
             ...book.title
               .toLowerCase()
@@ -409,7 +422,6 @@ const searchBooks = async (req, res) => {
               .map((word) => levenshtein.get(word, queryLower))
           );
 
-          // Check author distance
           const authorDistance = Math.min(
             ...book.author
               .toLowerCase()
@@ -425,7 +437,6 @@ const searchBooks = async (req, res) => {
           }
         }
 
-        // Calculate distance for title parameter
         if (title) {
           const titleLower = title.toLowerCase();
           const titleDistance = Math.min(
@@ -441,7 +452,6 @@ const searchBooks = async (req, res) => {
           }
         }
 
-        // Calculate distance for author parameter
         if (author) {
           const authorLower = author.toLowerCase();
           const authorDistance = Math.min(
@@ -457,9 +467,8 @@ const searchBooks = async (req, res) => {
           }
         }
 
-        // Check publishYear if provided - exact match only, no fuzzy matching for numbers
         if (publishYear && book.publishYear !== parseInt(publishYear)) {
-          return { book, distance: Infinity, field: "" }; // No match for year
+          return { book, distance: Infinity, field: "" }; 
         }
 
         return {
@@ -530,7 +539,7 @@ const incrementBookViews = async (req, res) => {
 const getWeeklyTopBooks = async (req, res) => {
   try {
     const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 60);
 
     const topBooks = await Book.find({
       createdAt: { $gte: oneWeekAgo },

@@ -6,14 +6,11 @@ import { FaEye, FaEyeSlash, FaGoogle } from "react-icons/fa";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useNavigate } from "react-router-dom";
 
-// Custom phone input formatter
 const formatPhoneNumber = (value) => {
   if (!value) return value;
 
-  // Remove all non-digits
   const phoneNumber = value.replace(/[^\d]/g, "");
 
-  // Apply mask based on the length
   if (phoneNumber.length < 4) return phoneNumber;
   if (phoneNumber.length < 7) {
     return `${phoneNumber.slice(0, 3)}-${phoneNumber.slice(3)}`;

@@ -68,7 +68,15 @@ const orderSchema = new mongoose.Schema({
   },
   orderStatus: {
     type: String,
-    enum: ["pending", "partially approved", "confirmed", "cancelled", "cancelled by seller"],
+    enum: [
+      "pending",
+      "partially approved",
+      "confirmed",
+      "cancelled",
+      "cancelled by seller",
+      "shipped",
+      "delivered",
+    ],
     default: "pending",
   },
   paymentStatus: {
@@ -90,7 +98,7 @@ const orderSchema = new mongoose.Schema({
     default: null,
   },
   shippingAddress: {
-    type: shippingAddressSchema, 
+    type: shippingAddressSchema,
     required: true,
   },
   cancellationMessage: {

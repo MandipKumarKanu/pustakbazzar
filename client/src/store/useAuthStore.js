@@ -2,7 +2,13 @@ import { create } from "zustand";
 import { toast } from "sonner";
 // import getErrorMessage from "../components/utils/getErrorMsg";
 import { jwtDecode } from "jwt-decode";
-import { authSignIn, authSignUp, getAddressApi } from "@/api/auth";
+import {
+  authSignIn,
+  authSignUp,
+  getAddressApi,
+  getProfileApi,
+  logoutApi,
+} from "@/api/auth";
 import getErrorMessage from "@/utils/getErrorMsg";
 
 export const useAuthStore = create((set) => ({
@@ -54,13 +60,30 @@ export const useAuthStore = create((set) => ({
     set({ adLoading: true, adError: null });
     try {
       const response = await getAddressApi();
-      set({ adLoading: false, addresses:response.data.addresses });
+      set({ adLoading: false, addresses: response.data.addresses });
     } catch (error) {
       set({ adError: error, adLoading: false });
     }
   },
 
   logout: async () => {
-    console.log("logout");
+    try {
+      await logoutApi();
+      set({ loading: false, user: null, token: null });
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
+  },
+
+  getProfile: async () => {
+    set({ loading: true, error: null });
+    try {
+      const response = await getProfileApi();
+      console.log(response?.data);
+      set({ loading: false, user: response?.data });
+    } catch (error) {
+      // toast.error(getErrorMessage(error));
+      set({ error: error, loading: false });
+    }
   },
 }));

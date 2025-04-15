@@ -4,7 +4,6 @@ import BookCard from "@/components/BookCard";
 import HeadingText from "@/components/Heading";
 import Loader from "@/components/Loader";
 
-// Shadcn UI components
 import {
   Select,
   SelectContent,
@@ -28,7 +27,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-// Icons from lucide-react
 import {
   SlidersHorizontal,
   ChevronLeft,
@@ -40,9 +38,7 @@ import {
 } from "lucide-react";
 import { getBooks } from "@/api/book";
 
-// A separate Pagination component for clarity
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
-  // Simple pagination that always shows all pages for clarity
   const pages = [];
   for (let i = 1; i <= totalPages; i++) {
     pages.push(i);
@@ -84,7 +80,6 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
 };
 
 const AllBookPage = () => {
-  // Local state management
   const [loading, setLoading] = useState(true);
   const [books, setBooks] = useState([]);
   const [page, setPage] = useState(1);
@@ -95,7 +90,6 @@ const AllBookPage = () => {
   const [activeFilters, setActiveFilters] = useState([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  // Number of items per fetch
   const FETCH_SIZE = 30;
 
   const sortOptions = {
@@ -130,7 +124,6 @@ const AllBookPage = () => {
     try {
       const selectedSort = sortOptions[sortOption];
       let order = null;
-      // let dateOrder = null;
 
       if (selectedSort.sortType === "price") {
         order = { order: selectedSort.priceOrder, type: "price" };
@@ -140,7 +133,7 @@ const AllBookPage = () => {
 
       const res = await getBooks(page, FETCH_SIZE, order, minPrice, maxPrice);
       setBooks(res.data.books);
-      // Ensure totalPages is a number
+
       setTotalPages(Number(res.data.totalPages));
     } catch (error) {
       console.error("Error fetching books:", error);
@@ -154,7 +147,7 @@ const AllBookPage = () => {
     setPage(1);
   };
 
-  // Apply filters and update active filters display.
+
   const handleApplyFilters = () => {
     const filters = [];
     if (minPrice) filters.push(`Min: $${minPrice}`);
@@ -165,7 +158,7 @@ const AllBookPage = () => {
     setIsFilterOpen(false);
   };
 
-  // Clear individual filter and refetch books.
+
   const handleClearFilter = (filter) => {
     if (filter.startsWith("Min:")) {
       setMinPrice("");
@@ -178,7 +171,7 @@ const AllBookPage = () => {
     setPage(1);
   };
 
-  // Clear all filters.
+
   const handleClearAllFilters = () => {
     setMinPrice("");
     setMaxPrice("");
@@ -188,7 +181,7 @@ const AllBookPage = () => {
     setIsFilterOpen(false);
   };
 
-  // Handle page changes and scroll to the top.
+
   const handlePageChange = (newPage) => {
     window.scrollTo(0, 0);
     setPage(newPage);
@@ -199,7 +192,7 @@ const AllBookPage = () => {
       <HeadingText fullName="All Books" bgName="ALL BOOKS" />
       <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
-          {/* Sorting and Filter controls */}
+
           <div className="flex flex-wrap items-center gap-4">
             <Select value={sortOption} onValueChange={handleSortChange}>
               <SelectTrigger className="w-[180px]">
@@ -269,7 +262,7 @@ const AllBookPage = () => {
             </Dialog>
           </div>
 
-          {/* Display active filters */}
+
           {activeFilters.length > 0 && (
             <div className="flex flex-wrap gap-2 items-center">
               <span className="text-sm text-muted-foreground">
@@ -302,7 +295,7 @@ const AllBookPage = () => {
           )}
         </div>
 
-        {/* Books List */}
+
         {loading && books.length === 0 ? (
           <div className="min-h-screen flex items-center justify-center">
             <Loader />
@@ -343,7 +336,7 @@ const AllBookPage = () => {
           </div>
         )}
 
-        {/* Pagination */}
+
         {totalPages > 1 && (
           <Pagination
             currentPage={page}

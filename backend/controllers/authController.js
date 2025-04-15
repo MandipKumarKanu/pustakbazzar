@@ -2,6 +2,9 @@ const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const Book = require("../models/Book");
+const {
+  recordUserSignup,
+} = require('../controllers/statsController');
 
 const generateAccessToken = (user) => {
   return jwt.sign(
@@ -26,6 +29,8 @@ const register = async (req, res) => {
 
     const user = new User({ profile, password });
     await user.save();
+    await recordUserSignup();
+
 
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
@@ -78,7 +83,9 @@ const getUsers = async (req, res) => {
   try {
     if (req.user.profile.role !== "admin")
       return res.status(403).json({ message: "Access denied." });
-    const users = await User.find().select("-password -refreshToken");
+    const users = await User.find()
+      .select("-password -refreshToken")
+      .sort({ createdAt: -1 });
     res.status(200).json(users);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -115,10 +122,8 @@ const myBook = async (req, res) => {
     const uid = req.user._id;
     const forDonation = req.params.forDonation === "true" ? true : false;
     const books = await Book.find({ addedBy: uid, forDonation })
-    .populate(
-      "category",
-      "categoryName"
-    );
+      .sort({ createdAt: -1 })
+      .populate("category", "categoryName");
     res.status(200).json(books);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -126,11 +131,18 @@ const myBook = async (req, res) => {
 };
 
 const updateUser = async (req, res) => {
+  const { firstName, lastName, profileImg } = req.body;
   try {
-    const user = await User.findByIdAndUpdate(req.user._id, req.body, {
-      new: true,
-    }).select("-password -refreshToken");
-    res.status(200).json(user);
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user._id,
+      {
+        ...(firstName && { "profile.firstName": firstName }),
+        ...{ "profile.lastName": lastName },
+        ...(profileImg && { "profile.profileImg": profileImg }),
+      },
+      { new: true, runValidators: true }
+    );
+    res.status(200).json(updatedUser);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

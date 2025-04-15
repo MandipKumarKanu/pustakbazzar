@@ -1,23 +1,31 @@
 import MyBookPage from "@/pages/MyBookPage";
+import MyOrders from "@/pages/MyOrders";
 import React, { useState } from "react";
 
 const ProfileBooks = ({ user }) => {
   const [activeTab, setActiveTab] = useState("bought");
 
   const tabs = [
-    { name: "Bought", value: "bought", count: user?.purchased || 0 },
-    // { name: "Rented", value: "rented", count: user?.rented || 0 },
-    { name: "Donated", value: "donated", count: user?.donated || 0 },
+    { name: "Bought", value: "bought", count: user?.bought?.length  || 0 },
+    { name: "Donated", value: "donated", count: user?.donated?.length || 0 },
   ];
 
-  if (user?.seller?.status === "approved") {
-    tabs.push({ name: "Listed by you", value: "list", count: user?.sold || 0 });
+  if (user?.isSeller?.status === "approved") {
+    tabs.push({
+      name: "Listed by you",
+      value: "list",
+      count: user?.sold?.length || 0,
+    });
   }
 
   const renderContent = () => {
     switch (activeTab) {
       case "bought":
-        return <div>Your bought books will be listed here.</div>;
+        return (
+          <>
+            <MyOrders />
+          </>
+        );
       case "list":
         return (
           <>

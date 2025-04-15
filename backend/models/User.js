@@ -1,6 +1,10 @@
 const mongoose = require("mongoose");
 const bcryptjs = require("bcryptjs");
 
+function arrayLimit(val) {
+  return val.length <= 3;
+}
+
 const userSchema = new mongoose.Schema(
   {
     profile: {
@@ -34,8 +38,10 @@ const userSchema = new mongoose.Schema(
       },
       role: { type: String, enum: ["user", "admin"], default: "user" },
     },
+
     password: { type: String, required: true },
-    refreshToken: { type: String, default:  null },
+    refreshToken: { type: String, default: null },
+
     isSeller: {
       status: {
         type: String,
@@ -45,19 +51,38 @@ const userSchema = new mongoose.Schema(
       proofDoc: { type: String, default: "" },
       rating: { type: Number, default: 0, min: 0 },
     },
+
     bought: [{ type: mongoose.Schema.Types.ObjectId, ref: "Book" }],
     sold: [{ type: mongoose.Schema.Types.ObjectId, ref: "Book" }],
     donated: [{ type: mongoose.Schema.Types.ObjectId, ref: "Book" }],
     savedForLater: [{ type: mongoose.Schema.Types.ObjectId, ref: "Book" }],
-    balance: { type: Number, default: 0 },
-    earning: { type: Number, default: 0 },
+
+    balance: { type: Number, default: 0, min: 0 },
+    earning: { type: Number, default: 0, min: 0 },
+
+    payoutHistory: [
+      {
+        payoutAmount: { type: Number, required: true },
+        payoutDate: { type: Date, default: Date.now },
+        transactionId: { type: String },
+        status: {
+          type: String,
+          enum: ["success", "failed"],
+          default: "success",
+        },
+      },
+    ],
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
 );
 
-function arrayLimit(val) {
-  return val.length <= 3;
-}
+userSchema.virtual("fullName").get(function () {
+  return `${this.profile.firstName} ${this.profile.lastName}`;
+});
 
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
@@ -84,5 +109,12 @@ userSchema.pre("findOneAndUpdate", async function (next) {
   }
   next();
 });
+
+userSchema.methods.toJSON = function () {
+  const obj = this.toObject();
+  delete obj.password;
+  delete obj.refreshToken;
+  return obj;
+};
 
 module.exports = mongoose.model("User", userSchema);

@@ -30,7 +30,7 @@ const Footer = () => {
         <div className="flex flex-col mb-6">
           <h1 className="font-medium text-lg pb-4">All Books</h1>
           <div className="flex flex-col gap-2">
-            {/* Add links to specific books here */}
+
             <Link
               to="/"
               className="hover:translate-x-1 transition-transform duration-300 ease-in-out"

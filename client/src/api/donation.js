@@ -1,19 +1,19 @@
 import { baseURL, customAxios } from "@/config/axios";
 import axios from "axios";
 
-export function getLatestDonation() {
+export async function getLatestDonation() {
   let url = "donation/latest-donations";
   return axios.get(`${baseURL}${url}`);
 }
 
-export function getPendingonation() {
+export async function getPendingonation() {
   let url = "donation/all-donations";
-  return customAxios.get(`${baseURL}${url}`);
+  return await customAxios.get(`${baseURL}${url}`);
 }
 
-export function changeDonationStatus(id, status) {
+export async function changeDonationStatus(id, status) {
   let url = `donation/update-status/${id}`;
-  return customAxios.patch(`${baseURL}${url}`, {
+  return await customAxios.patch(`${baseURL}${url}`, {
     status,
   });
 }

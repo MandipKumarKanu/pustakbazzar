@@ -27,13 +27,11 @@ const ContactPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Basic validation
     if (!formData.name || !formData.email || !formData.message) {
       toast.error("Please fill all required fields");
       return;
     }
 
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       toast.error("Please enter a valid email address");
@@ -43,10 +41,8 @@ const ContactPage = () => {
     setLoading(true);
 
     try {
-      // Replace with your actual API endpoint
       // await axios.post('/api/contact', formData);
 
-      // Simulating API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       toast.success("Message sent successfully! We'll get back to you soon.");

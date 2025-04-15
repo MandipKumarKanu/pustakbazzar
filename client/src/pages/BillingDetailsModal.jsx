@@ -169,6 +169,7 @@ const BillingDetailsModal = ({ isOpen, onClose, onSubmit }) => {
                   onChange={handleChange}
                   className="w-full bg-transparent border border-black px-4 py-2 rounded-full focus:outline-none focus:border-primaryColor transition"
                   required
+                  maxLength={10}
                 />
               </div>
             </div>

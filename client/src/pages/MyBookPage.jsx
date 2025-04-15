@@ -55,6 +55,7 @@ const MyBookPage = ({isDonation}) => {
                   condition={book.condition}
                   availability={book.availability}
                   status={book.status}
+                  forDonation={book.forDonation}
                 />
               ))}
         </div>

@@ -130,10 +130,16 @@ const CartPage = () => {
 
   const shipFEEE = (cartData?.carts?.length || 0) * SHIPPING_FEE_PER_SELLER;
 
-  console.log(shipFEEE)
-
+  console.log(shipFEEE);
 
   const handleCheckout = () => {
+    if (userAddresses.length === 0) {
+      toast.error(
+        "Please add a shipping address before proceeding to checkout."
+      );
+      return;
+    }
+
     navigate("/billing", {
       state: {
         address: userAddresses[selectedAddressIndex],
@@ -192,7 +198,6 @@ const CartPage = () => {
     cartData?.carts?.reduce((total, cart) => {
       return total + cart.books.reduce((sum, book) => sum + book.quantity, 0);
     }, 0) || 0;
-
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -295,9 +300,21 @@ const CartPage = () => {
                     </div>
                     {userAddresses && userAddresses.length > 0 ? (
                       <div className="text-sm">
-                        <p className="font-medium">{`${userAddresses[selectedAddressIndex]?.firstName || ''} ${userAddresses[selectedAddressIndex]?.lastName || ''} (${userAddresses[selectedAddressIndex]?.phone || ''})`}</p>
-                        <p>{`${userAddresses[selectedAddressIndex]?.landmark || ''}, ${userAddresses[selectedAddressIndex]?.town || ''}`}</p>
-                        <p>{userAddresses[selectedAddressIndex]?.street || ''}</p>
+                        <p className="font-medium">{`${
+                          userAddresses[selectedAddressIndex]?.firstName || ""
+                        } ${
+                          userAddresses[selectedAddressIndex]?.lastName || ""
+                        } (${
+                          userAddresses[selectedAddressIndex]?.phone || ""
+                        })`}</p>
+                        <p>{`${
+                          userAddresses[selectedAddressIndex]?.landmark || ""
+                        }, ${
+                          userAddresses[selectedAddressIndex]?.town || ""
+                        }`}</p>
+                        <p>
+                          {userAddresses[selectedAddressIndex]?.street || ""}
+                        </p>
                       </div>
                     ) : (
                       <div
@@ -335,7 +352,6 @@ const CartPage = () => {
                       <div className="flex justify-between">
                         <span>Shipping Fee</span>
                         <span>
-                        
                           ₹{shipFEEE}
                           <span className="text-[12px]">
                             ({cartData?.carts?.length}x{SHIPPING_FEE_PER_SELLER}

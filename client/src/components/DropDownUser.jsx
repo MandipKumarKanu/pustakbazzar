@@ -4,15 +4,17 @@ import ClickOutside from "@/hooks/ClickOutside";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FaBoxOpen, FaSignOutAlt, FaHeart } from "react-icons/fa";
+import { logoutApi } from "@/api/auth";
 
 const DropdownUser = () => {
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
+      logout()
       navigate("/");
     } catch (e) {
       console.error(e);

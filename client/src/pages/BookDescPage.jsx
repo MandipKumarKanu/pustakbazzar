@@ -228,7 +228,11 @@ const BookDescPage = () => {
               <div className="flex space-x-4">
                 <button
                   onClick={handleWishlist}
-                  disabled={isWishlistLoading || user?.id === book.addedBy._id}
+                  disabled={
+                    isWishlistLoading ||
+                    user?._id === book?.addedBy?._id ||
+                    user?.id === book?.addedBy?._id
+                  }
                   className="p-2 text-gray-500 hover:text-red-400 transition-colors duration-200 relative"
                 >
                   {isWishlistLoading ? (
@@ -328,14 +332,15 @@ const BookDescPage = () => {
                   <div className="flex justify-between">
                     <span className="text-gray-600">Seller:</span>
                     <span className="text-gray-900">
-                      {book.addedBy.profile.userName}
+                      {book?.addedBy?.profile?.userName || ""}
                     </span>
                   </div>
                 </div>
               </div>
 
               <div className="mt-6 bg-yellow-50 rounded-lg p-6 shadow">
-                {user?.id != book.addedBy._id ? (
+                {user?.id !== book?.addedBy?._id &&
+                user?._id !== book?.addedBy?._id ? (
                   <>
                     <h2 className="text-xl font-semibold text-gray-900 mb-4">
                       Delivery Information

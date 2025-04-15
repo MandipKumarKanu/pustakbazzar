@@ -77,7 +77,7 @@ const AddBook = () => {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      "image/*": [".jpeg", ".jpg", ".png", ".gif", ".webp"], 
+      "image/*": [".jpeg", ".jpg", ".png", ".gif", ".webp"],
     },
     multiple: true,
   });
@@ -407,7 +407,6 @@ const AddBook = () => {
           <>
             <div className="grid grid-cols-1 gap-5">
               <div className="space-y-2">
-              
                 <CategorySelector
                   selectedCategories={selectedCategories}
                   onCategoryChange={setSelectedCategories}
@@ -485,8 +484,10 @@ const AddBook = () => {
                       </div>
                     </div>
                   </div>
+                  {/* {console.log(user?.isSeller?.status)} */}
 
-                  {user?.seller?.status === "approved" && (
+                  {(user?.isSeller?.status === "approved" ||
+                    user?.seller?.status === "approved") && (
                     <div
                       className={`border rounded-lg p-4 cursor-pointer transition-all ${
                         bookForValue === "sell"
