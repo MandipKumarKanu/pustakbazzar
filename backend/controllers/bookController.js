@@ -143,12 +143,24 @@ const getBookById = async (req, res) => {
     const book = await Book.findById(req.params.id)
       .populate("category", "categoryName")
       .populate("addedBy", "profile.userName");
+
     if (!book) return res.status(404).json({ message: "Book not found." });
+
+    if (req.user) {
+      await User.findByIdAndUpdate(
+        req.user.id,
+        { $addToSet: { interest: book.category._id } },
+        { new: true }
+      );
+    }
+
     res.status(200).json({ book });
   } catch (error) {
+    console.error("Error fetching book:", error);
     res.status(500).json({ message: "Error fetching book." });
   }
 };
+
 
 const updateBook = async (req, res) => {
   const {

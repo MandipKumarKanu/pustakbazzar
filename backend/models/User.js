@@ -52,6 +52,13 @@ const userSchema = new mongoose.Schema(
       rating: { type: Number, default: 0, min: 0 },
     },
 
+    interest: {
+      type: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Category'
+      }]
+    },
+
     bought: [{ type: mongoose.Schema.Types.ObjectId, ref: "Book" }],
     sold: [{ type: mongoose.Schema.Types.ObjectId, ref: "Book" }],
     donated: [{ type: mongoose.Schema.Types.ObjectId, ref: "Book" }],
