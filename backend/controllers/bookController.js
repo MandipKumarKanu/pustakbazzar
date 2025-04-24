@@ -146,22 +146,19 @@ const getBookById = async (req, res) => {
 
     if (!book) return res.status(404).json({ message: "Book not found." });
 
-    const categories = book.category; // Assuming `book.category` contains an array of categories
-    // console.log(categories[0]._id, "categories");
+    const categories = Array.isArray(book.category) ? book.category : [book.category];
 
     if (req.user) {
-      const uid = req.user[0].id;
-      // console.log(req.user[0].id, "user id");
+      const uid = req.user._id || req.user[0]?.id;
       if (categories && categories.length > 0) {
-        const categoryId = categories[0]._id; // Extract the first category ID
-        const updatedUser = await User.findByIdAndUpdate(
+        const categoryId = categories[0]._id; 
+        await User.findByIdAndUpdate(
           uid,
           {
-            $addToSet: { interest: categoryId }, // Add the single category ID to the interest array
+            $addToSet: { interest: categoryId },
           },
           { new: true }
         );
-        console.log("Updated User:", updatedUser);
       } else {
         console.log("No categories found for the book.");
       }
@@ -268,28 +265,49 @@ const deleteBook = async (req, res) => {
 const getBooksByCategory = async (req, res) => {
   try {
     const cateId = req?.params?.categoryId || "all";
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = Math.min(parseInt(req.query.limit, 10) || 10, 50);
+    const skip = (page - 1) * limit;
 
-    let books;
+    let books, totalBooks;
 
     if (cateId === "all") {
+      totalBooks = await Book.countDocuments({
+        status: "available",
+        forDonation: false,
+      });
       books = await Book.find({
         status: "available",
         forDonation: false,
       })
         .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
         .lean()
         .populate("addedBy", "profile.userName");
     } else {
+      totalBooks = await Book.countDocuments({
+        category: { $in: [cateId] },
+        status: "available",
+        forDonation: false,
+      });
       books = await Book.find({
-        category: { $in: req?.params?.categoryId },
+        category: { $in: [cateId] },
         status: "available",
         forDonation: false,
       })
         .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
         .lean()
         .populate("addedBy", "profile.userName");
     }
-    res.status(200).json({ books });
+    res.status(200).json({
+      books,
+      totalPages: Math.ceil(totalBooks / limit),
+      currentPage: page,
+      totalBooks,
+    });
   } catch (error) {
     res.status(500).json({ message: "Error fetching books." });
   }

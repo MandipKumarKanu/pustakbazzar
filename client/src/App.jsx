@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import "./App.css";
-import { Route, Routes, useLocation } from "react-router-dom";
+import { Route, Routes, useLocation, Navigate } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import Navbar from "./components/Navbar";
 import ClickSpark from "./components/ClickSpark/ClickSpark";
@@ -55,7 +55,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   useLocalStorage("interest", []);
 
-  const { token, setUser, setToken } = useAuthStore();
+  const { token, setUser, setToken, user } = useAuthStore();
   const { fetchCart } = useCartStore();
 
   const { fetchCategories } = useCategoryStore();
@@ -110,8 +110,13 @@ function App() {
       {/* <Pointer /> */}
       <div className="min-h-[100dvh]">
         <Routes>
+          <Route
+            path="/auth"
+            element={
+              user && token ? <Navigate to="/" replace /> : <Auth />
+            }
+          />
           <Route path="/" element={<HomePage />} />
-          <Route path="/auth" element={<Auth />} />
           <Route path="" element={<ProtectedRoute />}>
             <Route path="/addbook" element={<AddBook />} />
             <Route path="/cart" element={<CartPage />} />

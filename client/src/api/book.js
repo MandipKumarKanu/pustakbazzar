@@ -25,13 +25,15 @@ export async function getBookById(id) {
 }
 export async function getBookByIdUser(id) {
   let url = `${baseURL}book/${id}`;
-  console.log("first")
+  // console.log("first")
   return await customAxios.get(url);
 }
 
-export async function getBookByCateId(id) {
-  let url = `book/category/${id}`;
-  return axios.get(`${baseURL}${url}`);
+export function getBookByCateId(categoryId, params = {}) {
+  const query = new URLSearchParams(params).toString();
+  return axios.get(
+    `${baseURL}book/category/${categoryId}${query ? `?${query}` : ""}`
+  );
 }
 
 export async function searchBookAPI(param) {
@@ -54,7 +56,7 @@ export async function updateBook(id, data) {
   return await customAxios.patch(`${baseURL}${url}`, data);
 }
 
-  export async function getRecommendation(categoryId) {
-    let url = `book/recommendations`;
-    return customAxios.post(`${baseURL}${url}`,categoryId);
-  }
+export async function getRecommendation(categoryId) {
+  let url = `book/recommendations`;
+  return customAxios.post(`${baseURL}${url}`, categoryId);
+}

@@ -64,7 +64,7 @@ const updateCategory = async (req, res) => {
 
 const getAllCategory = async (req, res) => {
   try {
-    const categories = await Category.find().sort({ createdAt: -1 }).lean();
+    const categories = await Category.find().sort({ categoryName: 1 }).lean();
 
     res.status(200).json({
       categories,

@@ -19,10 +19,10 @@ const HomePage = () => {
       <FeaturedBook />
       <HeadingText fullName="New Arrival" bgName="New Arrival" />
       <ArrivalBooks />
-      <HeadingText fullName="Recent Donors" bgName="Donors" />
-      <DonationSection />
       <HeadingText fullName="Recommendation" bgName="RECOMMENDATION" />
       <Recommendation />
+      <HeadingText fullName="Recent Donors" bgName="Donors" />
+      <DonationSection />
     </>
   );
 };

@@ -14,7 +14,7 @@ const AdminOrder = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("pending");
   const [selectedStatus, setSelectedStatus] = useState("");
 
   useEffect(() => {
@@ -256,6 +256,7 @@ const AdminOrder = () => {
             setIsDialogOpen(false);
             handleStatusChange(selectedOrder);
           }}
+          seeBelow={false}
         />
       )}
 

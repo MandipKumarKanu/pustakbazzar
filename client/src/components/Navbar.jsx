@@ -16,7 +16,6 @@ const Navbar = () => {
 
   let cartCount = typeof cCnt === "function" ? cCnt() : cCnt;
 
-
   const cartLength = 0;
   const navigate = useNavigate();
   const location = useLocation();
@@ -67,24 +66,12 @@ const Navbar = () => {
   const inactiveNavLink =
     "text-gray-700 hover:text-primary transition-colors duration-200";
 
-  // const categories = [
-  //   { name: "Fiction", path: "/category/fiction" },
-  //   { name: "Non-fiction", path: "/category/non-fiction" },
-  //   { name: "Educational", path: "/category/educational" },
-  //   { name: "Science", path: "/category/science" },
-  //   { name: "History", path: "/category/history" },
-  //   { name: "Biography", path: "/category/biography" },
-  //   { name: "Self-Help", path: "/category/self-help" },
-  //   { name: "Business", path: "/category/business" },
-  //   { name: "Thriller", path: "/category/thriller" },
-  //   { name: "Romance", path: "/category/romance" },
-  //   { name: "Mystery", path: "/category/mystery" },
-  //   { name: "Poetry", path: "/category/poetry" },
-  // ];
+  const maxCategories = 9;
+  const displayedCategories = categories.slice(0, maxCategories);
 
   const categoryRows = [];
-  for (let i = 0; i < categories.length; i += 3) {
-    categoryRows.push(categories.slice(i, i + 3));
+  for (let i = 0; i < displayedCategories.length; i += 3) {
+    categoryRows.push(displayedCategories.slice(i, i + 3));
   }
 
   return (
