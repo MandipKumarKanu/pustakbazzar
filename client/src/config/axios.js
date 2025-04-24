@@ -2,11 +2,12 @@ import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 
 // export const PROD_URL = "/api/api"; //production api
-export const DEV_URL = import.meta.env.VITE_DEV_URL; //development api
+// export const DEV_URL = ; //development api
 export const PROD_URL = "https://web-blogs-tau.vercel.app/api";
+export const baseURL = "http://localhost:8000/api/";
 
 // export const baseURL =  import.meta.env.MODE === "development" ? DEV_URL : PROD_URL;
-export const baseURL = "http://localhost:5000/api/";
+// export const baseURL = PROD_URL;
 
 export const customAxios = axios.create({
   headers: {
@@ -28,10 +29,9 @@ export const setupInterceptors = (getToken, setToken, updateUser) => {
 
   customAxios.interceptors.request.use(
     async (config) => {
-      const token = await tokenPromise;
+      const token = getToken && getToken();
       if (token) {
-        const decoded = jwtDecode(token);
-        config.headers.Authorization = ` Bearer ${token}`;
+        config.headers.Authorization = `Bearer ${token}`;
       }
       return config;
     },
@@ -46,12 +46,12 @@ export const setupInterceptors = (getToken, setToken, updateUser) => {
       if (error.response?.status === 401 && !originalRequest._isRetry) {
         originalRequest._isRetry = true;
         try {
-          const response = await axios.get(`${baseURL}auth/refresh`, {
+          const response = await axios.get(`${baseURL}/auth/refresh`, {
             withCredentials: true,
           });
 
           const { accessToken } = response.data;
-          const decodedUser = jwtDecode(accessToken);
+          const decodedUser = jwtDecode(accessToken).user;
 
           setToken(accessToken);
           updateUser(decodedUser);
@@ -61,7 +61,7 @@ export const setupInterceptors = (getToken, setToken, updateUser) => {
           if (originalRequest.headers) {
             originalRequest.headers.Authorization = `Bearer ${accessToken}`;
           }
-          return await customAxios(originalRequest);
+          return customAxios(originalRequest);
         } catch (refreshError) {
           console.error("Error refreshing token:", refreshError);
           return Promise.reject(error);

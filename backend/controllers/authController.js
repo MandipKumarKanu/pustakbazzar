@@ -8,7 +8,7 @@ const {
 
 const generateAccessToken = (user) => {
   return jwt.sign(
-    { id: user._id, profile: user.profile, seller: user.isSeller },
+    { id: user._id, profile: user.profile, seller: user.isSeller, interest: user.interest },
     process.env.ACCESS_TOKEN_SECRET,
     { expiresIn: "15d" }
   );

@@ -146,12 +146,27 @@ const getBookById = async (req, res) => {
 
     if (!book) return res.status(404).json({ message: "Book not found." });
 
+    const categories = book.category; // Assuming `book.category` contains an array of categories
+    // console.log(categories[0]._id, "categories");
+
     if (req.user) {
-      await User.findByIdAndUpdate(
-        req.user.id,
-        { $addToSet: { interest: book.category._id } },
-        { new: true }
-      );
+      const uid = req.user[0].id;
+      // console.log(req.user[0].id, "user id");
+      if (categories && categories.length > 0) {
+        const categoryId = categories[0]._id; // Extract the first category ID
+        const updatedUser = await User.findByIdAndUpdate(
+          uid,
+          {
+            $addToSet: { interest: categoryId }, // Add the single category ID to the interest array
+          },
+          { new: true }
+        );
+        console.log("Updated User:", updatedUser);
+      } else {
+        console.log("No categories found for the book.");
+      }
+    } else {
+      console.log("User not found");
     }
 
     res.status(200).json({ book });
@@ -160,7 +175,6 @@ const getBookById = async (req, res) => {
     res.status(500).json({ message: "Error fetching book." });
   }
 };
-
 
 const updateBook = async (req, res) => {
   const {
@@ -412,7 +426,6 @@ const searchBooks = async (req, res) => {
       return res.status(200).json({ books: filteredBooks.slice(0, limit) });
     }
 
-
     const fuzzySearchNeeded = query || title || author;
 
     if (!fuzzySearchNeeded) {
@@ -480,7 +493,7 @@ const searchBooks = async (req, res) => {
         }
 
         if (publishYear && book.publishYear !== parseInt(publishYear)) {
-          return { book, distance: Infinity, field: "" }; 
+          return { book, distance: Infinity, field: "" };
         }
 
         return {

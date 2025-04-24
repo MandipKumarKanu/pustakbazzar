@@ -14,7 +14,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import ShrinkDescription from "@/components/ShrinkDescription";
 import BookDescSkeleton from "@/components/BookDescSkeleton";
 import { formatPrice } from "@/utils/formatPrice";
-import { getBookById, incView } from "@/api/book";
+import { getBookById, getBookByIdUser, incView } from "@/api/book";
 import { Lens } from "@/components/magicui/lens";
 import { useIsSaved } from "@/hooks/useSaveLater";
 import { removeSaveForLaterApi, saveForLaterApi } from "@/api/saveForLater";
@@ -39,16 +39,45 @@ const BookDescPage = () => {
 
   let cartCount = typeof cCnt === "function" ? cCnt() : cCnt;
   useEffect(() => {
-    const fetchData = async () => {
-      await fetchBook();
-    };
-    fetchData();
+    // const fetchData = async () => {
+    // };
+    // fetchData();
     incViews();
     if (user && token) {
       isInWishlist();
       isInCartChk();
     }
   }, [id]);
+
+  useEffect(() => {
+    fetchBook();
+  }, [user, token]);
+
+  // Utility function to manage interests
+  const updateInterests = (categoryId) => {
+    if (!categoryId) return;
+
+    let interests = [];
+    try {
+      interests = JSON.parse(localStorage.getItem("interest")) || [];
+    } catch {
+      interests = [];
+    }
+
+    const updatedInterests = [...new Set([...interests, categoryId])];
+    if (updatedInterests.length > 5) {
+      updatedInterests.splice(0, updatedInterests.length - 5);
+    }
+
+    localStorage.setItem("interest", JSON.stringify(updatedInterests));
+  };
+
+  useEffect(() => {
+    if (book) {
+      const catId = book.category?.[0]?._id;
+      updateInterests(catId);
+    }
+  }, [book]);
 
   const isInWishlist = async () => {
     setIsWishlistLoading(true);
@@ -71,9 +100,16 @@ const BookDescPage = () => {
   const fetchBook = async () => {
     try {
       setIsLoading(true);
-      const res = await getBookById(id);
-      console.log(res.data.book);
-      setBook(res.data.book);
+      //check is public call, getBookById ; otherwise getBookByIdUser
+      if (user && token) {
+        const res = await getBookByIdUser(id);
+        console.log(res.data.book, "form user");
+        setBook(res.data.book);
+      } else {
+        const res = await getBookById(id);
+        console.log(res.data.book, "form public");
+        setBook(res.data.book);
+      }
     } catch (error) {
       console.error("Error fetching book:", error);
     } finally {
@@ -339,7 +375,7 @@ const BookDescPage = () => {
               </div>
 
               <div className="mt-6 bg-yellow-50 rounded-lg p-6 shadow">
-                {user?.id !== book?.addedBy?._id &&
+                {user?.id !== book?.addedBy?._id ||
                 user?._id !== book?.addedBy?._id ? (
                   <>
                     <h2 className="text-xl font-semibold text-gray-900 mb-4">

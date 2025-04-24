@@ -4,6 +4,14 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
 import ClickSpark from "./components/ClickSpark/ClickSpark";
 import "./index.css";
+import { setupInterceptors } from "./config/axios.js";
+import { useAuthStore } from "./store/useAuthStore.js";
+
+setupInterceptors(
+  () => useAuthStore.getState().token,
+  useAuthStore.getState().setToken,
+  useAuthStore.getState().setUser
+);
 
 createRoot(document.getElementById("root")).render(
   // <StrictMode>

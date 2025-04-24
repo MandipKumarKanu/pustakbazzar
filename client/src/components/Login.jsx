@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash, FaGoogle } from "react-icons/fa";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useCartStore } from "@/store/useCartStore";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 const loginSchema = z.object({
   email: z.string().min(1, "Email is required").email("Invalid email address"),
@@ -16,6 +17,8 @@ const Login = ({ switchToSignup }) => {
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const { login, loading } = useAuthStore();
   const { fetchCart } = useCartStore();
+  const [name, setName] = useLocalStorage("interest", []);
+
 
   const navigate = useNavigate();
 
@@ -46,7 +49,7 @@ const Login = ({ switchToSignup }) => {
   const onLoginSubmit = async (data) => {
     try {
       console.log(data);
-      await login(data.email, data.password, navigate);
+      await login(data.email, data.password, navigate,setName);
       await fetchCart()
       // navigate(-1);
     } catch (err) {
