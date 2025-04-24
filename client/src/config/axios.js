@@ -3,7 +3,7 @@ import { jwtDecode } from "jwt-decode";
 
 // export const PROD_URL = "/api/api"; //production api
 // export const DEV_URL = ; //development api
-export const PROD_URL = "https://pustakbazzar.vercel.app/";
+export const PROD_URL = "https://pustakbazzar.vercel.app/api/";
 export const DEV_URL = "http://localhost:5000/api/";
 
 export const baseURL =
