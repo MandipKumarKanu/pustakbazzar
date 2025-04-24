@@ -112,9 +112,7 @@ function App() {
         <Routes>
           <Route
             path="/auth"
-            element={
-              user && token ? <Navigate to="/" replace /> : <Auth />
-            }
+            element={user && token ? <Navigate to="/" replace /> : <Auth />}
           />
           <Route path="/" element={<HomePage />} />
           <Route path="" element={<ProtectedRoute />}>

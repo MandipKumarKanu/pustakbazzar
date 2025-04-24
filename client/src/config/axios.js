@@ -47,7 +47,7 @@ export const setupInterceptors = (getToken, setToken, updateUser) => {
       if (error.response?.status === 401 && !originalRequest._isRetry) {
         originalRequest._isRetry = true;
         try {
-          const response = await axios.get(`${baseURL}/auth/refresh`, {
+          const response = await axios.get(`${baseURL}auth/refresh`, {
             withCredentials: true,
           });
 
