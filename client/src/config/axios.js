@@ -3,10 +3,11 @@ import { jwtDecode } from "jwt-decode";
 
 // export const PROD_URL = "/api/api"; //production api
 // export const DEV_URL = ; //development api
-export const PROD_URL = "https://web-blogs-tau.vercel.app/api";
-export const baseURL = "http://localhost:5000/api/";
+export const PROD_URL = "https://pustakbazzar.vercel.app/";
+export const DEV_URL = "http://localhost:5000/api/";
 
-// export const baseURL =  import.meta.env.MODE === "development" ? DEV_URL : PROD_URL;
+export const baseURL =
+  import.meta.env.MODE === "development" ? DEV_URL : PROD_URL;
 // export const baseURL = PROD_URL;
 
 export const customAxios = axios.create({
