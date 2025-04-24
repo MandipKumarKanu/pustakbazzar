@@ -6,6 +6,7 @@ import FeaturedBook from "@/components/FeaturedBook";
 import HeadingText from "@/components/Heading";
 import Hero from "@/components/Hero";
 import HomeSearch from "@/components/HomeSearch";
+import Recommendation from "@/components/recommendation";
 import React from "react";
 
 const HomePage = () => {
@@ -20,6 +21,8 @@ const HomePage = () => {
       <ArrivalBooks />
       <HeadingText fullName="Recent Donors" bgName="Donors" />
       <DonationSection />
+      <HeadingText fullName="Recommendation" bgName="RECOMMENDATION" />
+      <Recommendation />
     </>
   );
 };

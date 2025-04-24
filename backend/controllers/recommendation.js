@@ -1,43 +1,50 @@
-const User = require("../models/User");
-const Book = require("../models/User");
+const Book = require('../models/Book');
 
+const publicRecommendation = async (req, res) => {
+  const { categories = [] } = req.body;
 
-const getCategoriesFromBoughtBooks = async (userId) => {
-  const user = await User.findById(userId).populate("bought");
+  try {
+    if (!Array.isArray(categories)) {
+      return res.status(400).json({
+        message: "'categories' must be an array",
+      });
+    }
 
-//   extract category from each book
-  const categories = user.bought.map((book) => book.category); 
-  return [...new Set(categories)];
+    let recommendedBooks;
+
+    if (categories.length > 0) {
+      recommendedBooks = await Book.find({
+        category: { $in: categories }, 
+        status: "available",
+      }).limit(10);
+    } else {
+      recommendedBooks = await Book.find({
+        status: "available",
+      }).limit(10);
+    }
+
+    if (recommendedBooks.length === 0) {
+      return res.status(404).json({
+        message: "No books found matching the given categories",
+        data: [],
+      });
+    }
+
+    res.status(200).json({
+      message: categories.length > 0 
+        ? "Recommendations fetched successfully" 
+        : "Random recommendations fetched successfully",
+      data: recommendedBooks,
+    });
+  } catch (err) {
+    console.error("Error fetching recommendations:", err);
+    res.status(500).json({
+      message: "Error fetching recommendations",
+      error: err.message,
+    });
+  }
 };
 
-const getRecommendations = async (userId) => {
-  // Fetch user's interest categories
-  const user = await User.findById(userId)
-    .populate("interest")
-    .populate("bought");
-  const interestCategories = user.interest.map((category) => category._id);
-
-
-  const purchasedCategories = await getCategoriesFromBoughtBooks(userId);
-
-  // Combine unique categories from both sources
-  const combinedCategories = [
-    ...new Set([...interestCategories, ...purchasedCategories]),
-  ];
-
-//   get bought book id to exclude from recommendatiion
-  const boughtBookIds = user.bought.map((book) => book._id);
-
-  const recommendedBooks = await Book.find({
-    category: { $in: combinedCategories },
-    _id: { $nin: boughtBookIds },
-  }).limit(10);
-
-  return recommendedBooks;
+module.exports = {
+  publicRecommendation,
 };
-
-
-
-module.exports={
-    getRecommendations
-}

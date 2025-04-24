@@ -23,7 +23,7 @@ export const useAuthStore = create((set) => ({
   setToken: (token) => set({ token }),
   setUser: (user) => set({ user }),
 
-  login: async (email, password, navigate) => {
+  login: async (email, password, navigate,setName) => {
     set({ loading: true, error: null });
     try {
       const response = await authSignIn({ email, password });
@@ -31,6 +31,7 @@ export const useAuthStore = create((set) => ({
       const decodedUser = jwtDecode(token);
       console.log(decodedUser);
       set({ loading: false, user: decodedUser, token });
+      setName(decodedUser.interest);
       toast.success("Logged-in Successful");
       navigate("/", { replace: true });
     } catch (error) {

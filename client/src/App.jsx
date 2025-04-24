@@ -36,14 +36,15 @@ import PaymentVerification from "./components/PaymentVerification";
 import OrderSuccessPage from "./pages/OrderSuccessPage";
 import MyOrders from "./pages/MyOrders";
 import SellerOrder from "./pages/SellerOrder";
-import {ProtectedRoute} from "./utils/protectedRoute";
-import {AdminProtectedRoute} from "./utils/protectedRoute";
+import { ProtectedRoute } from "./utils/protectedRoute";
+import { AdminProtectedRoute } from "./utils/protectedRoute";
 import DonationPending from "./pages/DonationPending";
 import TermsAndConditions from "./pages/TermsAndConditions";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import ManageUser from "./pages/AllUsers";
 import AdminOrder from "./pages/AdminOrder";
 import PayOut from "./pages/PayOut";
+import { useLocalStorage } from "./hooks/useLocalStorage";
 // import AdminOrder from "./pages/AdminOrder";
 
 // import ContactPage from "./pages/ContactPage";
@@ -52,6 +53,7 @@ function App() {
   const location = useLocation();
   const { pathname } = location;
   const [loading, setLoading] = useState(true);
+  useLocalStorage("interest", []);
 
   const { token, setUser, setToken } = useAuthStore();
   const { fetchCart } = useCartStore();
@@ -75,7 +77,13 @@ function App() {
         const decodedUser = jwtDecode(token);
         if (token) {
           setUser(decodedUser);
+          console.log(decodedUser);
           setToken(token);
+          localStorage.setItem(
+            "interest",
+            JSON.stringify(decodedUser.interest)
+          );
+
           fetchCart();
         }
       } catch (error) {
@@ -122,7 +130,10 @@ function App() {
           <Route path="/category" element={<CategoryPage />} />
           <Route path="/category/:cname" element={<ParticularCategory />} />
           <Route path="/contact" element={<ContactPage />} />
-          <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+          <Route
+            path="/terms-and-conditions"
+            element={<TermsAndConditions />}
+          />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
           {/* <Route element={<AdminProtectedRoute />}> */}
@@ -130,11 +141,14 @@ function App() {
             <Route path="/admin/home" element={<AdminHome />} />
             <Route path="/admin/managecategory" element={<ManageCategory />} />
             <Route path="/admin/sellerorder" element={<SellerOrder />} />
-            <Route path="/admin/pendingDonation" element={<DonationPending />} />
+            <Route
+              path="/admin/pendingDonation"
+              element={<DonationPending />}
+            />
             <Route path="/admin/allUsers" element={<ManageUser />} />
             <Route path="/admin/admin-order" element={<AdminOrder />} />
             <Route path="/admin/payout" element={<PayOut />} />
-          {/* </R8oute> */}
+            {/* </R8oute> */}
           </Route>
         </Routes>
       </div>

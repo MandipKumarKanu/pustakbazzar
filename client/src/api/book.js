@@ -21,7 +21,12 @@ export async function getBooks(
 
 export async function getBookById(id) {
   let url = `book/${id}`;
-  return axios.get(`${baseURL}${url}`);
+  return customAxios.get(`${baseURL}${url}`);
+}
+export async function getBookByIdUser(id) {
+  let url = `${baseURL}book/${id}`;
+  console.log("first")
+  return await customAxios.get(url);
 }
 
 export async function getBookByCateId(id) {
@@ -48,3 +53,8 @@ export async function updateBook(id, data) {
   let url = `book/${id}`;
   return await customAxios.patch(`${baseURL}${url}`, data);
 }
+
+  export async function getRecommendation(categoryId) {
+    let url = `book/recommendations`;
+    return customAxios.post(`${baseURL}${url}`,categoryId);
+  }
