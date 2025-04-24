@@ -24,8 +24,8 @@ app.use(
   cors({
     origin: [
       process.env.CLIENT_URL || "http://localhost:5173",
-      "https://pustakbazzar-h74q.vercel.app/",
-      "https://pustakbazzar.mandipkk.com.np/",
+      "https://pustakbazzar-h74q.vercel.app",
+      "https://pustakbazzar.mandipkk.com.np",
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
