@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FaUser, FaBars, FaTimes, FaShoppingCart } from "react-icons/fa";
-import { NavLink, useNavigate, useLocation } from "react-router-dom";
+import { NavLink, useNavigate, useLocation, Link } from "react-router-dom";
 import DropdownUser from "./DropDownUser";
 import Logo from "../assets/image/logo.png";
 import { ScrollProgress } from "./magicui/scroll-progress";
@@ -82,11 +82,13 @@ const Navbar = () => {
       <nav className={navbarClasses}>
         <div className="container mx-auto px-4 flex items-center justify-between h-16">
           <div className="flex items-center">
+            <Link to="/">
             <img
               src={Logo}
               alt="pustakbazzar"
               className="w-32 object-contain transition-all duration-300 hover:scale-105"
             />
+            </Link>
           </div>
 
           <div className="hidden md:block">

@@ -32,7 +32,7 @@ const createDonation = async (req, res) => {
 };
 
 const getLatestDonations = async (req, res) => {
-  let limit = 9;
+  let limit = 3;
 
   try {
     const donations = await Donation.find({
@@ -44,12 +44,23 @@ const getLatestDonations = async (req, res) => {
         "donor",
         "profile.userName profile.email profile.profileImg donated profile.firstName profile.lastName"
       )
-      .sort({ createdAt: -1 })
-      .limit(limit);
+      .sort({ createdAt: -1 });
 
+    // Keep only the latest donation per unique donor
+    const uniqueDonations = [];
+    const donorIds = new Set();
+
+    for (const donation of donations) {
+      const donorId = donation.donor?._id?.toString();
+      if (donorId && !donorIds.has(donorId)) {
+        uniqueDonations.push(donation);
+        donorIds.add(donorId);
+        if (uniqueDonations.length === limit) break;
+      }
+    }
 
     res.status(200).json({
-      donations,
+      donations: uniqueDonations,
     });
   } catch (error) {
     handleError(res, error, "Error fetching latest donations.");

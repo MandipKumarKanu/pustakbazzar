@@ -23,8 +23,8 @@ const HomePage = () => {
       <Recommendation />
       <HeadingText fullName="Recent Donors" bgName="Donors" />
       <DonationSection />
-      <HeadingText fullName="Recommendation" bgName="RECOMMENDATION" />
-      <Recommendation />
+      {/* <HeadingText fullName="Recommendation" bgName="RECOMMENDATION" />
+      <Recommendation /> */}
     </>
   );
 };
