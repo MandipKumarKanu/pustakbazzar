@@ -2,13 +2,16 @@ const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const Book = require("../models/Book");
-const {
-  recordUserSignup,
-} = require('../controllers/statsController');
+const { recordUserSignup } = require("../controllers/statsController");
 
 const generateAccessToken = (user) => {
   return jwt.sign(
-    { id: user._id, profile: user.profile, seller: user.isSeller, interest: user.interest },
+    {
+      id: user._id,
+      profile: user.profile,
+      seller: user.isSeller,
+      interest: user.interest,
+    },
     process.env.ACCESS_TOKEN_SECRET,
     { expiresIn: "15d" }
   );
@@ -31,7 +34,6 @@ const register = async (req, res) => {
     await user.save();
     await recordUserSignup();
 
-
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
     user.refreshToken = refreshToken;
@@ -39,8 +41,9 @@ const register = async (req, res) => {
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: true,
-      sameSite: "Strict",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "lax",
     });
 
     res.status(201).json({
@@ -69,8 +72,9 @@ const login = async (req, res) => {
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: true,
-      sameSite: "Strict",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "lax",
     });
 
     res.status(200).json({ accessToken });
@@ -184,22 +188,40 @@ const logout = async (req, res) => {
 };
 
 const refreshToken = async (req, res) => {
-  try {
-    const { refreshToken } = req.cookies;
-    if (!refreshToken)
-      return res.status(401).json({ message: "Unauthorized." });
+  const refreshToken = req.cookies.refreshToken;
+  if (!refreshToken) {
+    return res.status(401).json({ message: "Unauthorized." });
+  }
 
+  try {
     const user = await User.findOne({ refreshToken });
-    if (!user)
-      return res.status(403).json({ message: "Invalid refresh token." });
+    if (!user) return res.status(403).json({ message: "Forbidden" });
 
     jwt.verify(
       refreshToken,
       process.env.REFRESH_TOKEN_SECRET,
-      (err, decoded) => {
-        if (err)
-          return res.status(403).json({ message: "Invalid refresh token." });
+      async (err, decoded) => {
+        if (err) {
+          if (err.name === "TokenExpiredError") {
+            return res
+              .status(403)
+              .json({ message: "Refresh token expired. Please log in again." });
+          }
+          return res.status(403).json({ message: "Invalid refresh token" });
+        }
+
         const newAccessToken = generateAccessToken(user);
+        const newRefreshToken = generateRefreshToken(user);
+        user.refreshToken = newRefreshToken;
+        await user.save();
+
+        res.cookie("refreshToken", newRefreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+          sameSite: process.env.NODE_ENV === "production" ? "None" : "lax",
+        });
+
         res.status(200).json({ accessToken: newAccessToken });
       }
     );

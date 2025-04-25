@@ -16,7 +16,7 @@ const SellerOrder = () => {
   const [isAcceptDialogOpen, setIsAcceptDialogOpen] = useState(false);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [message, setMessage] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("pending");
 
   useEffect(() => {
     const fetchOrders = async () => {

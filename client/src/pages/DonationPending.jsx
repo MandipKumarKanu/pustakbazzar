@@ -175,7 +175,7 @@ const DonationPending = () => {
   const [donations, setDonations] = useState([]);
   const [error, setError] = useState(null);
   const [viewMode, setViewMode] = useState("table");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("pending");
   const [message, setmessage] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedDonation, setSelectedDonation] = useState(null);

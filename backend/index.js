@@ -22,12 +22,20 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: [process.env.CLIENT_URL || "http://localhost:5173"],
+    origin: [
+      process.env.CLIENT_URL || "http://localhost:5173",
+      "https://pustakbazzar-h74q.vercel.app",
+      "https://pustakbazzar.mandipkk.com.np",
+    ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+app.get("/", (req, res) => {
+  res.send("API is running...");
+});
 
 app.use("/api/auth", authRoutes);
 app.use("/api/book", bookRoutes);

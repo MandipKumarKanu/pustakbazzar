@@ -41,7 +41,7 @@ const BookDescPage = () => {
   useEffect(() => {
     // const fetchData = async () => {
     // };
-    // fetchData();
+    fetchBook();
     incViews();
     if (user && token) {
       isInWishlist();
@@ -49,11 +49,10 @@ const BookDescPage = () => {
     }
   }, [id]);
 
-  useEffect(() => {
-    fetchBook();
-  }, [user, token]);
+  // useEffect(() => {
+  //   fetchBook();
+  // }, [user, token]);
 
-  // Utility function to manage interests
   const updateInterests = (categoryId) => {
     if (!categoryId) return;
 
@@ -100,14 +99,11 @@ const BookDescPage = () => {
   const fetchBook = async () => {
     try {
       setIsLoading(true);
-      //check is public call, getBookById ; otherwise getBookByIdUser
       if (user && token) {
         const res = await getBookByIdUser(id);
-        console.log(res.data.book, "form user");
         setBook(res.data.book);
       } else {
         const res = await getBookById(id);
-        console.log(res.data.book, "form public");
         setBook(res.data.book);
       }
     } catch (error) {

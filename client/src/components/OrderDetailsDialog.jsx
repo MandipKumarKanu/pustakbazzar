@@ -2,7 +2,13 @@ import { formatDate } from "@/hooks/helper";
 import { Package, ShoppingBag, User, X } from "lucide-react";
 import { useState } from "react";
 
-export const OrderDetailsDialog = ({ order, onClose, onAccept, onCancel }) => {
+export const OrderDetailsDialog = ({
+  order,
+  onClose,
+  onAccept,
+  onCancel,
+  seeBelow = true,
+}) => {
   const [activeTab, setActiveTab] = useState("details");
   const orderDetails = order.orders[0];
   const orderStatus = orderDetails?.status;
@@ -166,7 +172,7 @@ export const OrderDetailsDialog = ({ order, onClose, onAccept, onCancel }) => {
             </div>
           )}
         </div>
-        {orderStatus === "pending" && (
+        {seeBelow && orderStatus === "pending" && (
           <div className="p-6 bg-gray-50 border-t">
             <div className="flex space-x-2 justify-end">
               <button

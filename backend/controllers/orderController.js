@@ -4,7 +4,6 @@ const Book = require("../models/Book");
 const { khaltiRequest } = require("../utils/khaltiRequest");
 const Transaction = require("../models/Transaction");
 
-
 const createOrder = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -176,6 +175,7 @@ const getOrdersForSeller = async (req, res) => {
 const getOrdersForAdmin = async (req, res) => {
   try {
     const orders = await Order.find()
+      .sort({ createdAt: -1 })
       .populate("userId", "profile ")
       .populate("orders.sellerId", "profile isSeller _id")
       .populate("orders.books.bookId");
@@ -194,10 +194,9 @@ const getOrdersForAdmin = async (req, res) => {
   }
 };
 
-
 const approveRejectOrder = async (req, res) => {
   try {
-    const { orderId, status, message } = req.body; 
+    const { orderId, status, message } = req.body;
     const sellerId = req.user.id;
 
     if (!["approved", "rejected"].includes(status)) {
@@ -226,12 +225,12 @@ const approveRejectOrder = async (req, res) => {
       order.orderStatus = "cancelled by seller";
       order.cancellationMessage =
         message || "Order was cancelled by one of the sellers.";
-        
+
       const bookUpdatePromises = order.orders.flatMap((subOrder) =>
         subOrder.books.map(async (bookItem) => {
           const book = await Book.findById(bookItem.bookId._id);
           if (book) {
-            book.status = "available"; 
+            book.status = "available";
             await book.save();
           }
         })
@@ -340,12 +339,10 @@ const updateOrderStatus = async (req, res) => {
       .json({ message: "Order status updated successfully.", order });
   } catch (error) {
     console.error("Error updating order status:", error);
-    res
-      .status(500)
-      .json({
-        message: "Failed to update order status.",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Failed to update order status.",
+      error: error.message,
+    });
   }
 };
 

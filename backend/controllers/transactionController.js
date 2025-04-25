@@ -3,9 +3,7 @@ const Order = require("../models/Order");
 const Book = require("../models/Book");
 const User = require("../models/User");
 const { khaltiRequest } = require("../utils/khaltiRequest");
-const {
-  recordSale,
-} = require('../controllers/statsController');
+const { recordSale } = require("../controllers/statsController");
 
 const platformFeePercentage = 0.2;
 
@@ -30,7 +28,7 @@ const initiateTransaction = async (req, res) => {
 
     const payload = {
       return_url: `${process.env.FRONTEND_URL}/payment/verify`,
-      amount: amount * 100, 
+      amount: amount * 100,
       purchase_order_id: orderId,
       purchase_order_name: "Book Purchase",
       customer_info: { userId: order.userId },
@@ -74,17 +72,9 @@ const verifyTransaction = async (req, res) => {
 
     const order = await Order.findById(transaction.orderId);
 
+    if (data.status === "Completed" && transaction.status !== "completed") {
+      await recordSale(order.netTotal);
 
-    await recordSale(order.netTotal);
-
-    order.paymentStatus = data.status === "Completed" ? "paid" : "cancelled";
-    await order.save();
-
-    transaction.status = data.status === "Completed" ? "completed" : "failed";
-    transaction.paymentDetails = data;
-    await transaction.save();
-
-    if (data.status === "Completed") {
       const user = await User.findById(order.userId);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
@@ -94,7 +84,7 @@ const verifyTransaction = async (req, res) => {
         for (const book of sellerOrder.books) {
           const seller = await User.findById(sellerOrder.sellerId);
           if (seller) {
-            seller.balance += (book.sellerEarnings);
+            seller.balance += book.sellerEarnings;
             await seller.save();
           }
 
@@ -112,6 +102,13 @@ const verifyTransaction = async (req, res) => {
 
       await user.save();
     }
+
+    order.paymentStatus = data.status === "Completed" ? "paid" : "cancelled";
+    await order.save();
+
+    transaction.status = data.status === "Completed" ? "completed" : "failed";
+    transaction.paymentDetails = data;
+    await transaction.save();
 
     res.json(data);
   } catch (error) {

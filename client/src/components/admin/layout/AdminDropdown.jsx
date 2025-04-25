@@ -13,7 +13,7 @@ const AdminDropdown = () => {
 
   const handleLogout = async () => {
     try {
-      logout();
+      // logout();
       navigate("/");
     } catch (e) {
       console.error(e);
@@ -62,7 +62,7 @@ const AdminDropdown = () => {
           <ul className="flex flex-col gap-5 border-b border-stroke px-6 py-4">
             <li>
               <Link
-                to="/admin/profile"
+                to="/profile"
                 className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
                 onClick={() => setDropdownOpen(false)}
               >
@@ -71,7 +71,7 @@ const AdminDropdown = () => {
               </Link>
             </li>
 
-            <li>
+            {/* <li>
               <Link
                 to="/admin/manage-users"
                 className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
@@ -80,9 +80,9 @@ const AdminDropdown = () => {
                 <FaUsers />
                 Manage Users
               </Link>
-            </li>
+            </li> */}
 
-            <li>
+            {/* <li>
               <Link
                 to="/admin/manage-books"
                 className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
@@ -91,11 +91,11 @@ const AdminDropdown = () => {
                 <FaBook />
                 Manage Books
               </Link>
-            </li>
+            </li> */}
 
             <li>
               <Link
-                to="/admin/settings"
+                // to="/admin/settings"
                 className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
                 onClick={() => setDropdownOpen(false)}
               >
@@ -109,7 +109,7 @@ const AdminDropdown = () => {
             onClick={handleLogout}
           >
             <FaSignOutAlt />
-            Logout
+            Back to Pustakbazzar
           </button>
         </div>
       )}
