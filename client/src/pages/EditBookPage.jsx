@@ -1,15 +1,16 @@
-import { getBookById, updateBook } from "@/api/book";
-import { CategorySelector } from "@/components/book/CategorySelector";
-import { ImageUploader } from "@/components/book/ImageUploader";
-import { SellingPriceFields } from "@/components/book/SellingPriceFields";
-import { CKEditorComp } from "@/components/ckEditor";
-import getErrorMessage from "@/utils/getErrorMsg";
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
+import { getBookById, updateBook } from "@/api/book";
+import { CategorySelector } from "@/components/book/CategorySelector";
+import { CKEditorComp } from "@/components/ckEditor";
 import { useCategoryStore } from "@/store/useCategoryStore";
 import { Cloudinary } from "cloudinary-core";
 import { toast } from "sonner";
+import { useDropzone } from "react-dropzone";
+import { conditions } from "@/components/book/bookConstant";
+import PrimaryBtn from "@/components/PrimaryBtn";
+import getErrorMessage from "@/utils/getErrorMsg";
 
 const cloudinary = new Cloudinary({
   cloud_name: import.meta.env.VITE_CLOUD_NAME,
@@ -22,12 +23,17 @@ const EditBookPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [book, setBook] = useState(null);
   const [error, setError] = useState(null);
-  const { category: categoryData } = useCategoryStore();
-  const [selectedCategories, setSelectedCategories] = useState([]);
+
+  const [activeStep, setActiveStep] = useState(1);
+  const [loading, setLoading] = useState(false);
   const [previewImages, setPreviewImages] = useState([]);
   const [selectedFiles, setSelectedFiles] = useState([]);
-  const [bookImages, setBookImages] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [cateError, setCateError] = useState(null);
+  const [desc, setDesc] = useState("");
+  const [descError, setDescError] = useState(null);
+
+  const { category: categoryData } = useCategoryStore();
 
   const {
     register,
@@ -35,14 +41,49 @@ const EditBookPage = () => {
     formState: { errors },
     setValue,
     watch,
-  } = useForm();
+    trigger,
+  } = useForm({
+    mode: "onChange",
+  });
 
-  const [desc, setDesc] = useState("");
-  const bookFor = watch("bookFor");
+  const bookForValue = watch("bookFor");
 
   useEffect(() => {
     fetchBook();
   }, [id]);
+
+  useEffect(() => {
+    if (selectedCategories.length >= 4) {
+      setCateError("Category must not be greater than 3");
+    } else if (selectedCategories.length === 0) {
+      setCateError("Category must not be empty");
+    } else {
+      setCateError(null);
+    }
+  }, [selectedCategories]);
+
+  const onDrop = (acceptedFiles) => {
+    const newImages = acceptedFiles.filter(
+      (file) => file.size <= 5 * 1024 * 1024
+    );
+    if (newImages.length !== acceptedFiles.length) {
+      toast.warning(
+        "Some files were skipped because they exceed the 5MB size limit"
+      );
+    }
+
+    setSelectedFiles((prev) => [...prev, ...newImages]);
+    const newPreviews = newImages.map((file) => URL.createObjectURL(file));
+    setPreviewImages((prev) => [...prev, ...newPreviews]);
+  };
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      "image/*": [".jpeg", ".jpg", ".png", ".gif", ".webp"],
+    },
+    multiple: true,
+  });
 
   const fetchBook = async () => {
     try {
@@ -50,6 +91,7 @@ const EditBookPage = () => {
       const res = await getBookById(id);
       const bookData = res.data.book;
       setBook(bookData);
+
       setDesc(bookData.description);
       setValue("bookName", bookData.title);
       setValue("bookLanguage", bookData.bookLanguage);
@@ -59,44 +101,32 @@ const EditBookPage = () => {
       setValue("condition", bookData.condition);
       setValue("bookFor", bookData.forDonation ? "donation" : "sell");
 
-      setPreviewImages(bookData?.images);
-
       if (!bookData.forDonation) {
         setValue("markedPrice", bookData.markedPrice);
         setValue("sellingPrice", bookData.sellingPrice);
       }
 
+      setPreviewImages(bookData?.images || []);
+
       if (bookData.category && bookData.category.length > 0) {
-        const categoryIds = bookData.category.map((cat) => cat._id);
-        const selectedCategories = categoryData.filter((cat) =>
-          categoryIds.includes(cat.value)
-        );
-        setSelectedCategories(selectedCategories);
+        const bookCategories = bookData.category.map((cat) => {
+          return {
+            value: typeof cat === "object" ? cat._id : cat,
+            label:
+              typeof cat === "object"
+                ? cat.name
+                : categoryData.find((c) => c.value === cat)?.label || cat,
+          };
+        });
+
+        setSelectedCategories(bookCategories);
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
       setError(getErrorMessage(error));
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleImageChange = (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length + selectedFiles.length > 5) {
-      alert("You can upload a maximum of 5 images");
-      e.target.value = null;
-      return;
-    }
-    const newImages = files.filter((file) => file.size <= 5 * 1024 * 1024);
-    if (newImages.length !== files.length) {
-      alert("Some files were skipped because they exceed the 5MB size limit");
-    }
-
-    setSelectedFiles((prev) => [...prev, ...newImages]);
-    const newPreviews = newImages.map((file) => URL.createObjectURL(file));
-    setPreviewImages((prev) => [...prev, ...newPreviews]);
-    e.target.value = null;
   };
 
   const removeImage = (index) => {
@@ -105,6 +135,11 @@ const EditBookPage = () => {
   };
 
   const handleUpdate = async (data) => {
+    if (desc.trim() === "") {
+      setDescError("Description is required");
+      return;
+    }
+
     try {
       setLoading(true);
       const uploadedImages = [];
@@ -132,13 +167,18 @@ const EditBookPage = () => {
 
       const categoryValue = selectedCategories.map((item) => item.value);
 
-      const oldImages = book?.images || [];
-      const finalImages = [...oldImages, ...uploadedImages];
+      const existingBookImages = book?.images || [];
+      const keptImages = existingBookImages.filter((img) =>
+        previewImages.includes(img)
+      );
+      const finalImages = [...keptImages, ...uploadedImages];
 
       const updatedData = {
         title: data.bookName,
         description: desc,
         author: data.author,
+        bookLanguage: data.bookLanguage,
+        edition: data.edition,
         category: categoryValue,
         markedPrice: data.bookFor === "donation" ? 0 : data.markedPrice,
         sellingPrice: data.bookFor === "donation" ? 0 : data.sellingPrice,
@@ -148,238 +188,677 @@ const EditBookPage = () => {
         publishYear: data.publishYear,
       };
 
-      const response = await updateBook(id, updatedData);
-      fetchBook()
-
+      await updateBook(id, updatedData);
       toast.success("Book updated successfully");
-      console.log("Updated Book Data:", updatedData);
+      navigate("/mybook");
     } catch (error) {
       console.error("Error updating book:", error);
+      toast.error(error.response?.data?.message || "Failed to update the book");
     } finally {
       setLoading(false);
     }
   };
 
-  if (isLoading && !book) {
-    return <div className="container mx-auto p-4">Loading...</div>;
-  }
+  const nextStep = async (e) => {
+    e.preventDefault();
 
-  if (error) {
-    return <div className="container mx-auto p-4 text-red-500">{error}</div>;
-  }
+    const stepFields = getStepFields(activeStep);
+    const isValid = await trigger(stepFields);
 
-  return (
-    <>
-      <div className="container mx-auto px-2 py-4">
-        <div className="max-w-4xl mt-10 mx-auto bg-gray-50 shadow-lg rounded-lg overflow-hidden">
-          <div className="p-4">
-            <h2 className="text-2xl font-bold mb-4 text-center text-gray-800">
-              Update Book
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <ImageUploader
-                previewImages={previewImages}
-                bookImages={bookImages}
-                onImageChange={handleImageChange}
-                onRemoveImage={removeImage}
-              />
-              <form onSubmit={handleSubmit(handleUpdate)} className="space-y-3">
-                <div>
+    if (isValid) {
+      setActiveStep((prevStep) => prevStep + 1);
+    }
+  };
+
+  const prevStep = (e) => {
+    e.preventDefault();
+
+    if (activeStep > 1) {
+      setActiveStep(activeStep - 1);
+    }
+  };
+
+  const getStepFields = (step) => {
+    switch (step) {
+      case 1:
+        return ["bookName", "bookLanguage", "author", "edition", "publishYear"];
+      case 2:
+        return ["markedPrice", "sellingPrice", "bookFor", "condition"];
+      case 3:
+        return ["description"];
+      default:
+        return [];
+    }
+  };
+
+  const formSteps = [
+    {
+      title: "Book Details",
+      subtitle: "Update basic information about your book",
+      icon: "📝",
+    },
+    {
+      title: "Categories & Condition",
+      subtitle: "Select categories and book condition",
+      icon: "🏷️",
+    },
+    {
+      title: "Images & Description",
+      subtitle: "Update images and describe your book",
+      icon: "📸",
+    },
+  ];
+
+  const renderStepIndicator = () => {
+    return (
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          {formSteps.map((step, index) => (
+            <div
+              key={index}
+              className={`flex-1 relative ${
+                index < formSteps.length - 1
+                  ? "after:content-[''] after:h-1 after:w-full after:absolute after:top-5 after:left-1/2 after:bg-gray-200 after:-z-10"
+                  : ""
+              }`}
+            >
+              <div className="flex flex-col items-center">
+                <div
+                  className={`flex items-center justify-center w-10 h-10 rounded-full mb-2 text-xl ${
+                    index + 1 === activeStep
+                      ? "bg-blue-600 text-white"
+                      : index + 1 < activeStep
+                      ? "bg-green-500 text-white"
+                      : "bg-gray-200 text-gray-500"
+                  }`}
+                >
+                  {index + 1 < activeStep ? "✓" : step.icon}
+                </div>
+                <h3 className="font-medium text-sm">{step.title}</h3>
+                <p className="text-xs text-gray-500 text-center mt-1">
+                  {step.subtitle}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const getStepContent = () => {
+    switch (activeStep) {
+      case 1:
+        return (
+          <>
+            <div className="grid grid-cols-1 gap-5">
+              <div className="space-y-2">
+                <label
+                  htmlFor="bookName"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Book Name
+                </label>
+                <input
+                  id="bookName"
+                  {...register("bookName", {
+                    required: "Book name is required",
+                  })}
+                  placeholder="Enter book title"
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                    errors.bookName
+                      ? "border-red-500 ring-1 ring-red-500"
+                      : "border-gray-300"
+                  }`}
+                />
+                {errors.bookName && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.bookName.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="space-y-2">
                   <label
-                    htmlFor="bookName"
-                    className="block text-sm font-medium text-gray-700 mb-1"
+                    htmlFor="author"
+                    className="block text-sm font-medium text-gray-700"
                   >
-                    Book Name
+                    Author
                   </label>
                   <input
-                    id="bookName"
-                    {...register("bookName", {
-                      required: "Book name is required",
-                    })}
-                    className={`w-full px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.bookName ? "border-red-500" : "border-gray-300"
+                    id="author"
+                    {...register("author")}
+                    placeholder="Author name"
+                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                      errors.author
+                        ? "border-red-500 ring-1 ring-red-500"
+                        : "border-gray-300"
                     }`}
                   />
-                  {errors.bookName && (
+                  {errors.author && (
                     <p className="text-red-500 text-xs mt-1">
-                      {errors.bookName.message}
+                      {errors.author.message}
                     </p>
                   )}
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label
-                      htmlFor="bookLanguage"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Language
-                    </label>
-                    <input
-                      id="bookLanguage"
-                      {...register("bookLanguage")}
-                      className={`w-full px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        errors.bookLanguage
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
-                    />
-                    {errors.bookLanguage && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.bookLanguage.message}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="author"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Author
-                    </label>
-                    <input
-                      id="author"
-                      {...register("author")}
-                      className={`w-full px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        errors.author ? "border-red-500" : "border-gray-300"
-                      }`}
-                    />
-                    {errors.author && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.author.message}
-                      </p>
-                    )}
-                  </div>
+
+                <div className="space-y-2">
+                  <label
+                    htmlFor="bookLanguage"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Language
+                  </label>
+                  <input
+                    id="bookLanguage"
+                    {...register("bookLanguage")}
+                    placeholder="Book language"
+                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                      errors.bookLanguage
+                        ? "border-red-500 ring-1 ring-red-500"
+                        : "border-gray-300"
+                    }`}
+                  />
+                  {errors.bookLanguage && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.bookLanguage.message}
+                    </p>
+                  )}
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label
-                      htmlFor="edition"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Edition
-                    </label>
-                    <input
-                      id="edition"
-                      {...register("edition")}
-                      className={`w-full px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        errors.edition ? "border-red-500" : "border-gray-300"
-                      }`}
-                    />
-                    {errors.edition && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.edition.message}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="publishYear"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Publish Year
-                    </label>
-                    <input
-                      id="publishYear"
-                      {...register("publishYear")}
-                      className={`w-full px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        errors.publishYear
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
-                    />
-                    {errors.publishYear && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.publishYear.message}
-                      </p>
-                    )}
-                  </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="space-y-2">
+                  <label
+                    htmlFor="edition"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Edition
+                  </label>
+                  <input
+                    id="edition"
+                    {...register("edition")}
+                    placeholder="Book edition"
+                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                      errors.edition
+                        ? "border-red-500 ring-1 ring-red-500"
+                        : "border-gray-300"
+                    }`}
+                  />
+                  {errors.edition && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.edition.message}
+                    </p>
+                  )}
                 </div>
+
+                <div className="space-y-2">
+                  <label
+                    htmlFor="publishYear"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Publication Year
+                  </label>
+                  <input
+                    id="publishYear"
+                    {...register("publishYear")}
+                    placeholder="Year published"
+                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                      errors.publishYear
+                        ? "border-red-500 ring-1 ring-red-500"
+                        : "border-gray-300"
+                    }`}
+                  />
+                  {errors.publishYear && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.publishYear.message}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </>
+        );
+      case 2:
+        return (
+          <>
+            <div className="grid grid-cols-1 gap-5">
+              <div className="space-y-2">
                 <CategorySelector
                   selectedCategories={selectedCategories}
                   onCategoryChange={setSelectedCategories}
                   error={errors.category}
                   categoryData={categoryData}
                 />
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Condition
-                  </label>
-                  <select
-                    {...register("condition")}
-                    className={`w-full px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.condition ? "border-red-500" : "border-gray-300"
+                {cateError && (
+                  <p className="text-red-500 text-xs mt-1">{cateError}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Book Condition
+                </label>
+                <select
+                  {...register("condition")}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                    errors.condition
+                      ? "border-red-500 ring-1 ring-red-500"
+                      : "border-gray-300"
+                  }`}
+                >
+                  <option value="">Select condition</option>
+                  {conditions.map((cond) => (
+                    <option key={cond.value} value={cond.value}>
+                      {cond.label}
+                    </option>
+                  ))}
+                </select>
+                {errors.condition && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.condition.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Book for
+                </label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div
+                    className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                      bookForValue === "donation"
+                        ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500"
+                        : "border-gray-300 hover:border-blue-300"
                     }`}
+                    onClick={() => {
+                      const radioBtn = document.querySelector(
+                        'input[value="donation"]'
+                      );
+                      if (radioBtn) radioBtn.click();
+                    }}
                   >
-                    <option value="">Select condition</option>
-                    <option value="new">New</option>
-                    <option value="good">Good</option>
-                    <option value="acceptable">Acceptable</option>
-                  </select>
-                  {errors.condition && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.condition.message}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Book for
-                  </label>
-                  <div className="flex space-x-2">
-                    <label
-                      htmlFor="bookForDonation"
-                      className="inline-flex items-center"
-                    >
+                    <div className="flex items-center space-x-3">
                       <input
                         type="radio"
-                        id="bookForDonation"
+                        id="donationRadio"
                         {...register("bookFor")}
                         value="donation"
-                        className="form-radio h-4 w-4 text-blue-600"
+                        className="h-5 w-5 text-blue-600"
                       />
-                      <span className="ml-1 text-gray-700 capitalize">
-                        donation
-                      </span>
-                    </label>
-                    <label
-                      htmlFor="bookForSell"
-                      className="inline-flex items-center"
-                    >
+                      <div>
+                        <label
+                          htmlFor="donationRadio"
+                          className="font-medium text-gray-800"
+                        >
+                          Donation
+                        </label>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Donate your book to help others
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                      bookForValue === "sell"
+                        ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500"
+                        : "border-gray-300 hover:border-blue-300"
+                    }`}
+                    onClick={() => {
+                      const radioBtn = document.querySelector(
+                        'input[value="sell"]'
+                      );
+                      if (radioBtn) radioBtn.click();
+                    }}
+                  >
+                    <div className="flex items-center space-x-3">
                       <input
                         type="radio"
-                        id="bookForSell"
+                        id="sellRadio"
                         {...register("bookFor")}
                         value="sell"
-                        className="form-radio h-4 w-4 text-blue-600"
+                        className="h-5 w-5 text-blue-600"
                       />
-                      <span className="ml-1 text-gray-700 capitalize">
-                        sell
-                      </span>
-                    </label>
+                      <div>
+                        <label
+                          htmlFor="sellRadio"
+                          className="font-medium text-gray-800"
+                        >
+                          Sell
+                        </label>
+                        <p className="text-xs text-gray-500 mt-1">
+                          List your book for sale
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                {bookFor === "sell" && (
-                  <SellingPriceFields register={register} errors={errors} />
-                )}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Description
-                  </label>
-                  <CKEditorComp content={desc} setContent={setDesc} />
+              </div>
+
+              {bookForValue === "sell" && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="markedPrice"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Marked Price (₹)
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <span className="text-gray-500">₹</span>
+                      </div>
+                      <input
+                        id="markedPrice"
+                        type="number"
+                        {...register("markedPrice", { valueAsNumber: true })}
+                        placeholder="0.00"
+                        className={`w-full pl-8 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                          errors.markedPrice
+                            ? "border-red-500 ring-1 ring-red-500"
+                            : "border-gray-300"
+                        }`}
+                      />
+                    </div>
+                    {errors.markedPrice && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.markedPrice.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="sellingPrice"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Selling Price (₹)
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <span className="text-gray-500">₹</span>
+                      </div>
+                      <input
+                        id="sellingPrice"
+                        type="number"
+                        {...register("sellingPrice", { valueAsNumber: true })}
+                        placeholder="0.00"
+                        className={`w-full pl-8 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                          errors.sellingPrice
+                            ? "border-red-500 ring-1 ring-red-500"
+                            : "border-gray-300"
+                        }`}
+                      />
+                    </div>
+                    {errors.sellingPrice && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.sellingPrice.message}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <button
-                  type="submit"
-                  className="w-full bg-blue-500 px-3 py-2 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-3xl text-white font-bold shadow-lg transition-transform duration-300 ease-in-out hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Updating..." : "Update Book"}
-                </button>
-              </form>
+              )}
             </div>
+          </>
+        );
+      case 3:
+        return (
+          <>
+            <div className="grid grid-cols-1 gap-5">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 flex gap-2">
+                  Book Images (Up to 5){" "}
+                  {previewImages.length < 1 && (
+                    <p className="text-red-500 text-xs mt-1">
+                      Please Select at least 1 image
+                    </p>
+                  )}
+                </label>
+                <div
+                  {...getRootProps()}
+                  className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center"
+                >
+                  <input {...getInputProps()} />
+
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-12 w-12 text-gray-400 mb-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                  <p className="text-sm text-gray-600 text-center mb-2">
+                    {isDragActive
+                      ? "Release to drop the files here"
+                      : "Drag & drop images here, or click to select files"}
+                  </p>
+                  <p className="text-xs text-gray-500 text-center mb-4">
+                    Maximum 5 images, 5MB each
+                  </p>
+                  <p
+                    htmlFor="image-upload"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md cursor-pointer hover:bg-blue-700 transition-colors"
+                  >
+                    Select Files
+                  </p>
+                </div>
+
+                {previewImages.length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-sm font-medium text-gray-700 mb-2">
+                      Selected Images:{" "}
+                    </p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 ">
+                      {previewImages.map((preview, index) => (
+                        <div
+                          key={index}
+                          className="relative group rounded-lg overflow-hidden border border-gray-200"
+                        >
+                          <img
+                            src={preview}
+                            alt={`Preview ${index + 1}`}
+                            className="w-full h-24 object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/50 bg-opacity-40 opacity-0 group-hover:opacity-100 group-hover:backdrop-blur-xs transition-opacity flex items-center justify-center">
+                            <button
+                              type="button"
+                              onClick={() => removeImage(index)}
+                              className="bg-red-500 text-white p-1 rounded-full hover:bg-red-600 focus:outline-none cursor-pointer"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-4 w-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M6 18L18 6M6 6l12 12"
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label
+                  htmlFor="description"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Description
+                </label>
+                <CKEditorComp content={desc} setContent={setDesc} />
+                {descError && (
+                  <p className="text-red-500 text-xs mt-1">{descError}</p>
+                )}
+              </div>
+            </div>
+          </>
+        );
+      default:
+        return null;
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex justify-center items-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex justify-center items-center">
+        <div className="bg-red-50 text-red-600 p-6 rounded-lg shadow-md">
+          <h3 className="text-xl font-semibold mb-2">Error</h3>
+          <p>{error}</p>
+          <button
+            onClick={() => navigate(-1)}
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen py-12">
+      <div className="container mx-auto px-4">
+        <div className="max-w-4xl mx-auto bg-gray-50 shadow-xl rounded-2xl overflow-hidden">
+          <div className="p-8">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-2 text-center text-gray-800">
+              Update Your Book
+            </h2>
+            <p className="text-center text-gray-500 mb-8">
+              Edit your book listing details
+            </p>
+
+            {renderStepIndicator()}
+
+            <form onSubmit={handleSubmit(handleUpdate)} className="space-y-8">
+              {getStepContent()}
+
+              <div className="flex justify-between pt-6 border-t border-gray-200">
+                <PrimaryBtn
+                  type="button"
+                  onClick={(e) => prevStep(e)}
+                  style={`bg-gray-100 hover:bg-gray-200 flex items-center gap-2 transition-all ${
+                    activeStep === 1
+                      ? "invisible"
+                      : "text-gray-700 hover:text-gray-900 border border-gray-300 hover:border-gray-400"
+                  }`}
+                  name={
+                    <>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 19l-7-7 7-7"
+                        />
+                      </svg>
+                      Previous
+                    </>
+                  }
+                />
+
+                {activeStep < 3 ? (
+                  <PrimaryBtn
+                    type="button"
+                    onClick={(e) => nextStep(e)}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 transition-colors shadow-md hover:shadow-lg"
+                    name={
+                      <>
+                        Next
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      </>
+                    }
+                  />
+                ) : (
+                  <PrimaryBtn
+                    type="submit"
+                    disabled={
+                      loading || cateError || previewImages.length === 0
+                    }
+                    name={
+                      loading ? (
+                        <>
+                          <svg
+                            className="animate-spin h-5 w-5 text-white"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
+                          </svg>
+                          Processing...
+                        </>
+                      ) : (
+                        <>Update Book</>
+                      )
+                    }
+                  />
+                )}
+              </div>
+            </form>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

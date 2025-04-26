@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { FiLoader } from "react-icons/fi";
 
 const provinces = [
   {
@@ -16,7 +17,12 @@ const provinces = [
   },
 ];
 
-const BillingDetailsModal = ({ isOpen, onClose, onSubmit }) => {
+const BillingDetailsModal = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  isSubmitting = false,
+}) => {
   const [selectedProvince, setSelectedProvince] = useState("");
   const [formData, setFormData] = useState({
     firstName: "",
@@ -40,7 +46,9 @@ const BillingDetailsModal = ({ isOpen, onClose, onSubmit }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     try {
-      onSubmit(formData);
+      const submissionData = { ...formData, province: selectedProvince };
+      onSubmit(submissionData);
+
       setFormData({
         firstName: "",
         lastName: "",
@@ -50,8 +58,11 @@ const BillingDetailsModal = ({ isOpen, onClose, onSubmit }) => {
         phone: "",
         email: "",
       });
-    } catch (error) {}
-    // onClose();
+
+      setSelectedProvince("");
+    } catch (error) {
+      console.error("Error submitting billing details:", error);
+    }
   };
 
   return (
@@ -189,16 +200,24 @@ const BillingDetailsModal = ({ isOpen, onClose, onSubmit }) => {
             <div className="flex justify-end mt-4 gap-4">
               <button
                 type="button"
-                className="px-4 py-2  bg-gray-400  hover:bg-gray-500 cursor-pointer rounded-full text-white text-lg font-bold"
+                className="px-4 py-2 bg-gray-400 hover:bg-gray-500 cursor-pointer rounded-full text-white text-lg font-bold"
                 onClick={onClose}
+                disabled={isSubmitting}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-full text-white text-lg font-bold cursor-pointer"
+                className="px-4 py-2 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-full text-white text-lg font-bold cursor-pointer flex items-center justify-center"
+                disabled={isSubmitting}
               >
-                Submit
+                {isSubmitting ? (
+                  <>
+                    <FiLoader className="animate-spin mr-2" /> Adding...
+                  </>
+                ) : (
+                  "Submit"
+                )}
               </button>
             </div>
           </form>

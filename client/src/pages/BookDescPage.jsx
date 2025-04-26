@@ -371,8 +371,86 @@ const BookDescPage = () => {
               </div>
 
               <div className="mt-6 bg-yellow-50 rounded-lg p-6 shadow">
-                {user?.id !== book?.addedBy?._id ||
-                user?._id !== book?.addedBy?._id ? (
+                {!user ? (
+                  <>
+                    <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                      Delivery Information
+                    </h2>
+                    <div className="flex items-center mb-3">
+                      <FaTruck className="text-gray-400 w-5 mr-2" />
+                      <span className="text-gray-700">
+                        Delivery Charge: ₹50 on all orders
+                      </span>
+                    </div>
+                    {book.availability !== "rent" && (
+                      <div className="mb-3">
+                        <span className="text-gray-700">
+                          No return policy is available.
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="relative group">
+                      <button
+                        disabled
+                        className="w-full px-6 py-3 mb-3 rounded-3xl text-white text-xl font-bold shadow-lg bg-blue-400 cursor-not-allowed opacity-70"
+                      >
+                        <FaShoppingCart className="mr-2 inline" />
+                        Add to Cart
+                      </button>
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">
+                        Please login to add to cart
+                      </div>
+                    </div>
+
+                    <div className="relative group">
+                      <button
+                        disabled
+                        className="w-full px-6 py-3 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-3xl text-white text-xl font-bold shadow-lg opacity-70 cursor-not-allowed"
+                      >
+                        <FaShoppingCart className="mr-2 inline" />
+                        {book.availability === "rent" ? "Rent Now" : "Buy Now"}
+                      </button>
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">
+                        Please login to {book.availability === "rent" ? "rent" : "buy"}
+                      </div>
+                    </div>
+                  </>
+                ) : user?._id === book?.addedBy?._id || user?.id === book?.addedBy?._id ? (
+                  <>
+                    <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                      Manage Your Listing
+                    </h2>
+                    <p className="text-gray-700 mb-4">
+                      This book was listed by you. You can manage it from your profile.
+                    </p>
+                    <div className="relative group">
+                      <button
+                        disabled
+                        className="w-full px-6 py-3 mb-3 rounded-3xl text-white text-xl font-bold shadow-lg bg-blue-400 cursor-not-allowed opacity-70"
+                      >
+                        <FaShoppingCart className="mr-2 inline" />
+                        Add to Cart
+                      </button>
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">
+                        You cannot purchase your own book
+                      </div>
+                    </div>
+
+                    <div className="relative group">
+                      <button
+                        disabled
+                        className="w-full px-6 py-3 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-3xl text-white text-xl font-bold shadow-lg opacity-70 cursor-not-allowed"
+                      >
+                        <FaShoppingCart className="mr-2 inline" />
+                        {book.availability === "rent" ? "Rent Now" : "Buy Now"}
+                      </button>
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">
+                        You cannot purchase your own book
+                      </div>
+                    </div>
+                  </>
+                ) : (
                   <>
                     <h2 className="text-xl font-semibold text-gray-900 mb-4">
                       Delivery Information
@@ -413,8 +491,10 @@ const BookDescPage = () => {
                     )}
 
                     <button
-                      className="w-full px-6 py-3 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-3xl text-white text-xl font-bold shadow-lg transition-colors duration-300 ease-in-out hover:bg-gradient-to-t hover:from-secondaryColor hover:to-primaryColor"
+                      className="w-full px-6 py-3 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-3xl text-white text-xl font-bold shadow-lg transition-colors duration-300 ease-in-out hover:bg-gradient-to-t hover:from-secondaryColor hover:to-primaryColor cursor-not-allowed"
                       onClick={handleBuy}
+                      disabled
+                      title="This feature is not available yet"
                     >
                       <FaShoppingCart className="mr-2 inline" />
                       {book.availability === "rent" ? "Rent Now" : "Buy Now"}
@@ -428,8 +508,6 @@ const BookDescPage = () => {
                       </p>
                     )}
                   </>
-                ) : (
-                  <>Book is Listed By You</>
                 )}
               </div>
             </div>

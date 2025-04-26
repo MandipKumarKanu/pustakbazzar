@@ -95,7 +95,7 @@ function HomeSearch() {
           value={searchFields.author}
           onChange={handleInputChange}
           placeholder="Who wrote the book?"
-          className="border-[1px] px-4 h-10 py-2 text-lg rounded-3xl border-primaryColor w-full md:w-1/3 lg:w-1/4 xl:w-1/5"
+          className="hidden md:block border-[1px] px-4 h-10 py-2 text-lg rounded-3xl border-primaryColor w-full md:w-1/3 lg:w-1/4 xl:w-1/5"
         />
         <input
           type="number"
@@ -105,7 +105,7 @@ function HomeSearch() {
           value={searchFields.year}
           onChange={handleInputChange}
           placeholder="When was the book published?"
-          className="border-[1px] px-4 h-10 py-2 text-lg rounded-3xl border-primaryColor w-full md:w-1/3 lg:w-1/4 xl:w-1/5"
+          className="hidden md:block border-[1px] px-4 h-10 py-2 text-lg rounded-3xl border-primaryColor w-full md:w-1/3 lg:w-1/4 xl:w-1/5"
         />
         <PrimaryBtn
           name={loading ? "Searching..." : "Search"}
@@ -125,7 +125,6 @@ function HomeSearch() {
             <FaTimes className="text-gray-600 text-xl" />
           </button>
           <div>
-            
             {loading ? (
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primaryColor mx-auto"></div>

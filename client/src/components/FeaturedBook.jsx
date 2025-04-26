@@ -27,7 +27,7 @@ const FeaturedBook = () => {
     <div className="container mx-auto px-4 mt-14">
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {loading
-          ? Array.from({ length: 3 }).map((_, index) => (
+          ? Array.from({ length: 6 }).map((_, index) => (
               <SkeletonBookCard key={index} />
             ))
           : books.map((book) => (

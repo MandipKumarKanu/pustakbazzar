@@ -9,8 +9,17 @@ export async function approveRejectOrder(id, action, reasone) {
   });
 }
 
-export async function getOrderForAdmin() {
-  return await customAxios.get("order/admin");
+export async function getOrderForAdmin(status = "all", page = 1, limit = 10) {
+  const queryParams = new URLSearchParams({
+    page,
+    limit,
+  });
+
+  if (status !== "all") {
+    queryParams.append("status", status);
+  }
+
+  return await customAxios.get(`order/admin?${queryParams.toString()}`);
 }
 
 export async function updateOrderStatusApi(orderId, status) {

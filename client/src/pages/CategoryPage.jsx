@@ -1,4 +1,3 @@
-// src/pages/CategoryPage.jsx
 import React, { useEffect, useState } from "react";
 import HeadingText from "@/components/Heading";
 import {
@@ -13,6 +12,7 @@ import BookCard from "@/components/BookCard";
 import SkeletonCard from "@/components/SkeletonCard";
 import { FaSearch } from "react-icons/fa";
 import { IoMdClose } from "react-icons/io";
+import SkeletonBookCard from "@/components/SkeletonBookCard";
 
 const LIMIT = 30;
 
@@ -148,7 +148,10 @@ export default function CategoryPage() {
                     setSearchText("");
                   }}
                 >
-                  <CardContent className="flex flex-col items-center space-y-3 cursor-pointer" title={category.label}>
+                  <CardContent
+                    className="flex flex-col items-center space-y-3 cursor-pointer"
+                    title={category.label}
+                  >
                     <p className="text-lg font-semibold capitalize line-clamp-1">
                       {category.label}
                     </p>
@@ -159,10 +162,10 @@ export default function CategoryPage() {
           </CarouselContent>
         </Carousel>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mt-14">
+        <div className="grid gap-6 mt-14 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
           {loading ? (
-            Array.from({ length: LIMIT }).map((_, i) => (
-              <SkeletonCard key={i} index={i} />
+            Array.from({ length: 9 }).map((_, index) => (
+              <SkeletonBookCard key={index} />
             ))
           ) : categoryData.length > 0 ? (
             categoryData.map((book) => (

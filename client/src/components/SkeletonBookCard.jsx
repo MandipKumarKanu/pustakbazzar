@@ -1,9 +1,13 @@
 import React from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card } from "./ui/card";
+import SpotlightCard from "./SpotlightCard/SpotlightCard";
 
 const SkeletonBookCard = () => {
   return (
-    <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 p-4 sm:p-5 w-full bg-white rounded-xl shadow-none hover:shadow-md transition-shadow duration-300">
+    <SpotlightCard className="flex flex-col sm:flex-row gap-4 sm:gap-6 p-4 sm:p-5 w-full bg-white rounded-xl shadow-none hover:shadow-md transition-shadow duration-300"
+    spotlightColor="rgba(108, 39, 199, 0.5)"
+    >
 
       <div className="relative w-full sm:w-48 h-48 sm:h-64 flex-shrink-0">
         <Skeleton className="w-full h-full rounded-lg" />
@@ -22,7 +26,7 @@ const SkeletonBookCard = () => {
           <Skeleton className="w-32 h-10 rounded-md" />
         </div>
       </div>
-    </div>
+    </SpotlightCard>
   );
 };
 

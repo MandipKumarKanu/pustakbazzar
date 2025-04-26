@@ -37,6 +37,7 @@ import {
   CalendarClock,
 } from "lucide-react";
 import { getBooks } from "@/api/book";
+import SkeletonBookCard from "@/components/SkeletonBookCard";
 
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
   const pages = [];
@@ -147,7 +148,6 @@ const AllBookPage = () => {
     setPage(1);
   };
 
-
   const handleApplyFilters = () => {
     const filters = [];
     if (minPrice) filters.push(`Min: $${minPrice}`);
@@ -157,7 +157,6 @@ const AllBookPage = () => {
     setPage(1);
     setIsFilterOpen(false);
   };
-
 
   const handleClearFilter = (filter) => {
     if (filter.startsWith("Min:")) {
@@ -171,7 +170,6 @@ const AllBookPage = () => {
     setPage(1);
   };
 
-
   const handleClearAllFilters = () => {
     setMinPrice("");
     setMaxPrice("");
@@ -180,7 +178,6 @@ const AllBookPage = () => {
     setPage(1);
     setIsFilterOpen(false);
   };
-
 
   const handlePageChange = (newPage) => {
     window.scrollTo(0, 0);
@@ -192,7 +189,6 @@ const AllBookPage = () => {
       <HeadingText fullName="All Books" bgName="ALL BOOKS" />
       <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
-
           <div className="flex flex-wrap items-center gap-4">
             <Select value={sortOption} onValueChange={handleSortChange}>
               <SelectTrigger className="w-[180px]">
@@ -262,7 +258,6 @@ const AllBookPage = () => {
             </Dialog>
           </div>
 
-
           {activeFilters.length > 0 && (
             <div className="flex flex-wrap gap-2 items-center">
               <span className="text-sm text-muted-foreground">
@@ -295,17 +290,14 @@ const AllBookPage = () => {
           )}
         </div>
 
-
-        {loading && books.length === 0 ? (
-          <div className="min-h-screen flex items-center justify-center">
-            <Loader />
+        {loading ? (
+          <div className="grid gap-6 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 9 }).map((_, index) => (
+              <SkeletonBookCard key={index} />
+            ))}
           </div>
         ) : books.length > 0 ? (
-          <div
-            className={`grid gap-6 ${
-              loading ? "opacity-60" : ""
-            } grid-cols-1 lg:grid-cols-2 xl:grid-cols-3`}
-          >
+          <div className="grid gap-6 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
             {books.map((book) => (
               <BookCard
                 key={book._id}
@@ -335,7 +327,6 @@ const AllBookPage = () => {
             </Button>
           </div>
         )}
-
 
         {totalPages > 1 && (
           <Pagination

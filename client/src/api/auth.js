@@ -39,7 +39,7 @@ export async function getAddressApi() {
 }
 
 export async function getAllUsers() {
-  const url = `auth/users`;
+  const url = `admin/users`;
   return await customAxios.get(`/${url}`);
 }
 
@@ -53,11 +53,11 @@ export const updateProfileApi = async (profileData) => {
 };
 
 export const sellerToApproveApi = async (id) => {
-  return await customAxios.post(`auth/seller/approve/${id}`);
+  return await customAxios.post(`admin/seller/approve/${id}`);
 };
 
 export const sellerToRejectApi = async (id) => {
-  return await customAxios.post(`auth/seller/reject/${id}`);
+  return await customAxios.post(`admin/seller/reject/${id}`);
 };
 
 export const logoutApi = async (id) => {

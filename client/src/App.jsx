@@ -45,6 +45,7 @@ import ManageUser from "./pages/AllUsers";
 import AdminOrder from "./pages/AdminOrder";
 import PayOut from "./pages/PayOut";
 import { useLocalStorage } from "./hooks/useLocalStorage";
+import SellerPayoutHistoryPage from "./pages/SellerPayoutHistoryPage";
 // import AdminOrder from "./pages/AdminOrder";
 
 // import ContactPage from "./pages/ContactPage";
@@ -122,7 +123,7 @@ function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/mybook" element={<MyBookPage />} />
             <Route path="/book/edit/:id" element={<EditBookPage />} />
-            <Route path="/users" element={<UserPage />} />
+            {/* <Route path="/users" element={<UserPage />} /> */}
             <Route path="/billing" element={<BillingAndOrderSummary />} />
             <Route path="/payment/verify/" element={<PaymentVerification />} />
             <Route path="/order-success" element={<OrderSuccessPage />} />
@@ -151,6 +152,7 @@ function App() {
             <Route path="/admin/allUsers" element={<ManageUser />} />
             <Route path="/admin/admin-order" element={<AdminOrder />} />
             <Route path="/admin/payout" element={<PayOut />} />
+            <Route path="/admin/payout-history" element={<SellerPayoutHistoryPage />} />
             {/* </R8oute> */}
           </Route>
         </Routes>

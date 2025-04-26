@@ -54,7 +54,7 @@ function BillingAndOrderSummary() {
   const totalPayment = subtotal + shippingFee;
 
   const [selectedAddress, setSelectedAddress] = useState(null);
-  const [paymentMethod, setPaymentMethod] = useState("credit");
+  const [paymentMethod, setPaymentMethod] = useState("khalti");
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -95,7 +95,7 @@ function BillingAndOrderSummary() {
       shippingFee: shippingFee.toFixed(2),
       payment: paymentMethod,
       shippingAddress: {
-        firstName: selectedAddress.firstName, 
+        firstName: selectedAddress.firstName,
         lastName: selectedAddress.lastName,
         street: selectedAddress.street,
         province: selectedAddress.province,
@@ -369,13 +369,17 @@ function BillingAndOrderSummary() {
                   type="radio"
                   name="payment"
                   value="credit"
-                  checked={paymentMethod === "credit"}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  disabled
+                  // checked={paymentMethod === "credit"}
+                  // onChange={(e) => setPaymentMethod(e.target.value)}
                   className="mr-2"
                   style={{ accentColor: "#531D99" }}
                 />
                 <span className="flex items-center gap-2">
-                  <FiCreditCard /> Direct Credit Transfer
+                  <FiCreditCard /> Direct Credit Transfer{" "}
+                  <span className="text-xs ml-2 bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">
+                    Coming Soon
+                  </span>
                 </span>
               </label>
               <label className="flex items-center">

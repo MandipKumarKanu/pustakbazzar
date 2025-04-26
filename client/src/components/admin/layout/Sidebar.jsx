@@ -93,6 +93,11 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             </NavItem>
           </li>
           <li>
+            <NavItem to="/admin/payout-history" icon={FaListAlt}>
+              Seller
+            </NavItem>
+          </li>
+          <li>
             <NavItem to="/admin/payout" icon={FaListAlt}>
               Payout
             </NavItem>

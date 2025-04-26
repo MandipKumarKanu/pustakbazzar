@@ -127,6 +127,8 @@ const AddBook = () => {
         condition: data.condition,
         forDonation: data.bookFor === "donation",
         publishYear: data.publishYear,
+        edition:data.edition,
+        language: data.bookLanguage,
       };
 
       await addBook(dataToSend);

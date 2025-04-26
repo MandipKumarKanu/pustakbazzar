@@ -43,6 +43,7 @@ const CartPage = () => {
   const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);
   const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
   const [isAddressLoading, setIsAddressLoading] = useState(true);
+  const [isAddingAddress, setIsAddingAddress] = useState(false);
 
   const {
     fetchCart,
@@ -58,17 +59,21 @@ const CartPage = () => {
   let cartCount = typeof cCnt === "function" ? cCnt() : cCnt;
 
   useEffect(() => {
-    if (addresses && addresses.length > 0) {
-      setUserAddresses(addresses);
-    }
-  }, [addresses]);
-
-  useEffect(() => {
     if (user) {
       fetchCart();
       fetchAddress();
     }
-  }, [user]);
+  }, [user, fetchCart, fetchAddress]);
+
+  useEffect(() => {
+    if (addresses && addresses.length > 0) {
+      setUserAddresses(addresses);
+
+      if (selectedAddressIndex >= addresses.length) {
+        setSelectedAddressIndex(addresses.length - 1);
+      }
+    }
+  }, [addresses]);
 
   const fetchUserAddresses = async () => {
     setIsAddressLoading(true);
@@ -156,16 +161,33 @@ const CartPage = () => {
         );
         return;
       }
+
+      setIsAddingAddress(true);
+
+      // Add address via API
       await addAddressApi(billingData);
 
-      await fetchUserAddresses();
-      setSelectedAddressIndex(userAddresses.length);
+      // Fetch the updated addresses
+      await fetchAddress();
+
+      // Create a new temporary array with the new address included
+      const updatedAddresses = [...userAddresses, billingData];
+
+      // Update state immediately to show the new address
+      setUserAddresses(updatedAddresses);
+
+      // Select the newly added address (it will be the last one in the array)
+      setSelectedAddressIndex(updatedAddresses.length - 1);
+
+      // Close the modal
       setIsBillingModalOpen(false);
 
-      toast.success("Address Added");
+      toast.success("Address added successfully");
     } catch (error) {
       toast.error(getErrorMessage(error));
       console.error("Error adding address: ", error);
+    } finally {
+      setIsAddingAddress(false);
     }
   };
 
@@ -526,6 +548,7 @@ const CartPage = () => {
         isOpen={isBillingModalOpen}
         onClose={() => setIsBillingModalOpen(false)}
         onSubmit={handleBillingSubmit}
+        isSubmitting={isAddingAddress}
       />
     </div>
   );
