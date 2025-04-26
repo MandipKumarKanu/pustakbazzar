@@ -7,15 +7,21 @@ const {
   updateDonationStatus,
   deleteDonation,
   getAllDonations,
-  getPendingDonations
+  getPendingDonations,
 } = require("../controllers/donationController");
 const authMiddleware = require("../middleware/authMiddleware");
+const roleMiddleware = require("../middleware/roleMiddleware");
 
 const router = express.Router();
 
 router.post("/donate", authMiddleware, createDonation);
 router.get("/my-donations", authMiddleware, getUserDonations);
-router.get("/pending", authMiddleware, getPendingDonations);
+router.get(
+  "/pending",
+  authMiddleware,
+  roleMiddleware(["admin"]),
+  getPendingDonations
+);
 router.get("/all-donations", getAllDonations);
 router.get("/latest-donations", getLatestDonations);
 router.get("/donors", getAllDonors);

@@ -76,4 +76,52 @@ const getMyEarnings = async (req, res) => {
   }
 };
 
-module.exports = { createPayout, getAllPayouts, getPayoutById,getMyEarnings };
+const getSellerPayoutHistory = async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    const sellerId = req.params.sellerId || req.user._id;
+
+    if (
+      req.user._id.toString() !== sellerId.toString() && 
+      req.user.profile.role !== "admin"
+    ) {
+      return res.status(403).json({ 
+        error: "Unauthorized. You can only view your own payout history." 
+      });
+    }
+    
+    const user = await User.findById(sellerId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    
+    // Paginate payout history
+    const totalHistory = user.payoutHistory.length;
+    const paginatedHistory = user.payoutHistory
+      .sort((a, b) => b.date - a.date) // Sort by date descending
+      .slice(skip, skip + limitNum);
+    
+    res.status(200).json({
+      message: "Payout history fetched successfully",
+      payoutHistory: paginatedHistory,
+      pagination: {
+        totalItems: totalHistory,
+        totalPages: Math.ceil(totalHistory / limitNum),
+        currentPage: pageNum
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching payout history:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+module.exports = { 
+  createPayout, 
+  getAllPayouts, 
+  getPayoutById, 
+  getMyEarnings, 
+  getSellerPayoutHistory 
+};

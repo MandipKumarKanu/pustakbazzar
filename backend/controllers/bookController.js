@@ -41,6 +41,9 @@ const createBook = async (req, res) => {
         .json({ message: "Only approved sellers can upload books for sale." });
     }
 
+    console.log("Language:", language);
+    console.log("Edition:", edition);
+
     const styledDesc = addCustomClassesToHtml(description);
     const book = new Book({
       title,
@@ -146,12 +149,14 @@ const getBookById = async (req, res) => {
 
     if (!book) return res.status(404).json({ message: "Book not found." });
 
-    const categories = Array.isArray(book.category) ? book.category : [book.category];
+    const categories = Array.isArray(book.category)
+      ? book.category
+      : [book.category];
 
     if (req.user) {
       const uid = req.user._id || req.user[0]?.id;
       if (categories && categories.length > 0) {
-        const categoryId = categories[0]._id; 
+        const categoryId = categories[0]._id;
         await User.findByIdAndUpdate(
           uid,
           {

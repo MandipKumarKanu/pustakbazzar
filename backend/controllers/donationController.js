@@ -42,12 +42,12 @@ const getLatestDonations = async (req, res) => {
       .populate("book")
       .populate(
         "donor",
-        "profile.userName profile.email profile.profileImg donated profile.firstName profile.lastName"
+        "profile.userName profile.email profile.profileImg donated profile.firstName profile.lastName createdAt"
       )
       .sort({ createdAt: -1 });
 
-    // Keep only the latest donation per unique donor
-    const uniqueDonations = [];
+
+     const uniqueDonations = [];
     const donorIds = new Set();
 
     for (const donation of donations) {
@@ -108,23 +108,32 @@ const updateDonationStatus = async (req, res) => {
 };
 
 const getAllDonations = async (req, res) => {
-  const { page = 1, limit = 10 } = req.query;
+  const { page = 1, limit = 10, status } = req.query;
+  const pageNum = parseInt(page);
+  const limitNum = parseInt(limit);
+  const skip = (pageNum - 1) * limitNum;
 
   try {
-    const donations = await Donation.find()
+    const query = {};
+    if (status && ['pending', 'approved', 'rejected', 'completed'].includes(status)) {
+      query.status = status;
+    }
+
+    const donations = await Donation.find(query)
       .populate("book")
       .populate("donor", "profile.userName profile.email")
-      .skip((page - 1) * limit)
-      .limit(limit);
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum);
 
-    const totalDonations = await Donation.countDocuments();
+    const totalDonations = await Donation.countDocuments(query);
 
     res.status(200).json({
       donations,
       pagination: {
         totalDonations,
-        totalPages: Math.ceil(totalDonations / limit),
-        currentPage: parseInt(page),
+        totalPages: Math.ceil(totalDonations / limitNum),
+        currentPage: pageNum,
       },
     });
   } catch (error) {
@@ -185,12 +194,17 @@ const deleteDonation = async (req, res) => {
 
 const getPendingDonations = async (req, res) => {
   try {
+    const { page = 1, limit = 10 } = req.query;
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
 
     const pendingDonations = await Donation.find({ status: "pending" })
       .populate("book")
       .populate("donor", "profile.userName profile.email")
-      .sort({ createdAt: -1 });
-   
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum);
 
     const totalPendingDonations = await Donation.countDocuments({
       status: "pending",
@@ -198,11 +212,11 @@ const getPendingDonations = async (req, res) => {
 
     res.status(200).json({
       donations: pendingDonations,
-      // pagination: {
-      //   totalPendingDonations,
-      //   totalPages: Math.ceil(totalPendingDonations / limit),
-      //   currentPage: parseInt(page),
-      // },
+      pagination: {
+        totalPendingDonations,
+        totalPages: Math.ceil(totalPendingDonations / limitNum),
+        currentPage: pageNum,
+      },
     });
   } catch (error) {
     handleError(res, error, "Error fetching pending donations.");

@@ -5,15 +5,15 @@ const {
   login,
   refreshToken,
   myProfile,
-  getUsers,
+  // getUsers,
   getUserById,
   updateUser,
   deleteUser,
   addAddress,
   logout,
-  approveSeller,
+  // approveSeller,
   applyForSeller,
-  rejectSeller,
+  // rejectSeller,
   getUserAddresses,
   myBook,
 } = require("../controllers/authController");
@@ -25,7 +25,7 @@ router.post("/login", login);
 router.get("/refresh", refreshToken);
 router.get("/profile", authMiddleWare, myProfile);
 router.get("/mybooks/:forDonation", authMiddleWare, myBook);
-router.get("/users", authMiddleWare, roleMiddleware(["admin"]), getUsers);
+// router.get("/users", authMiddleWare, roleMiddleware(["admin"]), getUsers);
 router.get("/user/:id", authMiddleWare, getUserById);
 router.patch("/profile", authMiddleWare, updateUser);
 router.delete("/profile", authMiddleWare, deleteUser);
@@ -33,7 +33,7 @@ router.patch("/profile/address", authMiddleWare, addAddress);
 router.get("/profile/address", authMiddleWare, getUserAddresses);
 router.post("/logout", authMiddleWare, logout);
 router.post("/seller", authMiddleWare, applyForSeller);
-router.post("/seller/approve/:id", authMiddleWare, approveSeller);
-router.post("/seller/reject/:id", authMiddleWare, rejectSeller);
+// router.post("/seller/approve/:id", authMiddleWare, approveSeller);
+// router.post("/seller/reject/:id", authMiddleWare, rejectSeller);
 
 module.exports = router;

@@ -138,20 +138,39 @@ const getOrdersForUser = async (req, res) => {
 const getOrdersForSeller = async (req, res) => {
   try {
     const sellerId = req.user.id;
+    const { page = 1, limit = 10, status } = req.query;
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
 
-    const orders = await Order.find({ "orders.sellerId": sellerId })
+    const query = { "orders.sellerId": sellerId };
+    
+    if (status && ['pending', 'approved', 'rejected', 'completed'].includes(status)) {
+      query["orders.status"] = status;
+    }
+
+    const orders = await Order.find(query)
       .select(
         "-totalPrice -deliveryPrice -discount -netTotal -payment -paymentStatus -orderStatus"
       )
       .populate("orders.sellerId", "profile.userName _id")
-      .sort({ date: -1 })
-      .populate("orders.books.bookId");
-    // .populate("userId", "profile.userName _id");
+      .populate("orders.books.bookId")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum);
+
+    const totalOrders = await Order.countDocuments(query);
 
     if (!orders || orders.length === 0) {
-      return res
-        .status(200)
-        .json({ message: "No orders found for this seller" });
+      return res.status(200).json({ 
+        message: "No orders found for this seller",
+        orders: [],
+        pagination: {
+          totalOrders: 0,
+          totalPages: 0,
+          currentPage: pageNum,
+        }
+      });
     }
 
     const sellerOrders = orders.map((order) => {
@@ -162,7 +181,14 @@ const getOrdersForSeller = async (req, res) => {
       return orderObj;
     });
 
-    return res.status(200).json({ orders: sellerOrders });
+    return res.status(200).json({ 
+      orders: sellerOrders,
+      pagination: {
+        totalOrders,
+        totalPages: Math.ceil(totalOrders / limitNum),
+        currentPage: pageNum,
+      }
+    });
   } catch (error) {
     console.error("Error in getOrdersForSeller:", error);
     return res.status(500).json({
@@ -174,17 +200,47 @@ const getOrdersForSeller = async (req, res) => {
 
 const getOrdersForAdmin = async (req, res) => {
   try {
-    const orders = await Order.find()
-      .sort({ createdAt: -1 })
-      .populate("userId", "profile ")
-      .populate("orders.sellerId", "profile isSeller _id")
-      .populate("orders.books.bookId");
+    const { page = 1, limit = 10, status } = req.query;
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
 
-    if (!orders || orders.length === 0) {
-      return res.status(404).json({ message: "No orders found" });
+    const query = {};
+    
+    if (status && ['pending', 'approved', 'rejected', 'completed', 'cancelled','shipped','delivered'].includes(status)) {
+      query.orderStatus = status;
     }
 
-    return res.status(200).json({ orders });
+    const orders = await Order.find(query)
+      .populate("userId", "profile")
+      .populate("orders.sellerId", "profile isSeller _id")
+      .populate("orders.books.bookId")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum);
+
+    const totalOrders = await Order.countDocuments(query);
+
+    if (!orders || orders.length === 0) {
+      return res.status(200).json({
+        message: "No orders found",
+        orders: [],
+        pagination: {
+          totalOrders: 0,
+          totalPages: 0,
+          currentPage: pageNum,
+        }
+      });
+    }
+
+    return res.status(200).json({
+      orders,
+      pagination: {
+        totalOrders,
+        totalPages: Math.ceil(totalOrders / limitNum),
+        currentPage: pageNum,
+      }
+    });
   } catch (error) {
     console.error("Error in getOrdersForAdmin:", error);
     return res.status(500).json({
