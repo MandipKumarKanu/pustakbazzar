@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { getStats } from "@/api/stats";
 import AnalyticsChart from "@/components/AnalyticsChart";
 import DashInfo from "@/components/DashInfo";
+import TodayAnalytics from "@/components/TodayAnalytics";
+import { useAuthStore } from "@/store/useAuthStore";
 
 const AdminHome = () => {
   const [stats, setStats] = useState(null);
@@ -9,6 +11,8 @@ const AdminHome = () => {
   const [error, setError] = useState(null);
   const [days, setDays] = useState(7);
   const [chartWidth, setChartWidth] = useState("100%");
+  const { user } = useAuthStore();
+  const isAdmin = user?.profile?.role === "admin";
 
   useEffect(() => {
     const handleResize = () => {
@@ -54,17 +58,20 @@ const AdminHome = () => {
   return (
     <div className="p-6">
       <DashInfo />
-      <div className="w-full">
-        <div className=" ">
-          <AnalyticsChart
-            chartData={stats}
-            loading={loading}
-            error={error}
-            chartWidth={chartWidth}
-            onDaysChange={handleDaysChange}
-          />
+      {isAdmin && (
+        <div className="w-full">
+          {stats && <TodayAnalytics analyticsData={stats[0]} />}
+          <div className=" ">
+            <AnalyticsChart
+              chartData={stats}
+              loading={loading}
+              error={error}
+              chartWidth={chartWidth}
+              onDaysChange={handleDaysChange}
+            />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

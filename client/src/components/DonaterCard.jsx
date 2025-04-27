@@ -47,14 +47,14 @@ const DonaterCard = ({ book, seller }) => {
         <div className="px-5 py-4">
           <h2 className="text-xl font-bold text-gray-800 flex items-center capitalize">
             {firstName} {lastName}
-            <FaAward className="text-amber-500 ml-2 shrink-0" />
+            {/* <FaAward className="text-amber-500 ml-2 shrink-0" /> */}
           </h2>
           
           <div className="flex items-center mt-2 text-sm">
             <span className="inline-block px-2 py-1 bg-primary/10 text-primary rounded-md font-medium mr-2">
               {donationCount} {donationCount === 1 ? 'Contribution' : 'Contributions'}
             </span>
-            <span className="text-gray-500">Member since {seller?.createdAt ? new Date(seller.createdAt).getFullYear() : 'N/A'}</span>
+            {/* <span className="text-gray-500">Member since {seller?.createdAt ? new Date(seller.createdAt).getFullYear() : 'N/A'}</span> */}
           </div>
           
           <div className="mt-4 pt-3 border-t border-gray-100">

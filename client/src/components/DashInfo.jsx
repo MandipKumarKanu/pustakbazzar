@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import DataTable from "./reactTable";
-import axios from "axios";
+import TodayAnalytics from "./TodayAnalytics"; // Import the new component
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -148,6 +148,7 @@ const DashInfo = () => {
 
   return (
     <div className="mb-8 overflow-hidden">
+      
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <div className="p-8 bg-white rounded-lg shadow-md">
           <div className="flex items-center gap-6">

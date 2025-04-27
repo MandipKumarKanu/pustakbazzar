@@ -148,7 +148,7 @@ const Footer = () => {
         <p>
           Developed by{" "}
           <a
-            href="https://github.com/noobdevs"
+            href="https://github.com/mand1pshah"
             target="_blank"
             rel="noopener noreferrer"
             className="font-semibold hover:underline"

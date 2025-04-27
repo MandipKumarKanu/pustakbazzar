@@ -429,13 +429,14 @@ const SellerPayoutHistoryPage = () => {
             </div>
           </div>
 
-          <Button
+          <button
             onClick={refreshData}
-            className="flex items-center gap-2 bg-white border border-gray-200 shadow-sm rounded-lg px-4 py-2 text-sm font-medium hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm hover:bg-gray-50"
+            title="Refresh books"
           >
-            <RefreshCw size={16} className="text-indigo-600" />
-            <span>Refresh Data</span>
-          </Button>
+            <RefreshCw size={14} />
+            <span>Refresh</span>
+          </button>
         </div>
 
         <div className="bg-white p-4 rounded-xl shadow-sm mb-6 border">

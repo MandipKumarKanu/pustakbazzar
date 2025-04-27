@@ -114,10 +114,11 @@ const EditBookPage = () => {
             value: typeof cat === "object" ? cat._id : cat,
             label:
               typeof cat === "object"
-                ? cat.name
-                : categoryData.find((c) => c.value === cat)?.label || cat,
+                ? cat.categoryName
+                : cat?.categoryName || cat,
           };
         });
+        // console.log("bookCategories", categoryData);
 
         setSelectedCategories(bookCategories);
       }

@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import Profile from "../components/Profile";
 import ProfileBooks from "../components/ProfileBooks";
 import { useAuthStore } from "@/store/useAuthStore";
+import Loader from "@/components/Loader";
 
 const ProfilePage = () => {
   const { user, getProfile, loading } = useAuthStore();
@@ -14,10 +15,12 @@ const ProfilePage = () => {
     fetchProfile();
   }, []);
 
- 
-
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <>
+        <Loader />
+      </>
+    );
   }
 
   return (

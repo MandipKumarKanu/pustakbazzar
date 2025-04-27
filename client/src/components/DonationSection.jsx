@@ -75,9 +75,9 @@ function DonationSection() {
 
   return (
     <div className="mt-10 container mx-auto px-4 mb-16">
-      <p className="text-center text-gray-600 max-w-2xl mx-auto"> Meet the incredible donors who are
+      {/* <p className="text-center text-gray-600 max-w-2xl mx-auto"> Meet the incredible donors who are
         making knowledge accessible to everyone.
-      </p>
+      </p> */}
 
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">

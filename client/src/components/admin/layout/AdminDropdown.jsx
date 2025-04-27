@@ -29,7 +29,7 @@ const AdminDropdown = () => {
       >
         <span className="hidden text-right lg:block">
           <span className="block text-sm font-medium text-white uppercase">
-            {user?.profile?.firstName} {user?.profile?.lastName} (Admin)
+            {user?.profile?.firstName} {user?.profile?.lastName} 
           </span>
         </span>
 
@@ -60,7 +60,7 @@ const AdminDropdown = () => {
       {dropdownOpen && (
         <div className="absolute right-0 mt-4 flex w-64 flex-col rounded-xl border border-stroke bg-white shadow-lg z-10">
           <ul className="flex flex-col gap-5 border-b border-stroke px-6 py-4">
-            <li>
+            {/* <li>
               <Link
                 to="/profile"
                 className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
@@ -69,7 +69,7 @@ const AdminDropdown = () => {
                 <FaUser />
                 Admin Profile
               </Link>
-            </li>
+            </li> */}
 
             {/* <li>
               <Link

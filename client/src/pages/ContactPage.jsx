@@ -1,65 +1,64 @@
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import React from "react";
 import { toast } from "sonner";
 import { FaEnvelope, FaPhoneAlt, FaMapMarkerAlt } from "react-icons/fa";
 import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from "react-icons/fa";
 import PrimaryBtn from "@/components/PrimaryBtn";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
+const contactFormSchema = z.object({
+  name: z
+    .string()
+    .min(1, "Name is required")
+    .regex(/^[a-zA-Z\s]+$/, "Name must contain only letters"),
+  email: z.string().min(1, "Email is required").email("Invalid email address"),
+  subject: z.string().optional(),
+  message: z.string().min(10, "Message must be at least 10 characters"),
+});
 
 const ContactPage = () => {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    subject: "",
-    message: "",
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: zodResolver(contactFormSchema),
+    mode: "onChange",
+    defaultValues: {
+      name: "",
+      email: "",
+      subject: "",
+      message: "",
+    },
+    mode: "onChange",
   });
-  const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!formData.name || !formData.email || !formData.message) {
-      toast.error("Please fill all required fields");
-      return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      toast.error("Please enter a valid email address");
-      return;
-    }
-
-    setLoading(true);
-
+  const onSubmit = async (data) => {
     try {
-      // await axios.post('/api/contact', formData);
-
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       toast.success("Message sent successfully! We'll get back to you soon.");
-      setFormData({ name: "", email: "", subject: "", message: "" });
+      reset();
     } catch (error) {
       toast.error("Failed to send message. Please try again later.");
       console.error("Contact form error:", error);
-    } finally {
-      setLoading(false);
     }
   };
+
+  const inputClasses =
+    "w-full h-11 rounded-md border border-gray-300 px-4 py-2 text-base outline-none transition-all focus:ring-2 focus:ring-purple-500 focus:border-transparent";
+  const textareaClasses =
+    "w-full rounded-md border border-gray-300 px-4 py-2 text-base outline-none transition-all focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none";
 
   return (
     <div className="min-h-screen bg-gradient-to-br">
       <div className="container mx-auto pt-16 pb-8 px-4">
-        <h1 className="text-4xl font-bold text-center mb-3 font-meditative">Get in Touch</h1>
-        <p className=" text-center max-w-2xl mx-auto font-sfpro text-threeColor text-lg ">
+        <h1 className="text-4xl font-bold text-center mb-3 font-meditative">
+          Get in Touch
+        </h1>
+        <p className="text-center max-w-2xl mx-auto font-sfpro text-threeColor text-lg">
           Have questions or want to learn more? We'd love to hear from you. Our
           team is ready to assist you with any inquiries.
         </p>
@@ -67,9 +66,10 @@ const ContactPage = () => {
 
       <div className="container mx-auto px-4 pb-16">
         <div className="max-w-6xl mx-auto border-2 rounded-2xl overflow-hidden">
-          <div className="bg-white  shadow-xl ">
-            <div className="flex flex-col md:flex-row ">
+          <div className="bg-white shadow-xl">
+            <div className="flex flex-col md:flex-row">
               <div className="bg-primaryColor text-white p-8 md:p-12 md:w-2/5 relative">
+                {/* Left side content - unchanged */}
                 <h2 className="text-2xl font-bold mb-6">Contact Information</h2>
 
                 <div className="space-y-6">
@@ -78,9 +78,9 @@ const ContactPage = () => {
                       <FaEnvelope className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className=" text-sm">Email</p>
+                      <p className="text-sm">Email</p>
                       <a
-                        href="mailto:contact@example.com"
+                        href="mailto:mandipshah3@gmail.com"
                         className="text-lg hover:underline"
                       >
                         mandipshah3@gmail.com
@@ -93,7 +93,7 @@ const ContactPage = () => {
                       <FaPhoneAlt className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className=" text-sm">Phone</p>
+                      <p className="text-sm">Phone</p>
                       <p className="text-lg">+977 981-120-9589</p>
                     </div>
                   </div>
@@ -103,7 +103,7 @@ const ContactPage = () => {
                       <FaMapMarkerAlt className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className=" text-sm">Address</p>
+                      <p className="text-sm">Address</p>
                       <p className="text-lg">Aadarshnagar</p>
                       <p className="text-lg">Birgunj, Nepal</p>
                     </div>
@@ -111,7 +111,7 @@ const ContactPage = () => {
                 </div>
 
                 <div className="mt-12">
-                  <p className=" mb-3">Connect with us</p>
+                  <p className="mb-3">Connect with us</p>
                   <div className="flex space-x-4">
                     <a
                       href="#"
@@ -161,7 +161,7 @@ const ContactPage = () => {
                   Send us a message
                 </h2>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                   <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <div>
                       <label
@@ -170,16 +170,20 @@ const ContactPage = () => {
                       >
                         Name <span className="text-red-500">*</span>
                       </label>
-                      <Input
+                      <input
                         id="name"
-                        name="name"
                         type="text"
-                        value={formData.name}
-                        onChange={handleChange}
-                        required
+                        {...register("name")}
                         placeholder="Your name"
-                        className="w-full"
+                        className={`${inputClasses} ${
+                          errors.name ? "border-red-500 focus:ring-red-500" : ""
+                        }`}
                       />
+                      {errors.name && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors.name.message}
+                        </p>
+                      )}
                     </div>
 
                     <div>
@@ -189,16 +193,22 @@ const ContactPage = () => {
                       >
                         Email <span className="text-red-500">*</span>
                       </label>
-                      <Input
+                      <input
                         id="email"
-                        name="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        required
+                        type="text"
+                        {...register("email")}
                         placeholder="your.email@example.com"
-                        className="w-full"
+                        className={`${inputClasses} ${
+                          errors.email
+                            ? "border-red-500 focus:ring-red-500"
+                            : ""
+                        }`}
                       />
+                      {errors.email && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors.email.message}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -209,14 +219,12 @@ const ContactPage = () => {
                     >
                       Subject
                     </label>
-                    <Input
+                    <input
                       id="subject"
-                      name="subject"
                       type="text"
-                      value={formData.subject}
-                      onChange={handleChange}
+                      {...register("subject")}
                       placeholder="What's this about?"
-                      className="w-full"
+                      className={inputClasses}
                     />
                   </div>
 
@@ -227,26 +235,31 @@ const ContactPage = () => {
                     >
                       Message <span className="text-red-500">*</span>
                     </label>
-                    <Textarea
+                    <textarea
                       id="message"
-                      name="message"
+                      {...register("message")}
                       rows={5}
-                      value={formData.message}
-                      onChange={handleChange}
-                      required
                       placeholder="How can we help you?"
-                      className="resize-none w-full"
+                      className={`${textareaClasses} ${
+                        errors.message
+                          ? "border-red-500 focus:ring-red-500"
+                          : ""
+                      }`}
                     />
+                    {errors.message && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.message.message}
+                      </p>
+                    )}
                   </div>
 
                   <div>
                     <PrimaryBtn
                       type="submit"
                       className="w-full bg-primaryColor hover:bg-primaryColor text-white py-2 px-4 rounded-md"
-                      disabled={loading}
-                      w
+                      disabled={isSubmitting}
                       name={
-                        loading ? (
+                        isSubmitting ? (
                           <div className="flex items-center justify-center">
                             <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin mr-2"></div>
                             Sending...
@@ -262,11 +275,17 @@ const ContactPage = () => {
                 <div className="mt-8 text-sm text-gray-500">
                   <p>
                     By submitting this form, you agree to our{" "}
-                    <a href="#" className=" hover:underline">
+                    <a
+                      href="/privacy-policy"
+                      className="text-primaryColor hover:underline"
+                    >
                       Privacy Policy
                     </a>{" "}
                     and{" "}
-                    <a href="#" className=" hover:underline">
+                    <a
+                      href="/terms-and-conditions"
+                      className="text-primaryColor hover:underline"
+                    >
                       Terms of Service
                     </a>
                     .

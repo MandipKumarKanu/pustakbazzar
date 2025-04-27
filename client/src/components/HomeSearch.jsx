@@ -76,7 +76,7 @@ function HomeSearch() {
   };
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center mx-4">
       <form
         onSubmit={handleSearch}
         className="flex flex-col md:flex-row gap-4 m-auto justify-center mt-20 w-full"

@@ -19,7 +19,6 @@ const Login = ({ switchToSignup }) => {
   const { fetchCart } = useCartStore();
   const [name, setName] = useLocalStorage("interest", []);
 
-
   const navigate = useNavigate();
 
   const {
@@ -49,9 +48,8 @@ const Login = ({ switchToSignup }) => {
   const onLoginSubmit = async (data) => {
     try {
       console.log(data);
-      await login(data.email, data.password, navigate,setName);
-      await fetchCart()
-      // navigate(-1);
+      await login(data.email, data.password, navigate, setName);
+      await fetchCart();
     } catch (err) {
       console.error(err);
     }
@@ -82,6 +80,30 @@ const Login = ({ switchToSignup }) => {
       </div>
       {error && <p className={errorClasses}>{error.message}</p>}
     </>
+  );
+
+  // Spinner component for the loading animation
+  const LoadingSpinner = () => (
+    <svg
+      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      ></circle>
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+      ></path>
+    </svg>
   );
 
   return (
@@ -116,8 +138,21 @@ const Login = ({ switchToSignup }) => {
       <div className="text-sm text-purple-600 cursor-pointer hover:underline font-medium text-right">
         Forgot password?
       </div>
-      <button type="submit" className={buttonClasses} disabled={loading}>
-        {!loading ? "Login" : "Signing in..."}
+      <button
+        type="submit"
+        className={`${buttonClasses} ${
+          loading ? "cursor-not-allowed opacity-90" : ""
+        } flex items-center justify-center`}
+        disabled={loading}
+      >
+        {loading ? (
+          <>
+            <LoadingSpinner />
+            <span>Signing in...</span>
+          </>
+        ) : (
+          "Login"
+        )}
       </button>
       <div className="text-sm mt-2 text-center text-gray-600">
         Don't have an account?{" "}
