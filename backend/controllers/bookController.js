@@ -171,7 +171,13 @@ const getBookById = async (req, res) => {
       console.log("User not found");
     }
 
-    res.status(200).json({ book });
+    const bookData = book.toObject();
+    if (bookData.language) {
+      bookData.bookLanguage = bookData.language;
+      delete bookData.language;
+    }
+
+    res.status(200).json({ book: bookData });
   } catch (error) {
     console.error("Error fetching book:", error);
     res.status(500).json({ message: "Error fetching book." });
@@ -663,6 +669,48 @@ const getFeaturedBooks = async (req, res) => {
   }
 };
 
+const getAllBooksForAdmin = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, status } = req.query;
+    const pageNum = parseInt(page);
+    const limitNum = Math.min(parseInt(limit) || 10, 50);
+    const skip = (pageNum - 1) * limitNum;
+
+    const query = {};
+    if (
+      status &&
+      ["available", "sold", "donated", "pending"].includes(status)
+    ) {
+      query.status = status;
+    }
+
+    const books = await Book.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum)
+      .populate("category", "categoryName")
+      .populate("addedBy", "profile.userName profile.email")
+      .lean();
+
+    const totalBooks = await Book.countDocuments(query);
+
+    return res.status(200).json({
+      books,
+      pagination: {
+        totalBooks,
+        totalPages: Math.ceil(totalBooks / limitNum),
+        currentPage: pageNum,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching books for admin:", error);
+    return res.status(500).json({
+      message: "Error fetching books",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createBook,
   getAllBooks,
@@ -678,4 +726,5 @@ module.exports = {
   getMonthlyTopBooks,
   toggleFeaturedBook,
   getFeaturedBooks,
+  getAllBooksForAdmin,
 };

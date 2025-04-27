@@ -94,14 +94,33 @@ const updateDonationStatus = async (req, res) => {
       return res.status(400).json({ message: "Invalid donation status." });
     }
 
-    const donation = await Donation.findById(donationId);
+    const donation = await Donation.findById(donationId).populate("book");
     if (!donation)
       return res.status(404).json({ message: "Donation not found." });
 
     donation.status = status;
     await donation.save();
 
-    res.status(200).json({ message: "Donation status updated.", donation });
+    if (status === "completed") {
+      const book = await Book.findById(donation.book._id);
+      if (book) {
+        book.status = "donated";
+        await book.save();
+      }
+    }
+
+    if (status === "rejected") {
+      const book = await Book.findById(donation.book._id);
+      if (book) {
+        book.status = "available";
+        await book.save();
+      }
+    }
+
+    res.status(200).json({ 
+      message: `Donation ${status} successfully.`, 
+      donation 
+    });
   } catch (error) {
     handleError(res, error, "Error updating donation status.");
   }

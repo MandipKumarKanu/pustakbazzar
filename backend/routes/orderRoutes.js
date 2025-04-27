@@ -8,7 +8,7 @@ const {
   getOrdersForAdmin,
   approveRejectOrder,
   cancelOrder,
-  updateOrderStatus
+  updateOrderStatus,
 } = require("../controllers/orderController");
 
 const authMiddleware = require("../middleware/authMiddleware");
@@ -31,6 +31,11 @@ router.patch(
   updateOrderStatus
 );
 
-router.get("/admin", authMiddleware, getOrdersForAdmin);
+router.get(
+  "/admin",
+  authMiddleware,
+  roleMiddleware(["admin"]),
+  getOrdersForAdmin
+);
 
 module.exports = router;
