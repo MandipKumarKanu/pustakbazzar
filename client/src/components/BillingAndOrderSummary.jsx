@@ -130,7 +130,7 @@ function BillingAndOrderSummary() {
     } else if (paymentMethod === "stripe") {
       try {
         const stripe = await loadStripe(
-          import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
+          import.meta.env.VITE_STRIPE_PK
         );
         const body = {
           shippingFee: shippingFee.toFixed(2),
