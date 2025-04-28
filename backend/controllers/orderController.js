@@ -362,11 +362,11 @@ const getOrdersForAdmin = async (req, res) => {
     if (
       status &&
       [
-        "pending",
         "approved",
         "rejected",
         "completed",
         "cancelled",
+        "confirmed",
         "shipped",
         "delivered",
       ].includes(status)
