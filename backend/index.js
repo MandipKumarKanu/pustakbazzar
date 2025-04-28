@@ -18,6 +18,12 @@ const app = express();
 
 connectDB();
 
+app.post(
+  "/api/webhook/stripe",
+  express.raw({ type: "application/json" }),
+  require("./controllers/transactionController").handleStripeWebhook
+);
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(
@@ -47,6 +53,7 @@ app.use("/api/order", orderRoutes);
 app.use("/api/donation", donationRoutes);
 app.use("/api/khaltipay", transactionRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/transactions", require("./routes/transactionRoutes"));
 
 const PORT = process.env.PORT || 8000;
 

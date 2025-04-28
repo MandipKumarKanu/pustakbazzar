@@ -9,6 +9,7 @@ const {
   approveRejectOrder,
   cancelOrder,
   updateOrderStatus,
+  createOrderWithStripe
 } = require("../controllers/orderController");
 
 const authMiddleware = require("../middleware/authMiddleware");
@@ -16,6 +17,7 @@ const roleMiddleware = require("../middleware/roleMiddleware");
 // const adminMiddleware = require("../middleware/adminMiddleware");
 
 router.post("/", authMiddleware, createOrder);
+router.post("/stripe-checkout", authMiddleware, createOrderWithStripe);
 router.get("/", authMiddleware, getOrdersForUser);
 router.get("/seller", authMiddleware, getOrdersForSeller);
 router.patch(

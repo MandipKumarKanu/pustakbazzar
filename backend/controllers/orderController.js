@@ -3,6 +3,7 @@ const Cart = require("../models/Cart");
 const Book = require("../models/Book");
 const { khaltiRequest } = require("../utils/khaltiRequest");
 const Transaction = require("../models/Transaction");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const createOrder = async (req, res) => {
   try {
@@ -112,6 +113,154 @@ const createOrder = async (req, res) => {
   }
 };
 
+const createOrderWithStripe = async (req, res) => {
+  try {
+    const {
+      shippingAddress,
+      shippingFee = 0,
+      products,
+      discount = 0,
+    } = req.body;
+    const userId = req.user.id;
+
+    if (!products || !Array.isArray(products) || products.length === 0) {
+      return res.status(400).json({ error: "No products provided" });
+    }
+
+    let totalPrice = 0;
+    const orders = [];
+
+    // Prepare orders
+    for (const sellerCart of products) {
+      const { sellerId, books } = sellerCart;
+
+      const orderBooks = books.map((book) => {
+        const price =
+          book.price || book.currentPrice || book.bookId.sellingPrice;
+        const sellerEarningRate = 1; // Adjust if needed
+
+        totalPrice += price * book.quantity;
+
+        return {
+          bookId: book.bookId._id,
+          price,
+          quantity: book.quantity,
+          sellerEarnings: price * sellerEarningRate * book.quantity,
+        };
+      });
+
+      orders.push({
+        sellerId: sellerId._id || sellerId,
+        books: orderBooks,
+        shippingFee,
+        status: "pending",
+      });
+    }
+
+    const netTotal = totalPrice + Number(shippingFee) - Number(discount);
+
+    const newOrder = new Order({
+      orders,
+      userId,
+      totalPrice,
+      shippingFee,
+      discount,
+      netTotal,
+      payment: "stripe",
+      orderStatus: "pending",
+      paymentStatus: "pending",
+      shippingAddress,
+    });
+    await newOrder.save();
+
+    const lineItems = products.flatMap((seller) =>
+      seller.books.map((book) => {
+        const price =
+          book.price || book.currentPrice || book.bookId.sellingPrice;
+
+        return {
+          price_data: {
+            currency: "npr",
+            product_data: {
+              name: book.bookId.title,
+              images: [book.bookId.images[0]],
+              metadata: {
+                book_id: book.bookId._id.toString(),
+              },
+            },
+            unit_amount: Math.round(price * 100),
+          },
+          quantity: book.quantity,
+        };
+      })
+    );
+
+    if (shippingFee > 0) {
+      lineItems.push({
+        price_data: {
+          currency: "npr",
+          product_data: {
+            name: "Shipping Fee",
+            description: "Delivery charges",
+          },
+          unit_amount: Math.round(shippingFee * 100),
+        },
+        quantity: 1,
+      });
+    }
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+      line_items: lineItems,
+      client_reference_id: newOrder._id.toString(),
+      metadata: {
+        order_id: newOrder._id.toString(),
+        user_id: userId,
+      },
+      success_url: `${process.env.FRONTEND_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}&order_id=${newOrder._id}`,
+      cancel_url: `${process.env.FRONTEND_URL}/payment/cancel?order_id=${newOrder._id}`,
+    });
+
+    newOrder.stripeSessionId = session.id;
+    await newOrder.save();
+
+
+
+    await Cart.findOneAndUpdate(
+      { userId },
+      { $set: { carts: [] } }
+    );
+
+    const transaction = new Transaction({
+      orderId: newOrder._id,
+      amount: netTotal,
+      status: "initiated",
+      stripeSessionId: session.id,
+      paymentMethod: "stripe",
+      paymentDetails: {
+        sessionId: session.id,
+        amount: netTotal,
+        currency: "npr",
+      },
+    });
+    await transaction.save();
+
+    return res.status(201).json({
+      success: true,
+      message: "Order created successfully",
+      sessionId: session.id,
+      orderId: newOrder._id,
+      checkoutUrl: session.url,
+    });
+  } catch (error) {
+    console.error("Stripe order creation error:", error.stack || error.message);
+    return res.status(500).json({
+      error: "Failed to create order with Stripe",
+      details: error.message,
+    });
+  }
+};
+
 const getOrdersForUser = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -144,8 +293,11 @@ const getOrdersForSeller = async (req, res) => {
     const skip = (pageNum - 1) * limitNum;
 
     const query = { "orders.sellerId": sellerId };
-    
-    if (status && ['pending', 'approved', 'rejected', 'completed'].includes(status)) {
+
+    if (
+      status &&
+      ["pending", "approved", "rejected", "completed"].includes(status)
+    ) {
       query["orders.status"] = status;
     }
 
@@ -162,14 +314,14 @@ const getOrdersForSeller = async (req, res) => {
     const totalOrders = await Order.countDocuments(query);
 
     if (!orders || orders.length === 0) {
-      return res.status(200).json({ 
+      return res.status(200).json({
         message: "No orders found for this seller",
         orders: [],
         pagination: {
           totalOrders: 0,
           totalPages: 0,
           currentPage: pageNum,
-        }
+        },
       });
     }
 
@@ -181,13 +333,13 @@ const getOrdersForSeller = async (req, res) => {
       return orderObj;
     });
 
-    return res.status(200).json({ 
+    return res.status(200).json({
       orders: sellerOrders,
       pagination: {
         totalOrders,
         totalPages: Math.ceil(totalOrders / limitNum),
         currentPage: pageNum,
-      }
+      },
     });
   } catch (error) {
     console.error("Error in getOrdersForSeller:", error);
@@ -206,8 +358,19 @@ const getOrdersForAdmin = async (req, res) => {
     const skip = (pageNum - 1) * limitNum;
 
     const query = {};
-    
-    if (status && ['pending', 'approved', 'rejected', 'completed', 'cancelled','shipped','delivered'].includes(status)) {
+
+    if (
+      status &&
+      [
+        "pending",
+        "approved",
+        "rejected",
+        "completed",
+        "cancelled",
+        "shipped",
+        "delivered",
+      ].includes(status)
+    ) {
       query.orderStatus = status;
     }
 
@@ -229,7 +392,7 @@ const getOrdersForAdmin = async (req, res) => {
           totalOrders: 0,
           totalPages: 0,
           currentPage: pageNum,
-        }
+        },
       });
     }
 
@@ -239,7 +402,7 @@ const getOrdersForAdmin = async (req, res) => {
         totalOrders,
         totalPages: Math.ceil(totalOrders / limitNum),
         currentPage: pageNum,
-      }
+      },
     });
   } catch (error) {
     console.error("Error in getOrdersForAdmin:", error);
@@ -404,6 +567,7 @@ const updateOrderStatus = async (req, res) => {
 
 module.exports = {
   createOrder,
+  createOrderWithStripe,
   getOrdersForUser,
   getOrdersForSeller,
   getOrdersForAdmin,

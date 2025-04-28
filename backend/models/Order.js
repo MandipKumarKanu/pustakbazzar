@@ -86,7 +86,7 @@ const orderSchema = new mongoose.Schema({
   },
   payment: {
     type: String,
-    enum: ["credit", "khalti"],
+    enum: ["credit", "khalti","stripe"],
     default: "credit",
   },
   date: {
@@ -94,6 +94,10 @@ const orderSchema = new mongoose.Schema({
     default: Date.now,
   },
   khaltiPaymentId: {
+    type: String,
+    default: null,
+  },
+  stripeSessionId: {
     type: String,
     default: null,
   },

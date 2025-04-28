@@ -16,9 +16,23 @@ const transactionSchema = new mongoose.Schema(
       enum: ["initiated", "completed", "failed"],
       default: "initiated",
     },
+    // Make payment IDs optional based on payment method
     khaltiPaymentId: {
       type: String,
-      required: true,
+      required: function() {
+        return this.paymentMethod === 'khalti';
+      }
+    },
+    stripeSessionId: {
+      type: String,
+      required: function() {
+        return this.paymentMethod === 'stripe';
+      }
+    },
+    paymentMethod: {
+      type: String,
+      enum: ["khalti", "stripe", "credit"],
+      required: true
     },
     paymentDetails: {
       type: Object,
