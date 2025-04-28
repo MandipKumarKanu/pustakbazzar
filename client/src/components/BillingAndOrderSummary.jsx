@@ -130,7 +130,7 @@ function BillingAndOrderSummary() {
     } else if (paymentMethod === "stripe") {
       try {
         const stripe = await loadStripe(
-          import.meta.env.VITE_STRIPE_PK
+          "pk_test_51RIJMdRtB48XzpAm9slu81fUQhYql4Siyf1hD6Cba5n4BiLxG4hqQPfvLbHBeHqKn7tfB9NEbsHWT8mYiHU2clvD00qfB6gYc8"
         );
         const body = {
           shippingFee: shippingFee.toFixed(2),
@@ -151,7 +151,7 @@ function BillingAndOrderSummary() {
 
         const response = await customAxios.post(`order/stripe-checkout`, body);
 
-        console.log(response)
+        console.log(response);
         const { sessionId } = response.data;
 
         const stripeResponse = await stripe.redirectToCheckout({
