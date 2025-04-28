@@ -291,7 +291,8 @@ const AdminOrder = () => {
             >
               <TabsList>
                 <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="pending">Pending</TabsTrigger>
+                {/* <TabsTrigger value="pending">Pending</TabsTrigger> */}
+                <TabsTrigger value="confirmed">Confirmed</TabsTrigger>
                 <TabsTrigger value="shipped">Shipped</TabsTrigger>
                 <TabsTrigger value="delivered">Delivered</TabsTrigger>
                 <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
@@ -397,6 +398,7 @@ const AdminOrder = () => {
                 className="w-full p-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
                 <option value="shipped">Shipped</option>
                 <option value="delivered">Delivered</option>
                 <option value="cancelled">Cancelled</option>
