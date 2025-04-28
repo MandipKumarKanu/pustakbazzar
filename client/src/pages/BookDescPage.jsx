@@ -7,6 +7,7 @@ import {
   FaSpinner,
   FaHeart as FaHeartSolid,
   FaShareAlt,
+  FaHandHoldingHeart,
 } from "react-icons/fa";
 import { FaRegHeart } from "react-icons/fa";
 import { RWebShare } from "react-web-share";
@@ -39,8 +40,6 @@ const BookDescPage = () => {
 
   let cartCount = typeof cCnt === "function" ? cCnt() : cCnt;
   useEffect(() => {
-    // const fetchData = async () => {
-    // };
     fetchBook();
     incViews();
     if (user && token) {
@@ -48,10 +47,6 @@ const BookDescPage = () => {
       isInCartChk();
     }
   }, [id]);
-
-  // useEffect(() => {
-  //   fetchBook();
-  // }, [user, token]);
 
   const updateInterests = (categoryId) => {
     if (!categoryId) return;
@@ -179,7 +174,6 @@ const BookDescPage = () => {
   return (
     <div className=" flex items-center">
       <div className="container mx-auto mt-12 mb-6 px-6 py-8 bg-purple-100 rounded-3xl">
-        {/* <title>{book?.title}</title> */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-20">
           <div className="lg:relative">
             <div className="lg:sticky lg:top-24 space-y-4">
@@ -189,7 +183,6 @@ const BookDescPage = () => {
                   lensSize={200}
                   isStatic={false}
                   ariaLabel="Zoom Area"
-                  // className="w-full h-full"
                   lensColor="red"
                 >
                   <img
@@ -374,138 +367,238 @@ const BookDescPage = () => {
                 {!user ? (
                   <>
                     <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                      Delivery Information
+                      {book.forDonation
+                        ? "Donation Book Information"
+                        : "Delivery Information"}
                     </h2>
-                    <div className="flex items-center mb-3">
-                      <FaTruck className="text-gray-400 w-5 mr-2" />
-                      <span className="text-gray-700">
-                        Delivery Charge: ₹50 on all orders
-                      </span>
-                    </div>
-                    {book.availability !== "rent" && (
-                      <div className="mb-3">
-                        <span className="text-gray-700">
-                          No return policy is available.
-                        </span>
+
+                    {book.forDonation ? (
+                      <div className="mb-4">
+                        <div className="p-4 bg-green-50 rounded-lg border border-green-200 mb-4">
+                          <div className="flex items-center mb-2">
+                            <FaHandHoldingHeart className="text-green-500 w-5 mr-2" />
+                            <span className="text-green-700 font-medium">
+                              This book is available for donation
+                            </span>
+                          </div>
+                          <p className="text-gray-700">
+                            This book is generously being offered for donation.
+                            Login to request it.
+                          </p>
+                        </div>
+
+                        <div className="relative group">
+                          <button
+                            disabled
+                            className="w-full px-6 py-3 bg-gradient-to-t from-green-600 to-green-500 rounded-3xl text-white text-xl font-bold shadow-lg opacity-70 cursor-not-allowed"
+                          >
+                            <FaHandHoldingHeart className="mr-2 inline" />
+                            Contact us
+                          </button>
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">
+                            Please login to request this donation
+                          </div>
+                        </div>
                       </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center mb-3">
+                          <FaTruck className="text-gray-400 w-5 mr-2" />
+                          <span className="text-gray-700">
+                            Delivery Charge: ₹50 on all orders
+                          </span>
+                        </div>
+                        {book.availability !== "rent" && (
+                          <div className="mb-3">
+                            <span className="text-gray-700">
+                              No return policy is available.
+                            </span>
+                          </div>
+                        )}
+
+                        <div className="relative group">
+                          <button
+                            disabled
+                            className="w-full px-6 py-3 mb-3 rounded-3xl text-white text-xl font-bold shadow-lg bg-blue-400 cursor-not-allowed opacity-70"
+                          >
+                            <FaShoppingCart className="mr-2 inline" />
+                            Add to Cart
+                          </button>
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">
+                            Please login to add to cart
+                          </div>
+                        </div>
+
+                        <div className="relative group">
+                          <button
+                            disabled
+                            className="w-full px-6 py-3 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-3xl text-white text-xl font-bold shadow-lg opacity-70 cursor-not-allowed"
+                          >
+                            <FaShoppingCart className="mr-2 inline" />
+                            {book.availability === "rent"
+                              ? "Rent Now"
+                              : "Buy Now"}
+                          </button>
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">
+                            Please login to{" "}
+                            {book.availability === "rent" ? "rent" : "buy"}
+                          </div>
+                        </div>
+                      </>
                     )}
-
-                    <div className="relative group">
-                      <button
-                        disabled
-                        className="w-full px-6 py-3 mb-3 rounded-3xl text-white text-xl font-bold shadow-lg bg-blue-400 cursor-not-allowed opacity-70"
-                      >
-                        <FaShoppingCart className="mr-2 inline" />
-                        Add to Cart
-                      </button>
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">
-                        Please login to add to cart
-                      </div>
-                    </div>
-
-                    <div className="relative group">
-                      <button
-                        disabled
-                        className="w-full px-6 py-3 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-3xl text-white text-xl font-bold shadow-lg opacity-70 cursor-not-allowed"
-                      >
-                        <FaShoppingCart className="mr-2 inline" />
-                        {book.availability === "rent" ? "Rent Now" : "Buy Now"}
-                      </button>
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">
-                        Please login to {book.availability === "rent" ? "rent" : "buy"}
-                      </div>
-                    </div>
                   </>
-                ) : user?._id === book?.addedBy?._id || user?.id === book?.addedBy?._id ? (
+                ) : user?._id === book?.addedBy?._id ||
+                  user?.id === book?.addedBy?._id ? (
                   <>
                     <h2 className="text-xl font-semibold text-gray-900 mb-4">
                       Manage Your Listing
                     </h2>
                     <p className="text-gray-700 mb-4">
-                      This book was listed by you. You can manage it from your profile.
+                      This book was listed by you. You can manage it from your
+                      profile.
                     </p>
-                    <div className="relative group">
-                      <button
-                        disabled
-                        className="w-full px-6 py-3 mb-3 rounded-3xl text-white text-xl font-bold shadow-lg bg-blue-400 cursor-not-allowed opacity-70"
-                      >
-                        <FaShoppingCart className="mr-2 inline" />
-                        Add to Cart
-                      </button>
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">
-                        You cannot purchase your own book
+                    {book.forDonation ? (
+                      <div className="p-4 bg-green-50 rounded-lg border border-green-200 mb-4">
+                        <div className="flex items-center mb-2">
+                          <FaHandHoldingHeart className="text-green-500 w-5 mr-2" />
+                          <span className="text-green-700 font-medium">
+                            Donation Book
+                          </span>
+                        </div>
+                        <p className="text-gray-700">
+                          You've listed this book for donation.
+                        </p>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="relative group">
+                        <button
+                          disabled
+                          className="w-full px-6 py-3 mb-3 rounded-3xl text-white text-xl font-bold shadow-lg bg-blue-400 cursor-not-allowed opacity-70"
+                        >
+                          <FaShoppingCart className="mr-2 inline" />
+                          Add to Cart
+                        </button>
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">
+                          You cannot purchase your own book
+                        </div>
+                      </div>
+                    )}
 
-                    <div className="relative group">
-                      <button
-                        disabled
-                        className="w-full px-6 py-3 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-3xl text-white text-xl font-bold shadow-lg opacity-70 cursor-not-allowed"
-                      >
-                        <FaShoppingCart className="mr-2 inline" />
-                        {book.availability === "rent" ? "Rent Now" : "Buy Now"}
-                      </button>
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">
-                        You cannot purchase your own book
+                    {!book.forDonation && (
+                      <div className="relative group">
+                        <button
+                          disabled
+                          className="w-full px-6 py-3 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-3xl text-white text-xl font-bold shadow-lg opacity-70 cursor-not-allowed"
+                        >
+                          <FaShoppingCart className="mr-2 inline" />
+                          {book.availability === "rent"
+                            ? "Rent Now"
+                            : "Buy Now"}
+                        </button>
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">
+                          You cannot purchase your own book
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </>
                 ) : (
                   <>
                     <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                      Delivery Information
+                      {book.forDonation
+                        ? "Donation Request"
+                        : "Delivery Information"}
                     </h2>
-                    <div className="flex items-center mb-3">
-                      <FaTruck className="text-gray-400 w-5 mr-2" />
-                      <span className="text-gray-700">
-                        Delivery Charge: ₹50 on all orders
-                      </span>
-                    </div>
-                    {book.availability !== "rent" && (
-                      <div className="mb-3">
-                        <span className="text-gray-700">
-                          No return policy is available.
-                        </span>
+
+                    {book.forDonation ? (
+                      <div className="mb-4">
+                        <div className="p-4 bg-green-50 rounded-lg border border-green-200 mb-4">
+                          <div className="flex items-center mb-2">
+                            <FaHandHoldingHeart className="text-green-500 w-5 mr-2" />
+                            <span className="text-green-700 font-medium">
+                              This book is available for donation
+                            </span>
+                          </div>
+                          <p className="text-gray-700">
+                            This book is being generously offered by{" "}
+                            {book?.addedBy?.profile?.firstName || "the owner"}.
+                            You can request it for free.
+                          </p>
+                        </div>
+
+                        <button
+                          className="w-full px-6 py-3 bg-gradient-to-t from-green-600 to-green-500 rounded-3xl text-white text-xl font-bold shadow-lg transition-colors duration-300 ease-in-out hover:bg-gradient-to-t hover:from-green-700 hover:to-green-600"
+                          onClick={() =>
+                            navigate("/contact", { state: { book } })
+                          }
+                        >
+                          <FaHandHoldingHeart className="mr-2 inline" />
+                          Contact Us
+                        </button>
+
+                        <p className="mt-4 text-sm text-gray-600">
+                          By requesting this book, you agree to pay the delivery
+                          charge of ₹50.
+                        </p>
                       </div>
-                    )}
-
-                    {book.availability !== "rent" && (
-                      <button
-                        onClick={handleAddToCart}
-                        disabled={isCartLoading}
-                        className={`w-full px-6 py-3 mb-3 rounded-3xl text-white text-xl font-bold shadow-lg transition-colors duration-300 ease-in-out ${
-                          !isInCart
-                            ? "bg-gradient-to-t from-blue-500 to-blue-600 hover:bg-gradient-to-t hover:from-blue-600 hover:to-blue-500"
-                            : "bg-gray-400"
-                        }`}
-                      >
-                        {isCartLoading ? (
-                          <FaSpinner className="animate-spin" />
-                        ) : (
-                          <>
-                            <FaShoppingCart className="mr-2 inline" />
-                            {isInCart ? "Remove from Cart" : "Add to Cart"}
-                          </>
+                    ) : (
+                      <>
+                        <div className="flex items-center mb-3">
+                          <FaTruck className="text-gray-400 w-5 mr-2" />
+                          <span className="text-gray-700">
+                            Delivery Charge: ₹50 on all orders
+                          </span>
+                        </div>
+                        {book.availability !== "rent" && (
+                          <div className="mb-3">
+                            <span className="text-gray-700">
+                              No return policy is available.
+                            </span>
+                          </div>
                         )}
-                      </button>
-                    )}
 
-                    <button
-                      className="w-full px-6 py-3 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-3xl text-white text-xl font-bold shadow-lg transition-colors duration-300 ease-in-out hover:bg-gradient-to-t hover:from-secondaryColor hover:to-primaryColor cursor-not-allowed"
-                      onClick={handleBuy}
-                      disabled
-                      title="This feature is not available yet"
-                    >
-                      <FaShoppingCart className="mr-2 inline" />
-                      {book.availability === "rent" ? "Rent Now" : "Buy Now"}
-                    </button>
+                        {book.availability !== "rent" && (
+                          <button
+                            onClick={handleAddToCart}
+                            disabled={isCartLoading}
+                            className={`w-full px-6 py-3 mb-3 rounded-3xl text-white text-xl font-bold shadow-lg transition-colors duration-300 ease-in-out ${
+                              !isInCart
+                                ? "bg-gradient-to-t from-blue-500 to-blue-600 hover:bg-gradient-to-t hover:from-blue-600 hover:to-blue-500"
+                                : "bg-gray-400"
+                            }`}
+                          >
+                            {isCartLoading ? (
+                              <FaSpinner className="animate-spin" />
+                            ) : (
+                              <>
+                                <FaShoppingCart className="mr-2 inline" />
+                                {isInCart
+                                  ? "Remove from Cart"
+                                  : "Add to Cart"}
+                              </>
+                            )}
+                          </button>
+                        )}
 
-                    {book.availability === "rent" && (
-                      <p className="mt-4 text-sm text-gray-600">
-                        Enjoy reading with our flexible rental option. Rent the
-                        book for ₹{book.perWeekPrice}/week and return it
-                        anytime!
-                      </p>
+                        <button
+                          className="w-full px-6 py-3 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-3xl text-white text-xl font-bold shadow-lg transition-colors duration-300 ease-in-out hover:bg-gradient-to-t hover:from-secondaryColor hover:to-primaryColor cursor-not-allowed"
+                          onClick={handleBuy}
+                          disabled
+                          title="This feature is not available yet"
+                        >
+                          <FaShoppingCart className="mr-2 inline" />
+                          {book.availability === "rent"
+                            ? "Rent Now"
+                            : "Buy Now"}
+                        </button>
+
+                        {book.availability === "rent" && (
+                          <p className="mt-4 text-sm text-gray-600">
+                            Enjoy reading with our flexible rental option. Rent
+                            the book for ₹{book.perWeekPrice}/week and return it
+                            anytime!
+                          </p>
+                        )}
+                      </>
                     )}
                   </>
                 )}
