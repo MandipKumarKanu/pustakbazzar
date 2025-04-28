@@ -32,7 +32,6 @@ const ContactPage = () => {
       subject: "",
       message: "",
     },
-    mode: "onChange",
   });
 
   const onSubmit = async (data) => {

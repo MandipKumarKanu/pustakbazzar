@@ -47,6 +47,8 @@ import PayOut from "./pages/PayOut";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import SellerPayoutHistoryPage from "./pages/SellerPayoutHistoryPage";
 import AdminBooks from "./pages/AdminBooks";
+import PaymentSuccess from "./components/PaymentSuccess";
+import PaymentCancel from "./components/PaymentCancel";
 // import AdminOrder from "./pages/AdminOrder";
 
 // import ContactPage from "./pages/ContactPage";
@@ -141,20 +143,29 @@ function App() {
           />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
+          <Route path="/payment/success" element={<PaymentSuccess />} />
+          <Route path="/payment/cancel" element={<PaymentCancel />} />
+
           <Route element={<SellerAdminProtectedRoute />}>
-          <Route element={<AdminLayout />}>
-            <Route path="/admin/home" element={<AdminHome />} />
-            <Route path="/admin/managecategory" element={<ManageCategory />} />
-            <Route path="/admin/sellerorder" element={<SellerOrder />} />
-            <Route path="/admin/books" element={<AdminBooks />} />
-            <Route
-              path="/admin/pendingDonation"
-              element={<DonationPending />}
-            />
-            <Route path="/admin/allUsers" element={<ManageUser />} />
-            <Route path="/admin/admin-order" element={<AdminOrder />} />
-            <Route path="/admin/payout" element={<PayOut />} />
-            <Route path="/admin/payout-history" element={<SellerPayoutHistoryPage />} />
+            <Route element={<AdminLayout />}>
+              <Route path="/admin/home" element={<AdminHome />} />
+              <Route
+                path="/admin/managecategory"
+                element={<ManageCategory />}
+              />
+              <Route path="/admin/sellerorder" element={<SellerOrder />} />
+              <Route path="/admin/books" element={<AdminBooks />} />
+              <Route
+                path="/admin/pendingDonation"
+                element={<DonationPending />}
+              />
+              <Route path="/admin/allUsers" element={<ManageUser />} />
+              <Route path="/admin/admin-order" element={<AdminOrder />} />
+              <Route path="/admin/payout" element={<PayOut />} />
+              <Route
+                path="/admin/payout-history"
+                element={<SellerPayoutHistoryPage />}
+              />
             </Route>
           </Route>
         </Routes>

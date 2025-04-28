@@ -13,6 +13,7 @@ import {
 } from "react-icons/fi";
 import { Wallet } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
+import { loadStripe } from "@stripe/stripe-js";
 
 const MAX_ADDRESSES = 5;
 
@@ -23,6 +24,8 @@ function BillingAndOrderSummary() {
   const uid = user?.id;
 
   const { fetchCart, cart: cartData, loading: isLoading } = useCartStore();
+
+  // console.log("cartData", cartData);
 
   useEffect(() => {
     if (user) {
@@ -115,13 +118,6 @@ function BillingAndOrderSummary() {
           ...dataToSave,
         });
         console.log(res);
-        // const response = await fetch(`${baseURL}/api/payment/initiate`, {
-        //   method: "POST",
-        //   headers: {
-        //     "Content-Type": "application/json",
-        //   },
-        //   body: JSON.stringify(orderData),
-        // });
 
         if (res.status === 201) {
           const result = res?.data?.khaltiResponse;
@@ -131,9 +127,41 @@ function BillingAndOrderSummary() {
         console.error("Payment initiation failed:", error);
         alert("Payment initiation failed. Please try again.");
       }
-    } else if (paymentMethod === "credit") {
+    } else if (paymentMethod === "stripe") {
       try {
-        navigate("/order-success", { state: { orderData: dataToSave } });
+        const stripe = await loadStripe(
+          import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
+        );
+        const body = {
+          shippingFee: shippingFee.toFixed(2),
+          products: cartData.carts,
+          shippingAddress: {
+            firstName: selectedAddress.firstName,
+            lastName: selectedAddress.lastName,
+            street: selectedAddress.street,
+            province: selectedAddress.province,
+            town: selectedAddress.town,
+            landmark: selectedAddress.landmark,
+            phone: selectedAddress.phone,
+            email: selectedAddress.email,
+          },
+        };
+
+        // console.log(body);
+
+        const response = await customAxios.post(`order/stripe-checkout`, body);
+
+        console.log(response)
+        const { sessionId } = response.data;
+
+        const stripeResponse = await stripe.redirectToCheckout({
+          sessionId,
+        });
+
+        if (stripeResponse.error) {
+          console.error("Stripe checkout error:", stripeResponse.error);
+          alert("Failed to redirect to Stripe checkout. Please try again.");
+        }
       } catch (error) {
         console.error("Failed to create order:", error);
         alert("There was an error processing your order. Please try again.");
@@ -394,6 +422,20 @@ function BillingAndOrderSummary() {
                 />
                 <span className="flex items-center gap-2">
                   <Wallet /> Khalti
+                </span>
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="payment"
+                  value="stripe"
+                  checked={paymentMethod === "stripe"}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="mr-2"
+                  style={{ accentColor: "#531D99" }}
+                />
+                <span className="flex items-center gap-2">
+                  <Wallet /> Stripe
                 </span>
               </label>
             </div>
