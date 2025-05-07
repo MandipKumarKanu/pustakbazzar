@@ -14,6 +14,7 @@ import {
 import { Wallet } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
 import { loadStripe } from "@stripe/stripe-js";
+import { FaCcStripe } from "react-icons/fa";
 
 const MAX_ADDRESSES = 5;
 
@@ -435,7 +436,7 @@ function BillingAndOrderSummary() {
                   style={{ accentColor: "#531D99" }}
                 />
                 <span className="flex items-center gap-2">
-                  <Wallet /> Stripe
+                  <FaCcStripe className="text-2xl" /> Stripe
                 </span>
               </label>
             </div>

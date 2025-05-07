@@ -19,7 +19,7 @@ const AdminOrder = () => {
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState("");
   const [statusFilter, setStatusFilter] = useState(
-    searchParams.get("status") || "pending"
+    searchParams.get("status") || "confirmed"
   );
 
   const [currentPage, setCurrentPage] = useState(

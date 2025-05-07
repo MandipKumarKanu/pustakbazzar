@@ -31,16 +31,17 @@ const ShrinkDescription = ({ desc, maxHeight = 400 }) => {
 
       {needsTruncation && !expanded && (
         <div
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: "80px",
-            background:
-              "linear-gradient(to top, var(--background), transparent)",
-            pointerEvents: "none",
-          }}
+          className="absolute bottom-0 left-0 right-0 h-20 pointer-events-none"
+          // style={{
+          //   position: "absolute",
+          //   bottom: 0,
+          //   left: 0,
+          //   right: 0,
+          //   height: "80px",
+          //   background:
+          //     "linear-gradient(to top, var(--background), transparent)",
+          //   pointerEvents: "none",
+          // }}
         />
       )}
 

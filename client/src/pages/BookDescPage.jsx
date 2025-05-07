@@ -23,6 +23,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { addToCartApi, removeToCartApi } from "@/api/cart";
 import { useIsInCart } from "@/hooks/useCart";
 import { useCartStore } from "@/store/useCartStore";
+import { toast } from "sonner";
 
 const BookDescPage = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -111,11 +112,13 @@ const BookDescPage = () => {
   const handleWishlist = useCallback(async () => {
     setIsWishlistLoading(true);
     try {
-      console.log("adding to wishlist");
+      // console.log("adding to wishlist");
       if (isWishlisted) {
         await removeSaveForLaterApi(id);
+        toast.success("Book Removed from Wishlist");
       } else {
         await saveForLaterApi(id);
+        toast.success("Book Added from Wishlist");
       }
       setIsWishlisted(!isWishlisted);
     } catch (error) {
@@ -130,10 +133,12 @@ const BookDescPage = () => {
     try {
       if (isInCart) {
         await removeToCartApi(id);
+        toast.success("Book Removed from Cart");
         decCart(cartCount);
       } else {
         await addToCartApi(id);
         incCart(cartCount);
+        toast.success("Book Added from Cart");
       }
       setIsInCart(!isInCart);
     } catch (error) {
@@ -222,11 +227,44 @@ const BookDescPage = () => {
                 {book.title}
               </h1>
               <p className="text-xl text-gray-600">by {book.author}</p>
+
+              {/* {(book.status === "sold" || book.status === "donated") && (
+                <div className="mt-3 inline-flex items-center px-4 py-2 bg-red-100 text-red-800 border border-red-200 rounded-lg">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 mr-2"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                  <span className="font-medium">
+                    {book.status === "sold"
+                      ? "This book has been sold"
+                      : "This book has been donated"}
+                  </span>
+                </div>
+              )} */}
             </div>
 
             <div className="flex items-baseline gap-4 mb-6">
               <div className="flex flex-col">
-                {book.availability === "rent" ? (
+                {book.status === "sold" || book.status === "donated" ? (
+                  <div className="flex items-center">
+                    <span className="text-3xl font-bold text-gray-400 line-through">
+                      {formatPrice(book.sellingPrice)}
+                    </span>
+                    <span className="ml-3 text-red-600 font-semibold">
+                      Not Available
+                    </span>
+                  </div>
+                ) : book.availability === "rent" ? (
                   <>
                     <span className="text-3xl font-bold text-btnColor">
                       {formatPrice(book.perWeekPrice)}/week
@@ -272,7 +310,7 @@ const BookDescPage = () => {
                   data={{
                     text: `Check out "${book.title}" by ${book.author} - A must-read book!`,
                     url: currentUrl,
-                    title: `KitabKunj - ${book.title}`,
+                    title: `PustakBazzar - ${book.title}`,
                   }}
                   onClick={() => console.log("shared successfully!")}
                 >
@@ -501,6 +539,46 @@ const BookDescPage = () => {
                       </div>
                     )}
                   </>
+                ) : book.status === "sold" || book.status === "donated" ? (
+                  // New UI for unavailable books
+                  <div className="bg-gray-100 rounded-lg p-6 shadow">
+                    <div className="flex items-center mb-4">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-8 w-8 text-gray-500 mr-3"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      <h2 className="text-xl font-semibold text-gray-700">
+                        No Longer Available
+                      </h2>
+                    </div>
+
+                    <div className="p-4 bg-gray-200 rounded-lg mb-4">
+                      <p className="text-gray-700">
+                        We're sorry, but this book is{" "}
+                        {book.status === "sold"
+                          ? "already sold"
+                          : "already donated"}{" "}
+                        and is no longer available for purchase.
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() => navigate("/books")}
+                      className="w-full px-6 py-3 bg-gradient-to-t from-gray-600 to-gray-500 rounded-3xl text-white text-xl font-bold shadow-lg hover:from-gray-700 hover:to-gray-600 transition-colors duration-300"
+                    >
+                      Browse Similar Books
+                    </button>
+                  </div>
                 ) : (
                   <>
                     <h2 className="text-xl font-semibold text-gray-900 mb-4">
@@ -571,9 +649,7 @@ const BookDescPage = () => {
                             ) : (
                               <>
                                 <FaShoppingCart className="mr-2 inline" />
-                                {isInCart
-                                  ? "Remove from Cart"
-                                  : "Add to Cart"}
+                                {isInCart ? "Remove from Cart" : "Add to Cart"}
                               </>
                             )}
                           </button>

@@ -86,7 +86,7 @@ const DropdownUser = () => {
                 <FaBoxOpen className="text-lg" /> Dashboard
               </Link>
             </li>
-            <li>
+            {/* <li>
               <Link
                 to="/myapproved"
                 className="flex items-center gap-3.5 text-sm font-medium hover:text-primary lg:text-base"
@@ -94,8 +94,8 @@ const DropdownUser = () => {
               >
                 <FaBoxOpen className="text-lg" /> My Books
               </Link>
-            </li>
-            <li>
+            </li> */}
+            {/* <li>
               <Link
                 to="/myorders"
                 className="flex items-center gap-3.5 text-sm font-medium hover:text-primary lg:text-base"
@@ -103,7 +103,7 @@ const DropdownUser = () => {
               >
                 <FaBoxOpen className="text-lg" /> My Orders
               </Link>
-            </li>
+            </li> */}
             <li>
               <Link
                 to="/wishlist"

@@ -4,8 +4,9 @@ import getErrorMessage from "../utils/getErrorMsg";
 import HeadingText from "../components/Heading";
 import MyBookCard from "../components/MyBookCard";
 import SkeletonCard from "../components/SkeletonCard";
+import SkeletonBookCard from "@/components/SkeletonBookCard";
 
-const MyBookPage = ({isDonation}) => {
+const MyBookPage = ({ isDonation }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [books, setBooks] = useState([]);
@@ -27,7 +28,13 @@ const MyBookPage = ({isDonation}) => {
   };
 
   if (loading) {
-    return <>Loading....</>;
+    return (
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 mt-14">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <SkeletonBookCard key={index} />
+        ))}
+      </div>
+    );
   }
 
   return (
