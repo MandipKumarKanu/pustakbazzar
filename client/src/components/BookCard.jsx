@@ -47,7 +47,7 @@ const BookCard = ({
               {name}
             </div>
           </div>
-          <p className="text-gray-600 text-sm mt-1">{author}</p>
+          <p className="text-gray-600 text-sm mt-1 line-clamp-2">{author}</p>
           <p className="text-gray-600 text-sm mt-1">{publishYear}</p>
         </div>
 
