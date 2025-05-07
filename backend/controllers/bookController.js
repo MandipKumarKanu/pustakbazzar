@@ -41,8 +41,8 @@ const createBook = async (req, res) => {
         .json({ message: "Only approved sellers can upload books for sale." });
     }
 
-    console.log("Language:", language);
-    console.log("Edition:", edition);
+    // console.log("Language:", language);
+    // console.log("Edition:", edition);
 
     const styledDesc = addCustomClassesToHtml(description);
     const book = new Book({
@@ -338,203 +338,183 @@ const getBooksBySeller = async (req, res) => {
 const searchBooks = async (req, res) => {
   try {
     const { query, title, author, publishYear } = req.query;
+    const page = parseInt(req.query.page) || 1;
     const limit = req.query.limit ? parseInt(req.query.limit) : 20;
     const maxDistance = req.query.distance ? parseInt(req.query.distance) : 2;
 
+    // Validate that at least one search parameter exists
     if (!query && !title && !author && !publishYear) {
       return res
         .status(400)
         .json({ message: "At least one search parameter is required." });
     }
 
-    const mongoQuery = {};
+    // Base query to only include available books that aren't for donation
+    const baseQuery = {
+      status: "available",
+      forDonation: false,
+    };
 
-    if (query) {
-      mongoQuery.$or = [
-        { title: { $regex: query, $options: "i" } },
-        { author: { $regex: query, $options: "i" } },
-      ];
-    } else {
-      const conditions = [];
+    // STEP 1: Try exact matching with MongoDB query
+    const mongoQuery = buildMongoQuery(query, title, author, publishYear);
+    // Combine with base query
+    const fullQuery = { ...baseQuery, ...mongoQuery };
 
-      if (title) {
-        conditions.push({ title: { $regex: title, $options: "i" } });
-      }
+    // Count total matches for pagination
+    const totalExactMatches = await Book.countDocuments(fullQuery);
 
-      if (author) {
-        conditions.push({ author: { $regex: author, $options: "i" } });
-      }
+    const exactMatches = await Book.find(fullQuery)
+      .lean()
+      .populate("category")
+      .populate("addedBy", "profile.userName")
+      .skip((page - 1) * limit)
+      .limit(limit);
 
-      if (publishYear) {
-        conditions.push({ publishYear: parseInt(publishYear) });
-      }
-
-      if (conditions.length > 0) {
-        mongoQuery.$and = conditions;
-      }
-    }
-
-    const books = await Book.find(mongoQuery).lean().populate("category");
-
-    if (books.length > 0) {
-      return res.status(200).json({ books: books.slice(0, limit) });
-    }
-
-    const allBooks = await Book.find().lean().populate("category");
-
-    const filteredBooks = allBooks.filter((book) => {
-      if (!query && !title && !author && !publishYear) {
-        return false;
-      }
-
-      let titleMatch = true;
-      let authorMatch = true;
-      let queryMatch = true;
-      let yearMatch = true;
-
-      if (title) {
-        const titleLower = book.title.toLowerCase();
-        const searchTitle = title.toLowerCase();
-        titleMatch =
-          titleLower.includes(searchTitle) ||
-          titleLower
-            .split(/\s+/)
-            .some(
-              (word) =>
-                word.startsWith(searchTitle) || searchTitle.startsWith(word)
-            );
-      }
-
-      if (author) {
-        const authorLower = book.author.toLowerCase();
-        const searchAuthor = author.toLowerCase();
-        authorMatch =
-          authorLower.includes(searchAuthor) ||
-          authorLower
-            .split(/\s+/)
-            .some(
-              (word) =>
-                word.startsWith(searchAuthor) || searchAuthor.startsWith(word)
-            );
-      }
-
-      if (publishYear) {
-        yearMatch = book.publishYear === parseInt(publishYear);
-      }
-
-      if (query) {
-        const queryLower = query.toLowerCase();
-        const titleLower = book.title.toLowerCase();
-        const authorLower = book.author.toLowerCase();
-
-        const titleQueryMatch =
-          titleLower.includes(queryLower) ||
-          titleLower
-            .split(/\s+/)
-            .some(
-              (word) =>
-                word.startsWith(queryLower) || queryLower.startsWith(word)
-            );
-
-        const authorQueryMatch =
-          authorLower.includes(queryLower) ||
-          authorLower
-            .split(/\s+/)
-            .some(
-              (word) =>
-                word.startsWith(queryLower) || queryLower.startsWith(word)
-            );
-
-        queryMatch = titleQueryMatch || authorQueryMatch;
-      }
-
-      return titleMatch && authorMatch && queryMatch && yearMatch;
-    });
-
-    if (filteredBooks.length > 0) {
-      return res.status(200).json({ books: filteredBooks.slice(0, limit) });
-    }
-
-    const fuzzySearchNeeded = query || title || author;
-
-    if (!fuzzySearchNeeded) {
-      return res.status(200).json({ books: [] });
-    }
-
-    const fuzzyResults = allBooks
-      .map((book) => {
-        let minDistance = Infinity;
+    if (exactMatches.length > 0 || totalExactMatches > 0) {
+      // Add _fuzzyMatch to exact matches with distance 0
+      const exactMatchesWithFuzzy = exactMatches.map((book) => {
+        // Determine which field matched for better frontend display
         let matchField = "";
-
         if (query) {
-          const queryLower = query.toLowerCase();
-
-          const titleDistance = Math.min(
-            ...book.title
-              .toLowerCase()
-              .split(/\s+/)
-              .map((word) => levenshtein.get(word, queryLower))
-          );
-
-          const authorDistance = Math.min(
-            ...book.author
-              .toLowerCase()
-              .split(/\s+/)
-              .map((word) => levenshtein.get(word, queryLower))
-          );
-
-          const queryMinDistance = Math.min(titleDistance, authorDistance);
-
-          if (queryMinDistance < minDistance) {
-            minDistance = queryMinDistance;
-            matchField = titleDistance <= authorDistance ? "title" : "author";
-          }
-        }
-
-        if (title) {
-          const titleLower = title.toLowerCase();
-          const titleDistance = Math.min(
-            ...book.title
-              .toLowerCase()
-              .split(/\s+/)
-              .map((word) => levenshtein.get(word, titleLower))
-          );
-
-          if (titleDistance < minDistance) {
-            minDistance = titleDistance;
-            matchField = "title";
-          }
-        }
-
-        if (author) {
-          const authorLower = author.toLowerCase();
-          const authorDistance = Math.min(
-            ...book.author
-              .toLowerCase()
-              .split(/\s+/)
-              .map((word) => levenshtein.get(word, authorLower))
-          );
-
-          if (authorDistance < minDistance) {
-            minDistance = authorDistance;
-            matchField = "author";
-          }
-        }
-
-        if (publishYear && book.publishYear !== parseInt(publishYear)) {
-          return { book, distance: Infinity, field: "" };
+          // Check if it matched title or author
+          const titleMatch = book.title
+            .toLowerCase()
+            .includes(query.toLowerCase());
+          const authorMatch = book.author
+            .toLowerCase()
+            .includes(query.toLowerCase());
+          matchField = titleMatch ? "title" : authorMatch ? "author" : "query";
+        } else {
+          matchField = title ? "title" : author ? "author" : "publishYear";
         }
 
         return {
-          book,
-          distance: minDistance,
-          field: matchField,
+          ...book,
+          _fuzzyMatch: {
+            distance: 0,
+            field: matchField,
+          },
         };
-      })
-      .filter((result) => result.distance <= maxDistance)
-      .sort((a, b) => a.distance - b.distance);
+      });
+      
+      return res.status(200).json({ 
+        books: exactMatchesWithFuzzy,
+        pagination: {
+          totalBooks: totalExactMatches,
+          totalPages: Math.ceil(totalExactMatches / limit),
+          currentPage: page,
+          hasNextPage: page < Math.ceil(totalExactMatches / limit),
+          hasPrevPage: page > 1
+        }
+      });
+    }
 
-    const fuzzyBooks = fuzzyResults.map((result) => ({
+    // STEP 2: If no exact matches, get all available non-donation books and try flexible filtering
+    const allBooks = await Book.find(baseQuery)
+      .lean()
+      .populate("category")
+      .populate("addedBy", "profile.userName");
+
+    const filteredBooks = filterBooksWithFlexibleMatch(
+      allBooks,
+      query,
+      title,
+      author,
+      publishYear
+    );
+
+    if (filteredBooks.length > 0) {
+      // Calculate total and paginate results
+      const totalFilteredBooks = filteredBooks.length;
+      const paginatedFilteredBooks = filteredBooks.slice((page - 1) * limit, page * limit);
+      
+      // Add _fuzzyMatch to filtered books with distance 1
+      const filteredBooksWithFuzzy = paginatedFilteredBooks.map((book) => {
+        // Determine which field matched
+        let matchField = "";
+        if (query) {
+          const titleMatch =
+            book.title.toLowerCase().includes(query.toLowerCase()) ||
+            book.title
+              .toLowerCase()
+              .split(/\s+/)
+              .some(
+                (word) =>
+                  word.startsWith(query.toLowerCase()) ||
+                  query.toLowerCase().startsWith(word)
+              );
+
+          const authorMatch =
+            book.author.toLowerCase().includes(query.toLowerCase()) ||
+            book.author
+              .toLowerCase()
+              .split(/\s+/)
+              .some(
+                (word) =>
+                  word.startsWith(query.toLowerCase()) ||
+                  query.toLowerCase().startsWith(word)
+              );
+
+          matchField = titleMatch
+            ? "title"
+            : authorMatch
+            ? "author"
+            : "flexible";
+        } else {
+          matchField = title ? "title" : author ? "author" : "publishYear";
+        }
+
+        return {
+          ...book,
+          _fuzzyMatch: {
+            distance: 1,
+            field: matchField,
+          },
+        };
+      });
+      
+      return res.status(200).json({ 
+        books: filteredBooksWithFuzzy,
+        pagination: {
+          totalBooks: totalFilteredBooks,
+          totalPages: Math.ceil(totalFilteredBooks / limit),
+          currentPage: page,
+          hasNextPage: page < Math.ceil(totalFilteredBooks / limit),
+          hasPrevPage: page > 1
+        }
+      });
+    }
+
+    // STEP 3: If still no matches, try fuzzy search with Levenshtein distance
+    const fuzzySearchNeeded = query || title || author;
+    if (!fuzzySearchNeeded) {
+      return res.status(200).json({ 
+        books: [],
+        pagination: {
+          totalBooks: 0,
+          totalPages: 0,
+          currentPage: page,
+          hasNextPage: false,
+          hasPrevPage: false
+        }
+      });
+    }
+
+    const fuzzyResults = performFuzzySearch(
+      allBooks,
+      query,
+      title,
+      author,
+      publishYear,
+      maxDistance
+    );
+
+    // Calculate total and paginate results
+    const totalFuzzyResults = fuzzyResults.length;
+    const paginatedFuzzyResults = fuzzyResults.slice((page - 1) * limit, page * limit);
+
+    // This is where _fuzzyMatch is added to each book object
+    const fuzzyBooks = paginatedFuzzyResults.map((result) => ({
       ...result.book,
       _fuzzyMatch: {
         distance: result.distance,
@@ -542,12 +522,231 @@ const searchBooks = async (req, res) => {
       },
     }));
 
-    return res.status(200).json({ books: fuzzyBooks.slice(0, limit) });
+    return res.status(200).json({ 
+      books: fuzzyBooks,
+      pagination: {
+        totalBooks: totalFuzzyResults,
+        totalPages: Math.ceil(totalFuzzyResults / limit),
+        currentPage: page,
+        hasNextPage: page < Math.ceil(totalFuzzyResults / limit),
+        hasPrevPage: page > 1
+      }
+    });
   } catch (error) {
     console.error("Error searching books:", error);
-    res.status(500).json({ message: "Error searching books." });
+    res.status(500).json({ 
+      message: "Error searching books.",
+      pagination: {
+        totalBooks: 0,
+        totalPages: 0,
+        currentPage: 1,
+        hasNextPage: false,
+        hasPrevPage: false
+      }
+    });
   }
 };
+
+// Helper function to build MongoDB query
+function buildMongoQuery(query, title, author, publishYear) {
+  const mongoQuery = {};
+
+  if (query) {
+    // Search both title and author with single query parameter
+    mongoQuery.$or = [
+      { title: { $regex: query, $options: "i" } },
+      { author: { $regex: query, $options: "i" } },
+    ];
+
+    // If the query looks like a year, also search in publishYear
+    if (/^\d{4}$/.test(query)) {
+      mongoQuery.$or.push({ publishYear: query });
+    }
+  } else {
+    const conditions = [];
+
+    if (title) {
+      conditions.push({ title: { $regex: title, $options: "i" } });
+    }
+
+    if (author) {
+      conditions.push({ author: { $regex: author, $options: "i" } });
+    }
+
+    if (publishYear) {
+      // Handle publishYear as string to match the stored format
+      conditions.push({ publishYear: publishYear.toString() });
+    }
+
+    if (conditions.length > 0) {
+      mongoQuery.$and = conditions;
+    }
+  }
+
+  return mongoQuery;
+}
+
+// Helper function for flexible filtering
+function filterBooksWithFlexibleMatch(
+  books,
+  query,
+  title,
+  author,
+  publishYear
+) {
+  return books.filter((book) => {
+    if (!query && !title && !author && !publishYear) {
+      return false;
+    }
+
+    let titleMatch = true;
+    let authorMatch = true;
+    let queryMatch = true;
+    let yearMatch = true;
+
+    if (title) {
+      const titleLower = book.title.toLowerCase();
+      const searchTitle = title.toLowerCase();
+      titleMatch =
+        titleLower.includes(searchTitle) ||
+        titleLower
+          .split(/\s+/)
+          .some(
+            (word) =>
+              word.startsWith(searchTitle) || searchTitle.startsWith(word)
+          );
+    }
+
+    if (author) {
+      const authorLower = book.author.toLowerCase();
+      const searchAuthor = author.toLowerCase();
+      authorMatch =
+        authorLower.includes(searchAuthor) ||
+        authorLower
+          .split(/\s+/)
+          .some(
+            (word) =>
+              word.startsWith(searchAuthor) || searchAuthor.startsWith(word)
+          );
+    }
+
+    if (publishYear) {
+      // Convert both to numbers for proper comparison
+      const bookYear = parseInt(book.publishYear, 10);
+      const searchYear = parseInt(publishYear, 10);
+      yearMatch = bookYear === searchYear;
+    }
+
+    if (query) {
+      const queryLower = query.toLowerCase();
+      const titleLower = book.title.toLowerCase();
+      const authorLower = book.author.toLowerCase();
+
+      const titleQueryMatch =
+        titleLower.includes(queryLower) ||
+        titleLower
+          .split(/\s+/)
+          .some(
+            (word) => word.startsWith(queryLower) || queryLower.startsWith(word)
+          );
+
+      const authorQueryMatch =
+        authorLower.includes(queryLower) ||
+        authorLower
+          .split(/\s+/)
+          .some(
+            (word) => word.startsWith(queryLower) || queryLower.startsWith(word)
+          );
+
+      queryMatch = titleQueryMatch || authorQueryMatch;
+    }
+
+    return titleMatch && authorMatch && queryMatch && yearMatch;
+  });
+}
+
+// Helper function for fuzzy search
+function performFuzzySearch(
+  books,
+  query,
+  title,
+  author,
+  publishYear,
+  maxDistance
+) {
+  return books
+    .map((book) => {
+      let minDistance = Infinity;
+      let matchField = "";
+
+      if (query) {
+        const queryLower = query.toLowerCase();
+        const titleWords = book.title.toLowerCase().split(/\s+/);
+        const authorWords = book.author.toLowerCase().split(/\s+/);
+
+        const titleDistance = Math.min(
+          ...titleWords.map((word) => levenshtein.get(word, queryLower))
+        );
+
+        const authorDistance = Math.min(
+          ...authorWords.map((word) => levenshtein.get(word, queryLower))
+        );
+
+        const queryMinDistance = Math.min(titleDistance, authorDistance);
+
+        if (queryMinDistance < minDistance) {
+          minDistance = queryMinDistance;
+          matchField = titleDistance <= authorDistance ? "title" : "author";
+        }
+      }
+
+      if (title) {
+        const titleLower = title.toLowerCase();
+        const titleWords = book.title.toLowerCase().split(/\s+/);
+
+        const titleDistance = Math.min(
+          ...titleWords.map((word) => levenshtein.get(word, titleLower))
+        );
+
+        if (titleDistance < minDistance) {
+          minDistance = titleDistance;
+          matchField = "title";
+        }
+      }
+
+      if (author) {
+        const authorLower = author.toLowerCase();
+        const authorWords = book.author.toLowerCase().split(/\s+/);
+
+        const authorDistance = Math.min(
+          ...authorWords.map((word) => levenshtein.get(word, authorLower))
+        );
+
+        if (authorDistance < minDistance) {
+          minDistance = authorDistance;
+          matchField = "author";
+        }
+      }
+
+      if (publishYear) {
+        // If publishYear doesn't match, exclude from results
+        const bookYear = parseInt(book.publishYear, 10);
+        const searchYear = parseInt(publishYear, 10);
+
+        if (bookYear !== searchYear) {
+          return { book, distance: Infinity, field: "" };
+        }
+      }
+
+      return {
+        book,
+        distance: minDistance,
+        field: matchField,
+      };
+    })
+    .filter((result) => result.distance <= maxDistance)
+    .sort((a, b) => a.distance - b.distance);
+}
 
 const filterBooks = async (req, res) => {
   try {
