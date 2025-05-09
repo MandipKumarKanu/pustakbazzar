@@ -6,7 +6,7 @@ const bookSchema = new mongoose.Schema(
     description: { type: String, required: true, trim: true },
     author: { type: String, required: true, trim: true },
     publishYear: { type: String, trim: true },
-    language: { type: String },
+    bookLanguage: { type: String },
     edition: { type: String },
     addedBy: {
       type: mongoose.Schema.Types.ObjectId,

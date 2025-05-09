@@ -58,7 +58,7 @@ const createBook = async (req, res) => {
       forDonation,
       publishYear,
       edition,
-      language,
+      bookLanguage: language, // Changed from language to bookLanguage
       // status,
     });
 
@@ -197,7 +197,7 @@ const updateBook = async (req, res) => {
     forDonation,
     publishYear,
     edition,
-    language,
+    bookLanguage,
   } = req.body;
 
   try {
@@ -236,7 +236,7 @@ const updateBook = async (req, res) => {
         forDonation,
         publishYear,
         edition,
-        language,
+        bookLanguage: bookLanguage,
       },
       { new: true }
     );
@@ -266,10 +266,34 @@ const deleteBook = async (req, res) => {
         .json({ message: "Unauthorized to delete this book." });
     }
 
+    const user = await User.findById(book.addedBy);
+
+    if (user) {
+      if (book.forDonation) {
+        user.donated = user.donated.filter(
+          (donatedId) => donatedId.toString() !== book._id.toString()
+        );
+      } else {
+        user.sold = user.sold.filter(
+          (soldId) => soldId.toString() !== book._id.toString()
+        );
+      }
+
+      await user.save();
+    }
+
+    if (book.forDonation) {
+      await Donation.deleteOne({ book: book._id });
+    }
+
     await book.deleteOne();
     res.status(200).json({ message: "Book deleted successfully." });
   } catch (error) {
-    res.status(500).json({ message: "Error deleting book." });
+    console.error("Error deleting book:", error);
+    res.status(500).json({
+      message: "Error deleting book.",
+      error: error.message,
+    });
   }
 };
 
@@ -357,7 +381,7 @@ const searchBooks = async (req, res) => {
 
     // STEP 1: Try exact matching with MongoDB query
     const mongoQuery = buildMongoQuery(query, title, author, publishYear);
-    // Combine with base query
+    // Combine with baseQuery
     const fullQuery = { ...baseQuery, ...mongoQuery };
 
     // Count total matches for pagination
@@ -396,16 +420,16 @@ const searchBooks = async (req, res) => {
           },
         };
       });
-      
-      return res.status(200).json({ 
+
+      return res.status(200).json({
         books: exactMatchesWithFuzzy,
         pagination: {
           totalBooks: totalExactMatches,
           totalPages: Math.ceil(totalExactMatches / limit),
           currentPage: page,
           hasNextPage: page < Math.ceil(totalExactMatches / limit),
-          hasPrevPage: page > 1
-        }
+          hasPrevPage: page > 1,
+        },
       });
     }
 
@@ -426,8 +450,11 @@ const searchBooks = async (req, res) => {
     if (filteredBooks.length > 0) {
       // Calculate total and paginate results
       const totalFilteredBooks = filteredBooks.length;
-      const paginatedFilteredBooks = filteredBooks.slice((page - 1) * limit, page * limit);
-      
+      const paginatedFilteredBooks = filteredBooks.slice(
+        (page - 1) * limit,
+        page * limit
+      );
+
       // Add _fuzzyMatch to filtered books with distance 1
       const filteredBooksWithFuzzy = paginatedFilteredBooks.map((book) => {
         // Determine which field matched
@@ -472,31 +499,31 @@ const searchBooks = async (req, res) => {
           },
         };
       });
-      
-      return res.status(200).json({ 
+
+      return res.status(200).json({
         books: filteredBooksWithFuzzy,
         pagination: {
           totalBooks: totalFilteredBooks,
           totalPages: Math.ceil(totalFilteredBooks / limit),
           currentPage: page,
           hasNextPage: page < Math.ceil(totalFilteredBooks / limit),
-          hasPrevPage: page > 1
-        }
+          hasPrevPage: page > 1,
+        },
       });
     }
 
     // STEP 3: If still no matches, try fuzzy search with Levenshtein distance
     const fuzzySearchNeeded = query || title || author;
     if (!fuzzySearchNeeded) {
-      return res.status(200).json({ 
+      return res.status(200).json({
         books: [],
         pagination: {
           totalBooks: 0,
           totalPages: 0,
           currentPage: page,
           hasNextPage: false,
-          hasPrevPage: false
-        }
+          hasPrevPage: false,
+        },
       });
     }
 
@@ -511,7 +538,10 @@ const searchBooks = async (req, res) => {
 
     // Calculate total and paginate results
     const totalFuzzyResults = fuzzyResults.length;
-    const paginatedFuzzyResults = fuzzyResults.slice((page - 1) * limit, page * limit);
+    const paginatedFuzzyResults = fuzzyResults.slice(
+      (page - 1) * limit,
+      page * limit
+    );
 
     // This is where _fuzzyMatch is added to each book object
     const fuzzyBooks = paginatedFuzzyResults.map((result) => ({
@@ -522,27 +552,27 @@ const searchBooks = async (req, res) => {
       },
     }));
 
-    return res.status(200).json({ 
+    return res.status(200).json({
       books: fuzzyBooks,
       pagination: {
         totalBooks: totalFuzzyResults,
         totalPages: Math.ceil(totalFuzzyResults / limit),
         currentPage: page,
         hasNextPage: page < Math.ceil(totalFuzzyResults / limit),
-        hasPrevPage: page > 1
-      }
+        hasPrevPage: page > 1,
+      },
     });
   } catch (error) {
     console.error("Error searching books:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: "Error searching books.",
       pagination: {
         totalBooks: 0,
         totalPages: 0,
         currentPage: 1,
         hasNextPage: false,
-        hasPrevPage: false
-      }
+        hasPrevPage: false,
+      },
     });
   }
 };
@@ -910,6 +940,25 @@ const getAllBooksForAdmin = async (req, res) => {
   }
 };
 
+const getAuthors = async (req, res) => {
+  try {
+    const authors = await Book.distinct("author").sort({ author: 1 });
+
+    return res.status(200).json({
+      success: true,
+      count: authors.length,
+      authors,
+    });
+  } catch (error) {
+    console.error("Error fetching unique authors:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching unique authors",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createBook,
   getAllBooks,
@@ -926,4 +975,5 @@ module.exports = {
   toggleFeaturedBook,
   getFeaturedBooks,
   getAllBooksForAdmin,
+  getAuthors,
 };

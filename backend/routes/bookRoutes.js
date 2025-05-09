@@ -16,7 +16,8 @@ const {
   getMonthlyTopBooks,
   toggleFeaturedBook,
   getFeaturedBooks,
-  getAllBooksForAdmin
+  getAllBooksForAdmin,
+  getAuthors
   // myBook
 } = require("../controllers/bookController");
 
@@ -33,6 +34,7 @@ router.get("/featured", getFeaturedBooks);
 router.get("/search", searchBooks);
 router.get("/category/:categoryId", getBooksByCategory);
 router.get("/admin", authMiddleware, roleMiddleware(["admin"]), getAllBooksForAdmin);
+router.get("/get-author",  getAuthors);
 router.get("/:id", userMiddleware, getBookById);
 router.patch("/:id", authMiddleware, updateBook);
 router.delete("/:id", authMiddleware, deleteBook);

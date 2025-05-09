@@ -9,7 +9,7 @@ const generateAccessToken = (user) => {
     {
       id: user._id,
       profile: user.profile,
-      seller: user.isSeller,
+      isSeller: user.isSeller,
       interest: user.interest,
     },
     process.env.ACCESS_TOKEN_SECRET,
