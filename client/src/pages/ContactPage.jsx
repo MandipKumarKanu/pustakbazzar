@@ -6,6 +6,8 @@ import PrimaryBtn from "@/components/PrimaryBtn";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { customAxios } from "@/config/axios";
+// import customAxios from "@/utils/customAxios";
 
 const contactFormSchema = z.object({
   name: z
@@ -13,7 +15,7 @@ const contactFormSchema = z.object({
     .min(1, "Name is required")
     .regex(/^[a-zA-Z\s]+$/, "Name must contain only letters"),
   email: z.string().min(1, "Email is required").email("Invalid email address"),
-  subject: z.string().optional(),
+  subject: z.string().min(1, "Subject is required"),
   message: z.string().min(10, "Message must be at least 10 characters"),
 });
 
@@ -36,13 +38,22 @@ const ContactPage = () => {
 
   const onSubmit = async (data) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await customAxios.post("/contact", data);
 
-      toast.success("Message sent successfully! We'll get back to you soon.");
-      reset();
+      if (response.status === 200 || response.status === 201) {
+        toast.success("Message sent successfully! We'll get back to you soon.");
+        reset();
+      } else {
+        throw new Error("Failed to send message");
+      }
     } catch (error) {
-      toast.error("Failed to send message. Please try again later.");
       console.error("Contact form error:", error);
+
+      const errorMessage =
+        error.response?.data?.message ||
+        "Failed to send message. Please try again later.";
+
+      toast.error(errorMessage);
     }
   };
 
@@ -216,15 +227,22 @@ const ContactPage = () => {
                       htmlFor="subject"
                       className="block text-sm font-medium text-gray-700 mb-1"
                     >
-                      Subject
+                      Subject<span className="text-red-500">*</span>
                     </label>
                     <input
                       id="subject"
                       type="text"
                       {...register("subject")}
                       placeholder="What's this about?"
-                      className={inputClasses}
+                      className={`${inputClasses} ${
+                        errors.subject ? "border-red-500 focus:ring-red-500" : ""
+                      }`}
                     />
+                    {errors.subject && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.subject.message}
+                      </p>
+                    )}
                   </div>
 
                   <div>

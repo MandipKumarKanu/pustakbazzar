@@ -5,13 +5,18 @@ import { bookSchema } from "./book/bookSchema";
 import { conditions } from "./book/bookConstant";
 import { useCategoryStore } from "@/store/useCategoryStore";
 import { useAuthStore } from "@/store/useAuthStore";
-import { addBook } from "@/api/book";
+import { addBook, getAuthor } from "@/api/book";
 import { toast } from "sonner";
 import { CKEditorComp } from "./ckEditor";
 import { Cloudinary } from "cloudinary-core";
 import PrimaryBtn from "./PrimaryBtn";
 import { useDropzone } from "react-dropzone";
 import { CategorySelector } from "./book/CategorySelector";
+// import AuthorAutocomplete from "./book/AuthorAutocomplete";
+import AutocompleteInput from "./ui/AutocompleteInput";
+import { Languages, User } from "lucide-react";
+import { editionOptions, languageOptions } from "@/hooks/helper";
+import { RiSortNumberAsc } from "react-icons/ri";
 
 const cloudinary = new Cloudinary({
   cloud_name: import.meta.env.VITE_CLOUD_NAME,
@@ -27,6 +32,7 @@ const AddBook = () => {
   const [desc, setDesc] = useState("");
   const [descError, setDescError] = useState(null);
   const [activeStep, setActiveStep] = useState(1);
+  const [authors, setAuthors] = useState("");
 
   const { user } = useAuthStore();
   const { category: categoryData } = useCategoryStore();
@@ -38,6 +44,7 @@ const AddBook = () => {
     watch,
     reset,
     trigger,
+    setValue,
   } = useForm({
     resolver: zodResolver(bookSchema),
     mode: "onChange",
@@ -49,6 +56,14 @@ const AddBook = () => {
       condition: "",
     },
   });
+  useEffect(() => {
+    async function fetchAuthors() {
+      const res = await getAuthor();
+      setAuthors(res.data.authors);
+      // console.log(res.data.authors)
+    }
+    fetchAuthors();
+  }, []);
 
   useEffect(() => {
     if (selectedCategories.length >= 4) {
@@ -127,7 +142,7 @@ const AddBook = () => {
         condition: data.condition,
         forDonation: data.bookFor === "donation",
         publishYear: data.publishYear,
-        edition:data.edition,
+        edition: data.edition,
         language: data.bookLanguage,
       };
 
@@ -189,7 +204,9 @@ const AddBook = () => {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const nextStep = async () => {
+  const nextStep = async (e) => {
+    e.preventDefault();
+
     const stepFields = getStepFields(activeStep);
     const isValid = await trigger(stepFields);
 
@@ -211,7 +228,9 @@ const AddBook = () => {
     }
   };
 
-  const prevStep = () => {
+  const prevStep = (e) => {
+    e.preventDefault();
+
     if (activeStep > 1) {
       setActiveStep(activeStep - 1);
     }
@@ -310,15 +329,18 @@ const AddBook = () => {
                   >
                     Author
                   </label>
-                  <input
-                    id="author"
-                    {...register("author")}
-                    placeholder="Author name"
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-                      errors.author
-                        ? "border-red-500 ring-1 ring-red-500"
-                        : "border-gray-300"
-                    }`}
+
+                  <AutocompleteInput
+                    authors={authors || []}
+                    value={watch("author")}
+                    onChange={(value) => setValue("author", value)}
+                    error={errors.author}
+                    register={register}
+                    name="author"
+                    placeholder="Enter author name"
+                    label="Type any author name or select from suggestions"
+                    icon={<User className="h-4 w-4 text-blue-500" />}
+                    hintText="Continue with"
                   />
                   {errors.author && (
                     <p className="text-red-500 text-xs mt-1">
@@ -334,7 +356,21 @@ const AddBook = () => {
                   >
                     Language
                   </label>
-                  <input
+
+                  <AutocompleteInput
+                    authors={languageOptions || []}
+                    value={watch("bookLanguage")}
+                    onChange={(value) => setValue("bookLanguage", value)}
+                    error={errors.bookLanguage}
+                    register={register}
+                    name="bookLanguage"
+                    placeholder="Enter book language"
+                    label="Type any book language name or select from suggestions"
+                    icon={<Languages className="h-4 w-4 text-blue-500" />}
+                    hintText="Continue with"
+                    optionsOnly
+                  />
+                  {/* <input
                     id="bookLanguage"
                     {...register("bookLanguage")}
                     placeholder="Book language"
@@ -343,7 +379,7 @@ const AddBook = () => {
                         ? "border-red-500 ring-1 ring-red-500"
                         : "border-gray-300"
                     }`}
-                  />
+                  /> */}
                   {errors.bookLanguage && (
                     <p className="text-red-500 text-xs mt-1">
                       {errors.bookLanguage.message}
@@ -360,7 +396,21 @@ const AddBook = () => {
                   >
                     Edition
                   </label>
-                  <input
+
+                  <AutocompleteInput
+                    authors={editionOptions || []}
+                    value={watch("edition")}
+                    onChange={(value) => setValue("edition", value)}
+                    error={errors.edition}
+                    register={register}
+                    name="edition"
+                    placeholder="Enter book edition"
+                    label="Type any book edition name or select from suggestions"
+                    icon={<RiSortNumberAsc className="h-4 w-4 text-blue-500" />}
+                    hintText="Continue with"
+                    optionsOnly
+                  />
+                  {/* <input
                     id="edition"
                     {...register("edition")}
                     placeholder="Book edition"
@@ -369,7 +419,7 @@ const AddBook = () => {
                         ? "border-red-500 ring-1 ring-red-500"
                         : "border-gray-300"
                     }`}
-                  />
+                  /> */}
                   {errors.edition && (
                     <p className="text-red-500 text-xs mt-1">
                       {errors.edition.message}
@@ -662,7 +712,8 @@ const AddBook = () => {
                           <img
                             src={preview}
                             alt={`Preview ${index + 1}`}
-                            className="w-full h-24 object-cover"
+                            className="w-full h-24 object-contain"
+                            style={{ mixBlendMode: "multiply" }}
                           />
                           <div className="absolute inset-0  bg-black/50 bg-opacity-40 opacity-0 group-hover:opacity-100 group-hover:backdrop-blur-xs transition-opacity flex items-center justify-center">
                             <button
@@ -760,8 +811,6 @@ const AddBook = () => {
                   }
                 />
 
-                {/* </button> */}
-
                 {activeStep < 3 ? (
                   <PrimaryBtn
                     type="button"
@@ -789,6 +838,7 @@ const AddBook = () => {
                   />
                 ) : (
                   <PrimaryBtn
+                    type="submit"
                     disabled={loading || cateError}
                     name={
                       loading ? (

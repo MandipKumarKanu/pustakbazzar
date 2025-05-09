@@ -12,7 +12,7 @@ const MyOrders = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
- 
+
   useEffect(() => {
     const fetchOrders = async () => {
       try {
@@ -32,8 +32,6 @@ const MyOrders = () => {
   const handlePayNow = (order) => {
     alert(`Initiating payment for Order ${order._id}`);
   };
-
-
 
   return (
     <>
@@ -68,9 +66,7 @@ const MyOrders = () => {
                 No orders found
               </p>
               <p className="text-gray-500">
-                {searchTerm || statusFilter !== "all"
-                  ? "Try changing your filters or search term"
-                  : "Start shopping to create your first order"}
+                Start shopping to create your first order
               </p>
               <motion.button
                 whileHover={{ scale: 1.03 }}

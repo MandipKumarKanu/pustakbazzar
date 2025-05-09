@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { getBookById, updateBook } from "@/api/book";
+import { getBookById, updateBook, getAuthor } from "@/api/book";
 import { CategorySelector } from "@/components/book/CategorySelector";
 import { CKEditorComp } from "@/components/ckEditor";
 import { useCategoryStore } from "@/store/useCategoryStore";
@@ -11,6 +11,10 @@ import { useDropzone } from "react-dropzone";
 import { conditions } from "@/components/book/bookConstant";
 import PrimaryBtn from "@/components/PrimaryBtn";
 import getErrorMessage from "@/utils/getErrorMsg";
+import AutocompleteInput from "@/components/ui/AutocompleteInput";
+import { Languages, User } from "lucide-react";
+import { RiSortNumberAsc } from "react-icons/ri";
+import { editionOptions, languageOptions } from "@/hooks/helper";
 
 const cloudinary = new Cloudinary({
   cloud_name: import.meta.env.VITE_CLOUD_NAME,
@@ -23,6 +27,7 @@ const EditBookPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [book, setBook] = useState(null);
   const [error, setError] = useState(null);
+  const [authors, setAuthors] = useState([]);
 
   const [activeStep, setActiveStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -50,7 +55,17 @@ const EditBookPage = () => {
 
   useEffect(() => {
     fetchBook();
+    fetchAuthors();
   }, [id]);
+
+  const fetchAuthors = async () => {
+    try {
+      const res = await getAuthor();
+      setAuthors(res.data.authors);
+    } catch (error) {
+      console.error("Error fetching authors:", error);
+    }
+  };
 
   useEffect(() => {
     if (selectedCategories.length >= 4) {
@@ -118,8 +133,6 @@ const EditBookPage = () => {
                 : cat?.categoryName || cat,
           };
         });
-        // console.log("bookCategories", categoryData);
-
         setSelectedCategories(bookCategories);
       }
     } catch (error) {
@@ -191,7 +204,7 @@ const EditBookPage = () => {
 
       await updateBook(id, updatedData);
       toast.success("Book updated successfully");
-      navigate("/mybook");
+      navigate(-1);
     } catch (error) {
       console.error("Error updating book:", error);
       toast.error(error.response?.data?.message || "Failed to update the book");
@@ -327,15 +340,17 @@ const EditBookPage = () => {
                   >
                     Author
                   </label>
-                  <input
-                    id="author"
-                    {...register("author")}
-                    placeholder="Author name"
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-                      errors.author
-                        ? "border-red-500 ring-1 ring-red-500"
-                        : "border-gray-300"
-                    }`}
+                  <AutocompleteInput
+                    authors={authors || []}
+                    value={watch("author")}
+                    onChange={(value) => setValue("author", value)}
+                    error={errors.author}
+                    register={register}
+                    name="author"
+                    placeholder="Enter author name"
+                    label="Type any author name or select from suggestions"
+                    icon={<User className="h-4 w-4 text-blue-500" />}
+                    hintText="Continue with"
                   />
                   {errors.author && (
                     <p className="text-red-500 text-xs mt-1">
@@ -351,15 +366,18 @@ const EditBookPage = () => {
                   >
                     Language
                   </label>
-                  <input
-                    id="bookLanguage"
-                    {...register("bookLanguage")}
-                    placeholder="Book language"
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-                      errors.bookLanguage
-                        ? "border-red-500 ring-1 ring-red-500"
-                        : "border-gray-300"
-                    }`}
+                  <AutocompleteInput
+                    authors={languageOptions || []}
+                    value={watch("bookLanguage")}
+                    onChange={(value) => setValue("bookLanguage", value)}
+                    error={errors.bookLanguage}
+                    register={register}
+                    name="bookLanguage"
+                    placeholder="Enter book language"
+                    label="Select a language from the list"
+                    icon={<Languages className="h-4 w-4 text-blue-500" />}
+                    hintText="Continue with"
+                    optionsOnly
                   />
                   {errors.bookLanguage && (
                     <p className="text-red-500 text-xs mt-1">
@@ -377,15 +395,18 @@ const EditBookPage = () => {
                   >
                     Edition
                   </label>
-                  <input
-                    id="edition"
-                    {...register("edition")}
-                    placeholder="Book edition"
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-                      errors.edition
-                        ? "border-red-500 ring-1 ring-red-500"
-                        : "border-gray-300"
-                    }`}
+                  <AutocompleteInput
+                    authors={editionOptions || []}
+                    value={watch("edition")}
+                    onChange={(value) => setValue("edition", value)}
+                    error={errors.edition}
+                    register={register}
+                    name="edition"
+                    placeholder="Enter book edition"
+                    label="Select an edition from the list"
+                    icon={<RiSortNumberAsc className="h-4 w-4 text-blue-500" />}
+                    hintText="Continue with"
+                    optionsOnly
                   />
                   {errors.edition && (
                     <p className="text-red-500 text-xs mt-1">
@@ -669,7 +690,8 @@ const EditBookPage = () => {
                           <img
                             src={preview}
                             alt={`Preview ${index + 1}`}
-                            className="w-full h-24 object-cover"
+                            className="w-full h-24 object-contain"
+                            style={{ mixBlendMode: "multiply" }}
                           />
                           <div className="absolute inset-0 bg-black/50 bg-opacity-40 opacity-0 group-hover:opacity-100 group-hover:backdrop-blur-xs transition-opacity flex items-center justify-center">
                             <button

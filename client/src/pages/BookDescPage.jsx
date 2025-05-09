@@ -267,13 +267,15 @@ const BookDescPage = () => {
                       <img
                         alt={book.title}
                         src={book.images[currentImageIndex]}
-                        className="object-cover w-full h-full cursor-crosshair"
+                        className="object-contain w-full h-full cursor-crosshair"
+                        loading="lazy"
+                        style={{ mixBlendMode: "multiply" }}
                       />
                     </Lens>
                   </div>
 
                   {book.images.length > 1 && (
-                    <div className="flex gap-3 overflow-x-auto pb-2 snap-x">
+                    <div className="flex gap-3 overflow-x-auto p-2 snap-x">
                       {book.images.map((image, index) => (
                         <button
                           key={index}
@@ -287,7 +289,7 @@ const BookDescPage = () => {
                           <img
                             src={image}
                             alt={`Book image ${index + 1}`}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-contain"
                           />
                         </button>
                       ))}
@@ -499,8 +501,8 @@ const BookDescPage = () => {
                                 <span className="text-sm text-gray-500">
                                   Language
                                 </span>
-                                <span className="font-medium">
-                                  {book.language || "English"}
+                                <span className="font-medium capitalize">
+                                  {book.bookLanguage || "English"}
                                 </span>
                               </div>
                               <div className="flex flex-col">

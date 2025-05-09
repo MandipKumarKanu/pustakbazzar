@@ -21,7 +21,7 @@
   font-style: normal;
   font-weight: 200 700;
   font-display: swap;
-  src: url("./assets/fonts/sfpro.OTF") format("OTF");
+  src: url("./assets/fonts/SFPro.ttf") format("truetype");
 }
 
 @font-face {
@@ -29,7 +29,15 @@
   font-style: normal;
   font-weight: 200 700;
   font-display: swap;
-  src: url("./assets/fonts/Suntage.otf") format("OTF");
+  src: url("./assets/fonts/Suntage.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: Cyber;
+  font-style: normal;
+  font-weight: 200 700;
+  font-display: swap;
+  src: url("./assets/fonts/cyber.otf") format("OTF");
 }
 
 /* *{
@@ -473,9 +481,9 @@
 
 /* Add this to your CSS */
 .hide-scrollbar {
-  -ms-overflow-style: none;  /* Internet Explorer 10+ */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none; /* Firefox */
 }
-.hide-scrollbar::-webkit-scrollbar { 
-  display: none;  /* Safari and Chrome */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
 }

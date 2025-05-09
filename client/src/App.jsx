@@ -50,6 +50,7 @@ import AdminBooks from "./pages/AdminBooks";
 import PaymentSuccess from "./components/PaymentSuccess";
 import PaymentCancel from "./components/PaymentCancel";
 import SearchPage from "./pages/SearchPage";
+import MessagePage from "./pages/MessagePage";
 // import AdminOrder from "./pages/AdminOrder";
 
 // import ContactPage from "./pages/ContactPage";
@@ -164,6 +165,7 @@ function App() {
               <Route path="/admin/allUsers" element={<ManageUser />} />
               <Route path="/admin/admin-order" element={<AdminOrder />} />
               <Route path="/admin/payout" element={<PayOut />} />
+              <Route path="/admin/messages" element={<MessagePage />} />
               <Route
                 path="/admin/payout-history"
                 element={<SellerPayoutHistoryPage />}

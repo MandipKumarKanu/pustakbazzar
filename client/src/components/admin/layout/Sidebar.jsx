@@ -166,6 +166,11 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                   Payouts
                 </NavItem>
               </li>
+              <li>
+                <NavItem to="/admin/messages" icon={FaMoneyCheckAlt}>
+                  Messages
+                </NavItem>
+              </li>
             </>
           )}
 
