@@ -13,7 +13,7 @@ const ProfileSkeleton = () => {
 
       <div className="flex flex-col gap-2 items-center">
         <div className="h-10 bg-gray-200 rounded-lg w-60"></div>
-        
+
         <div className="flex items-center gap-5 mt-2">
           <div className="h-10 bg-gray-200 rounded-lg w-36"></div>
           <div className="h-10 bg-gray-200 rounded-lg w-36"></div>
@@ -41,7 +41,10 @@ const ProfileTabsSkeleton = () => {
       <div className="mt-10 px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3, 4, 5, 6].map((item) => (
-            <div key={item} className="bg-white rounded-xl overflow-hidden shadow-sm">
+            <div
+              key={item}
+              className="bg-white rounded-xl overflow-hidden shadow-sm"
+            >
               <div className="h-48 bg-gray-200"></div>
               <div className="p-4">
                 <div className="h-5 bg-gray-200 rounded w-3/4 mb-3"></div>

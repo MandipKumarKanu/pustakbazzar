@@ -9,7 +9,7 @@ const Auth = () => {
   const switchToSignup = () => setActiveTab("signup");
 
   return (
-    <div className="w-full max-w-[600px] m-auto mt-10">
+    <div className="w-full max-w-[600px] m-auto mt-10 px-4">
       <div className="flex justify-around mb-8">
         <div
           className={`p-2 cursor-pointer text-xl font-bold transition-all duration-300 ${
