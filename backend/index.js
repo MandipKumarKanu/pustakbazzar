@@ -42,6 +42,13 @@ app.use(
   })
 );
 
+
+app.use((req, res, next) => {
+  res.setHeader('Referrer-Policy', 'no-referrer-when-downgrade');
+  next();
+});
+
+
 app.get("/", (req, res) => {
   res.send("API is running...");
 });
