@@ -7,8 +7,7 @@ import { FaEye, FaEyeSlash, FaGoogle } from "react-icons/fa";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useCartStore } from "@/store/useCartStore";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
-import axios from "axios";
-import { baseURL } from "@/config/axios";
+import { baseURL, customAxios } from "@/config/axios";
 import { jwtDecode } from "jwt-decode";
 import { toast } from "sonner";
 
@@ -42,7 +41,7 @@ const Login = ({ switchToSignup }) => {
   const handleGoogleResponse = async (response) => {
     try {
       const { credential } = response;
-      const { data } = await axios.post(`${baseURL}auth/google-login`, {
+      const { data } = await customAxios.post(`${baseURL}auth/google-login`, {
         token: credential,
       });
 
