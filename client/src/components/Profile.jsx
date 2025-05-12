@@ -152,6 +152,45 @@ const Profile = ({ user }) => {
     }
   };
 
+  const renderSellerStatusButton = () => {
+    switch (usr?.isSeller?.status) {
+      case "no":
+        return (
+          <div className="w-full sm:w-auto sm:absolute sm:top-20 sm:right-4 md:right-20">
+            <PrimaryBtn
+              name="Become a Seller"
+              style="w-full sm:max-w-[180px]"
+              onClick={handleOpenModalForSeller}
+            />
+          </div>
+        );
+      case "applied":
+        return (
+          <div className="w-full sm:w-auto sm:absolute sm:top-20 sm:right-4 md:right-20">
+            <PrimaryBtn
+              name="Application Status"
+              style="w-full sm:max-w-[180px] bg-yellow-500 hover:bg-yellow-600"
+              onClick={handleOpenModalForSeller}
+            />
+          </div>
+        );
+      case "rejected":
+        return (
+          <div className="w-full sm:w-auto sm:absolute sm:top-20 sm:right-4 md:right-20">
+            <PrimaryBtn
+              name="Re-apply as Seller"
+              style="w-full sm:max-w-[180px] bg-red-600 hover:bg-red-700"
+              onClick={handleOpenModalForSeller}
+            />
+          </div>
+        );
+      case "approved":
+        return null; // Already showing badge for approved sellers
+      default:
+        return null;
+    }
+  };
+
   const renderProfileHeader = () => (
     <div className="m-auto flex flex-col items-center gap-4 relative mt-6 md:mt-10 px-4">
       <div className="w-28 h-28 sm:w-40 sm:h-40 md:w-60 md:h-60 relative">
@@ -195,15 +234,7 @@ const Profile = ({ user }) => {
             />
           </div>
 
-          {usr?.isSeller?.status !== "approved" && (
-            <div className="w-full sm:w-auto sm:absolute sm:top-20 sm:right-4 md:right-20">
-              <PrimaryBtn
-                name="Become a Seller"
-                style="w-full sm:max-w-[180px]"
-                onClick={handleOpenModalForSeller}
-              />
-            </div>
-          )}
+          {renderSellerStatusButton()}
         </div>
       </div>
     </div>
@@ -215,12 +246,6 @@ const Profile = ({ user }) => {
         <DialogHeader className="px-6 pt-6 pb-2">
           <DialogTitle className="text-2xl sm:text-3xl font-semibold text-gray-900 flex justify-between items-center">
             Edit Profile
-            <button
-              onClick={handleCloseModal}
-              className="text-gray-500 hover:text-gray-700 transition-colors"
-            >
-              <FaTimes size={20} />
-            </button>
           </DialogTitle>
         </DialogHeader>
 
@@ -336,6 +361,7 @@ const Profile = ({ user }) => {
         handleSaveDoc={handleSaveDoc}
         setDocFile={setDocFile}
         isUploading={isUploading}
+        userSellerStatus={usr?.isSeller?.status}
       />
     </>
   );
