@@ -22,6 +22,7 @@ export const useAuthStore = create((set) => ({
 
   setToken: (token) => set({ token }),
   setUser: (user) => set({ user }),
+  setUser: (user) => set({ user }),
 
   login: async (email, password, navigate,setName) => {
     set({ loading: true, error: null });
