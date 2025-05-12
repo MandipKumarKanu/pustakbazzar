@@ -16,6 +16,7 @@ const {
   // rejectSeller,
   getUserAddresses,
   myBook,
+  googleLogin,
 } = require("../controllers/authController");
 const authMiddleWare = require("../middleware/authMiddleware");
 const roleMiddleware = require("../middleware/roleMiddleware");
@@ -35,5 +36,6 @@ router.post("/logout", authMiddleWare, logout);
 router.post("/seller", authMiddleWare, applyForSeller);
 // router.post("/seller/approve/:id", authMiddleWare, approveSeller);
 // router.post("/seller/reject/:id", authMiddleWare, rejectSeller);
+router.post('/google-login', googleLogin);
 
 module.exports = router;

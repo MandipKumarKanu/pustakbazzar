@@ -33,6 +33,8 @@ app.use(
       process.env.CLIENT_URL || "http://localhost:5173",
       "https://pustakbazzar-h74q.vercel.app",
       "https://pustakbazzar.mandipkk.com.np",
+      "http://192.168.100.236:5173",
+      "http://192.168.100.64:5173",
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],

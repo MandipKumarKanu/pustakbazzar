@@ -3,6 +3,8 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const Book = require("../models/Book");
 const { recordUserSignup } = require("../controllers/statsController");
+const { OAuth2Client } = require('google-auth-library');
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const generateAccessToken = (user) => {
   return jwt.sign(
@@ -343,6 +345,66 @@ const getUserAddresses = async (req, res) => {
   }
 };
 
+const googleLogin = async (req, res) => {
+  try {
+    const { token } = req.body;
+    
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const { email, name, picture, sub } = payload;
+    
+    let user = await User.findOne({ "profile.email": email });
+
+    if (!user) {
+      const nameParts = name.split(' ');
+      const firstName = nameParts[0];
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+
+      user = new User({
+        profile: {
+          firstName,
+          lastName, 
+          email,
+          profileImg: picture,
+          userName: email.split('@')[0],
+          role: "user",
+        },
+        password: await bcrypt.hash(sub + process.env.PASSWORD_SALT, 10),
+        googleId: sub,
+        authProvider: "google"
+      });
+      
+      await user.save();
+      await recordUserSignup();
+    }
+
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+    
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "lax",
+    });
+
+    res.status(200).json({ 
+      accessToken,
+      message: "Google login successful" 
+    });
+  } catch (error) {
+    console.error("Google login error:", error);
+    res.status(401).json({ message: "Google authentication failed", error: error.message });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -359,4 +421,5 @@ module.exports = {
   // rejectSeller,
   myBook,
   getUserAddresses,
+  googleLogin,
 };
