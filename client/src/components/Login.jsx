@@ -31,9 +31,18 @@ const Login = ({ switchToSignup }) => {
         callback: handleGoogleResponse,
       });
 
+      window.google.accounts.id.prompt();
+
       window.google.accounts.id.renderButton(
         document.getElementById("googleBtn"),
-        { theme: "outline", size: "large", width: "100%" }
+        {
+          theme: "filled_blue",
+          size: "large",
+          width: "100%",
+          text: "continue_with",
+          shape: "pill",
+          logo_alignment: "left",
+        }
       );
     }
   }, []);
@@ -52,10 +61,6 @@ const Login = ({ switchToSignup }) => {
       navigate("/", { replace: true });
       setName((user && user.interest) || []);
       toast.success("Logged-in Successful");
-
-      //      set({ loading: false, user: decodedUser, token });
-
-      // await login(user.profile.email, null, navigate, setName, data.accessToken);
       await fetchCart();
     } catch (error) {
       console.error("Google login failed:", error);
@@ -70,14 +75,6 @@ const Login = ({ switchToSignup }) => {
     resolver: zodResolver(loginSchema),
     mode: "onChange",
   });
-
-  const handleGoogleSignIn = async () => {
-    try {
-      console.log("Google sign-in initiated");
-    } catch (error) {
-      console.error("Google sign-in error:", error);
-    }
-  };
 
   const inputClasses =
     "w-full border-[1px] border-gray-300 px-4 py-3 rounded-3xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none bg-white";
@@ -123,7 +120,6 @@ const Login = ({ switchToSignup }) => {
     </>
   );
 
-  // Spinner component for the loading animation
   const LoadingSpinner = () => (
     <svg
       className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
@@ -150,7 +146,7 @@ const Login = ({ switchToSignup }) => {
   return (
     <form
       onSubmit={handleSubmit(onLoginSubmit)}
-      className="flex flex-col gap-6 mt-6 bg-white p-8 rounded-2xl border-2 shadow-xl mb-10"
+      className="flex flex-col gap-6 mt-6 bg-white p-8 rounded-2xl border-2 shadow-xl mb-10 "
     >
       <div>
         <label htmlFor="loginEmail" className={labelClasses}>
@@ -214,13 +210,9 @@ const Login = ({ switchToSignup }) => {
       </div>
       <button
         type="button"
-        className="flex items-center justify-center gap-3 bg-white text-gray-700 p-3 rounded-3xl hover:bg-gray-50 transition-all duration-300 shadow-md border-2 border-gray-300 font-bold"
-        // onClick={handleGoogleSignIn}
+        className="flex items-center justify-center gap-3 bg-white text-gray-700 p-3 rounded-3xl hover:bg-gray-50 transition-all duration-300 "
         id="googleBtn"
-      >
-        <FaGoogle className="text-xl" />
-        Login with Google
-      </button>
+      ></button>
     </form>
   );
 };
