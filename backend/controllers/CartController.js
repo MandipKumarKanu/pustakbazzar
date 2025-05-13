@@ -80,7 +80,7 @@ const getCart = async (req, res) => {
     const cart = await Cart.findOne({ userId })
     .populate({
       path: "carts.books.bookId",
-      select: "title author sellingPrice images",
+      select: "title author sellingPrice images status",
     })
     .populate({
       path: "carts.sellerId",

@@ -62,9 +62,6 @@ const createOrder = async (req, res) => {
     });
     await newOrder.save();
 
-    cart.carts = [];
-    await cart.save();
-
     if (payment === "khalti") {
       const payload = {
         return_url: `${process.env.FRONTEND_URL}/payment/verify`,
@@ -89,9 +86,13 @@ const createOrder = async (req, res) => {
         orderId: newOrder._id,
         amount: netTotal,
         khaltiPaymentId: khaltiResponse.pidx,
+        paymentMethod: "khalti",
         khaltiResponse,
       });
       await transaction.save();
+
+      cart.carts = [];
+      await cart.save();
 
       return res.status(201).json({
         message: "Order created and Khalti transaction initiated successfully",

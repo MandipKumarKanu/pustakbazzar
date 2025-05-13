@@ -17,7 +17,7 @@ const userSchema = new mongoose.Schema(
         trim: true,
       },
       firstName: { type: String, required: true, trim: true },
-      lastName: { type: String,  trim: true },
+      lastName: { type: String, trim: true },
       profileImg: { type: String, default: "" },
       phNo: { type: String, trim: true },
       address: {
@@ -43,10 +43,10 @@ const userSchema = new mongoose.Schema(
     refreshToken: { type: String, default: null },
 
     googleId: { type: String },
-    authProvider: { 
-      type: String, 
-      enum: ["local", "google"], 
-      default: "local" 
+    authProvider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
     },
 
     isSeller: {
@@ -60,10 +60,12 @@ const userSchema = new mongoose.Schema(
     },
 
     interest: {
-      type: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Category'
-      }]
+      type: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Category",
+        },
+      ],
     },
 
     bought: [{ type: mongoose.Schema.Types.ObjectId, ref: "Book" }],
