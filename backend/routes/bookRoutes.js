@@ -17,7 +17,9 @@ const {
   toggleFeaturedBook,
   getFeaturedBooks,
   getAllBooksForAdmin,
-  getAuthors
+  getAuthors,
+  generateBookDescription,
+
   // myBook
 } = require("../controllers/bookController");
 
@@ -33,8 +35,13 @@ router.get("/weeklytop", getWeeklyTopBooks);
 router.get("/featured", getFeaturedBooks);
 router.get("/search", searchBooks);
 router.get("/category/:categoryId", getBooksByCategory);
-router.get("/admin", authMiddleware, roleMiddleware(["admin"]), getAllBooksForAdmin);
-router.get("/get-author",  getAuthors);
+router.get(
+  "/admin",
+  authMiddleware,
+  roleMiddleware(["admin"]),
+  getAllBooksForAdmin
+);
+router.get("/get-author", getAuthors);
 router.get("/:id", userMiddleware, getBookById);
 router.patch("/:id", authMiddleware, updateBook);
 router.delete("/:id", authMiddleware, deleteBook);
@@ -42,6 +49,7 @@ router.get("/seller/:sellerId", getBooksBySeller);
 router.get("/filter", filterBooks);
 router.patch("/inc/:id", incrementBookViews);
 router.patch("/toggle/:id", toggleFeaturedBook);
-router.post("/recommendations",  publicRecommendation);
+router.post("/recommendations", publicRecommendation);
+router.post("/generate-description", generateBookDescription);
 
 module.exports = router;

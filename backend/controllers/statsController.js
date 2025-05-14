@@ -53,11 +53,19 @@ const getAllStats = async (req, res) => {
 
     const stats = await Stats.find({
       date: { $in: dateStrings },
-    })
-      .sort({ date: -1 })
-      .select("-totalSales");
+    }).select("-totalSales");
 
-    res.json(stats);
+    const sortedStats = stats.sort((a, b) => {
+      const [dayA, monthA, yearA] = a.date.split('-').map(Number);
+      const [dayB, monthB, yearB] = b.date.split('-').map(Number);
+      
+      const dateA = new Date(yearA, monthA - 1, dayA);
+      const dateB = new Date(yearB, monthB - 1, dayB);
+      
+      return dateB - dateA;
+    });
+
+    res.json(sortedStats);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Unable to fetch stats" });

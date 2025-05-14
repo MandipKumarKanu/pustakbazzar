@@ -4,6 +4,7 @@ const addCustomClassesToHtml = require("../utils/addCustomClass");
 const Donation = require("../models/Donation");
 const levenshtein = require("fast-levenshtein");
 const mongoose = require("mongoose");
+const fetch = require("node-fetch");
 // const { recordEvent } = require("../controllers/statsController");
 const {
   recordSale,
@@ -41,9 +42,6 @@ const createBook = async (req, res) => {
         .json({ message: "Only approved sellers can upload books for sale." });
     }
 
-    // console.log("Language:", language);
-    // console.log("Edition:", edition);
-
     const styledDesc = addCustomClassesToHtml(description);
     const book = new Book({
       title,
@@ -58,11 +56,10 @@ const createBook = async (req, res) => {
       forDonation,
       publishYear,
       edition,
-      bookLanguage: language, // Changed from language to bookLanguage
-      // status,
+      bookLanguage: language,
     });
 
-    await book.save();
+    const savedBook = await book.save();
 
     if (forDonation) {
       const donation = new Donation({
@@ -81,11 +78,16 @@ const createBook = async (req, res) => {
       await recordBookAdded();
     }
 
+    const platformFeePercentage = 0.1; // Flat 10%
+
     res.status(201).json({
-      book,
-      message: forDonation
-        ? "Book added for donation."
-        : "Book added for sell.",
+      success: true,
+      data: savedBook,
+      feeInfo: {
+        platformFeePercentage: platformFeePercentage,
+        estimatedFee: savedBook.sellingPrice * platformFeePercentage,
+        estimatedEarnings: savedBook.sellingPrice * (1 - platformFeePercentage),
+      },
     });
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -126,10 +128,12 @@ const getAllBooks = async (req, res) => {
       .populate("addedBy", "profile.userName")
       .lean();
 
+    const filteredBooks = books.filter((book) => book.addedBy !== null);
+
     const totalBooks = await Book.countDocuments(query);
 
     return res.status(200).json({
-      books,
+      books: filteredBooks,
       totalPages: Math.ceil(totalBooks / fetchLimit),
       currentPage: parseInt(page, 10),
     });
@@ -959,6 +963,69 @@ const getAuthors = async (req, res) => {
   }
 };
 
+// Ensure this is installed in your project
+
+const generateBookDescription = async (req, res) => {
+  try {
+    const { title, author, condition } = req.body;
+
+    if (!title || !author || !condition) {
+      return res.status(400).json({
+        message:
+          "Title, author, and condition are required to generate a description.",
+      });
+    }
+
+    const prompt = `
+      Generate a compelling, grammatically correct description for a second-hand book titled "${title}" by ${author}. 
+      The book is in ${condition} condition and is available for selling/donation on a student-focused platform.
+    `;
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: prompt,
+                },
+              ],
+            },
+          ],
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Gemini API error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    const description = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!description) {
+      throw new Error("Failed to generate description.");
+    }
+
+    res.status(200).json({
+      success: true,
+      description,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error generating book description.",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createBook,
   getAllBooks,
@@ -976,4 +1043,5 @@ module.exports = {
   getFeaturedBooks,
   getAllBooksForAdmin,
   getAuthors,
+  generateBookDescription,
 };

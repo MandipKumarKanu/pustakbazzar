@@ -14,6 +14,7 @@ const donationRoutes = require("./routes/donationRoutes");
 const transactionRoutes = require("./routes/transactionRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const contactRoutes = require("./routes/contactRoutes");
+const sellerRoutes = require("./routes/sellerRoutes");
 
 const app = express();
 
@@ -63,8 +64,9 @@ app.use("/api/order", orderRoutes);
 app.use("/api/donation", donationRoutes);
 app.use("/api/khaltipay", transactionRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api/transactions", require("./routes/transactionRoutes"));
+app.use("/api/transactions", transactionRoutes);
 app.use("/api/contact", contactRoutes);
+app.use("/api/seller", sellerRoutes);
 
 const PORT = process.env.PORT || 8000;
 
