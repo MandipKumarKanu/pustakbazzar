@@ -1,4 +1,4 @@
-const fetch = require("node-fetch");
+//const fetch = require("node-fetch");
 
 const KHALTI_API_URL = "https://a.khalti.com/api/v2/epayment/";
 
