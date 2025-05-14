@@ -12,6 +12,7 @@ import {
   FaClipboardList,
   FaTags,
   FaMoneyCheckAlt,
+  FaChartLine,
 } from "react-icons/fa";
 import { useAuthStore } from "@/store/useAuthStore";
 
@@ -169,6 +170,16 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
               <li>
                 <NavItem to="/admin/messages" icon={FaMoneyCheckAlt}>
                   Messages
+                </NavItem>
+              </li>
+              <li>
+                <NavItem to="/admin/PlatformFeeReport" icon={FaMoneyCheckAlt}>
+                  Platform Fee Report
+                </NavItem>
+              </li>
+              <li>
+                <NavItem to="/admin/SalesPerformanceReport" icon={FaChartLine}>
+                  Sales Performance Report
                 </NavItem>
               </li>
             </>

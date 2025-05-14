@@ -15,6 +15,8 @@ import AutocompleteInput from "@/components/ui/AutocompleteInput";
 import { Languages, User } from "lucide-react";
 import { RiSortNumberAsc } from "react-icons/ri";
 import { editionOptions, languageOptions } from "@/hooks/helper";
+import { customAxios } from "@/config/axios";
+
 
 const cloudinary = new Cloudinary({
   cloud_name: import.meta.env.VITE_CLOUD_NAME,
@@ -37,6 +39,7 @@ const EditBookPage = () => {
   const [cateError, setCateError] = useState(null);
   const [desc, setDesc] = useState("");
   const [descError, setDescError] = useState(null);
+  const [generatingDesc, setGeneratingDesc] = useState(false);
 
   const { category: categoryData } = useCategoryStore();
 
@@ -146,6 +149,38 @@ const EditBookPage = () => {
   const removeImage = (index) => {
     setPreviewImages((prev) => prev.filter((_, i) => i !== index));
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const generateDescription = async () => {
+    const title = watch("bookName");
+    const author = watch("author");
+    const condition = watch("condition");
+
+    if (!title || !author || !condition) {
+      toast.error("Please fill in the book name, author, and condition first.");
+      return;
+    }
+
+    try {
+      setGeneratingDesc(true);
+      const response = await customAxios.post("book/generate-description", {
+        title,
+        author,
+        condition,
+      });
+
+      if (response.data?.description) {
+        setDesc(response.data.description);
+        toast.success("Description generated successfully!");
+      } else {
+        toast.error("Failed to generate description. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error generating description:", error);
+      toast.error("Error generating description. Please try again.");
+    } finally {
+      setGeneratingDesc(false);
+    }
   };
 
   const handleUpdate = async (data) => {
@@ -722,16 +757,167 @@ const EditBookPage = () => {
                 )}
               </div>
 
-              <div className="space-y-2">
-                <label
-                  htmlFor="description"
-                  className="block text-sm font-medium text-gray-700"
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <label
+                    htmlFor="description"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    {" "}
+                    Description{" "}
+                  </label>
+
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={generateDescription}
+                      disabled={generatingDesc}
+                      className={`
+                        group flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium 
+                        shadow-sm transition-all duration-300 
+                        ${
+                          generatingDesc
+                            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                            : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 hover:shadow-md"
+                        }
+                      `}
+                    >
+                      {generatingDesc ? (
+                        <>
+                          <svg
+                            className="animate-spin h-5 w-5"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                              fill="none"
+                            />
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            />
+                          </svg>
+                          <span>AI is working...</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg
+                            className="h-5 w-5 text-indigo-100 group-hover:text-white transition-colors"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16Z"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                            <path
+                              d="M3 12H4M12 3V4M20 12H21M12 20V21M5.63607 5.63604L6.34317 6.34315M18.364 5.63604L17.6569 6.34315M6.34317 17.6569L5.63607 18.364M17.6569 17.6569L18.364 18.364"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                          <span>Generate with AI</span>
+                        </>
+                      )}
+                    </button>
+
+                    {descError && (
+                      <button
+                        type="button"
+                        onClick={generateDescription}
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-white font-medium bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 transition-all duration-300 shadow-sm hover:shadow-md"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                          />
+                        </svg>
+                        Regenerate
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {generatingDesc && (
+                  <div className="w-full bg-blue-50 border border-blue-100 rounded-lg p-3 mb-3 animate-pulse">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-shrink-0">
+                        <svg
+                          className="h-5 w-5 text-blue-500"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M9.99999 16.1716L19.1716 7L20.5858 8.41421L9.99999 19L3.41421 12.4142L4.82842 11L9.99999 16.1716Z"
+                            fill="currentColor"
+                          />
+                        </svg>
+                      </div>
+                      <p className="text-sm text-blue-700">
+                        AI is creating your description. This may take a
+                        moment...
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div
+                  className={`border rounded-lg transition-all duration-200 ${
+                    generatingDesc
+                      ? "border-blue-300 shadow-md shadow-blue-100"
+                      : "border-gray-200"
+                  }`}
                 >
-                  Description
-                </label>
-                <CKEditorComp content={desc} setContent={setDesc} />
+                  <CKEditorComp
+                    content={
+                      generatingDesc
+                        ? "✨ Wait for magic... AI is crafting your description ✨"
+                        : desc
+                    }
+                    setContent={setDesc}
+                  />
+                </div>
+
                 {descError && (
-                  <p className="text-red-500 text-xs mt-1">{descError}</p>
+                  <p className="flex items-center gap-2 text-red-500 text-sm mt-1">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                      />
+                    </svg>
+                    {descError}
+                  </p>
                 )}
               </div>
             </div>

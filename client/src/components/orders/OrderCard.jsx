@@ -197,6 +197,7 @@ const OrderCard = React.memo(({ order, onClick }) => {
               order.paymentStatus === "pending" &&
               "bg-gradient-to-t from-amber-700 to-orange-700 hover:from-amber-800 hover:to-orange-800"
             }
+            w
           />
         </div>
       </div>

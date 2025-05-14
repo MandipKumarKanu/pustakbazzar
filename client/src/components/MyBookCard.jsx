@@ -126,7 +126,7 @@ const MyBookCard = ({
               <>₹ 0.00</>
             )}
           </div>
-          <PrimaryBtn name={"View Book"} style=" w-full" />
+          <PrimaryBtn name={"View Book"} style=" w-full" w/>
         </div>
       </div>
     </SpotlightCard>

@@ -51,6 +51,8 @@ import PaymentSuccess from "./components/PaymentSuccess";
 import PaymentCancel from "./components/PaymentCancel";
 import SearchPage from "./pages/SearchPage";
 import MessagePage from "./pages/MessagePage";
+import PlatformFeeReport from "./components/PlatformFeeReport";
+import SalesPerformanceReport from "./components/SalesPerformanceReport";
 // import AdminOrder from "./pages/AdminOrder";
 
 // import ContactPage from "./pages/ContactPage";
@@ -166,6 +168,8 @@ function App() {
               <Route path="/admin/admin-order" element={<AdminOrder />} />
               <Route path="/admin/payout" element={<PayOut />} />
               <Route path="/admin/messages" element={<MessagePage />} />
+              <Route path="/admin/PlatformFeeReport" element={<PlatformFeeReport />} />
+              <Route path="/admin/SalesPerformanceReport" element={<SalesPerformanceReport />} />
               <Route
                 path="/admin/payout-history"
                 element={<SellerPayoutHistoryPage />}
