@@ -12,6 +12,7 @@ import {
   Zap,
   Search,
 } from "lucide-react";
+import {baseURL} from "@/config/axios;
 
 const AskAI = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -102,12 +103,9 @@ const AskAI = () => {
     }, 300);
 
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/book/ai-book-search",
-        {
-          query: userMessage,
-        }
-      );
+      const response = await axios.post(`${baseURL}/book/ai-book-search`, {
+  query: userMessage,
+        });
 
       setIsTyping(false);
 
