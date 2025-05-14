@@ -53,6 +53,7 @@ import SearchPage from "./pages/SearchPage";
 import MessagePage from "./pages/MessagePage";
 import PlatformFeeReport from "./components/PlatformFeeReport";
 import SalesPerformanceReport from "./components/SalesPerformanceReport";
+import AskAI from "./components/AskAI";
 // import AdminOrder from "./pages/AdminOrder";
 
 // import ContactPage from "./pages/ContactPage";
@@ -178,7 +179,7 @@ function App() {
           </Route>
         </Routes>
       </div>
-      {!pathname.includes("/admin") && <Footer />} <GotoTop />
+      {!pathname.includes("/admin") && <Footer />} <AskAI />
       <Toaster richColors />
     </>
   );

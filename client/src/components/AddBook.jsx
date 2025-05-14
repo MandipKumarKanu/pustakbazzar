@@ -316,10 +316,13 @@ const AddBook = () => {
         toast.success("Description generated successfully!");
       } else {
         toast.error("Failed to generate description. Please try again.");
+        setDesc("")
       }
     } catch (error) {
       console.error("Error generating description:", error);
       toast.error("Error generating description. Please try again.");
+        setDesc("")
+
     } finally {
       setGeneratingDesc(false);
     }

@@ -13,7 +13,7 @@ const ArrivalCard = ({ id, img, title, author, sellingPrice }) => {
           src={img}
           alt={title}
           loading="lazy"
-          className="object-contain rounded-lg h-52 w-full shadow-[8px_10px_8px_rgba(0,0,0,0.15)]"
+          className="object-cover rounded-lg h-52 w-full shadow-[8px_10px_8px_rgba(0,0,0,0.15)]"
         />
         <div
           className={`absolute bottom-0 right-0 p-2 px-3 text-sm text-white font-bold rounded-tl-xl opacity-90 bg-gradient-to-r from-primaryColor to-secondaryColor uppercase`}

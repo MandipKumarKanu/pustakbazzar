@@ -10,6 +10,9 @@ import {
   FaHandHoldingHeart,
   FaInfoCircle,
   FaAngleRight,
+  FaRobot,
+  FaArrowRight,
+  FaStar,
 } from "react-icons/fa";
 import { FaRegHeart } from "react-icons/fa";
 import { RWebShare } from "react-web-share";
@@ -26,6 +29,9 @@ import { addToCartApi, removeToCartApi } from "@/api/cart";
 import { useIsInCart } from "@/hooks/useCart";
 import { useCartStore } from "@/store/useCartStore";
 import { toast } from "sonner";
+import { customAxios } from "@/config/axios";
+import parse from "html-react-parser";
+import DOMPurify from "dompurify";
 
 const BookDescPage = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -41,6 +47,9 @@ const BookDescPage = () => {
   const navigate = useNavigate();
   const { user, token } = useAuthStore();
   const { incCart, decCart, cartCount: cCnt } = useCartStore();
+  const [aiReview, setAiReview] = useState(null);
+  const [isGeneratingReview, setIsGeneratingReview] = useState(false);
+  const [reviewError, setReviewError] = useState(null);
 
   let cartCount = typeof cCnt === "function" ? cCnt() : cCnt;
 
@@ -51,6 +60,10 @@ const BookDescPage = () => {
       isInWishlist();
       isInCartChk();
     }
+
+    setAiReview(null);
+    setIsGeneratingReview(false);
+    setReviewError(null);
   }, [id]);
 
   const updateInterests = (categoryId) => {
@@ -77,6 +90,34 @@ const BookDescPage = () => {
       updateInterests(catId);
     }
   }, [book]);
+
+  const generateAIReview = async () => {
+    if (!book.description) {
+      toast.error("No description available to generate review");
+      return;
+    }
+
+    setIsGeneratingReview(true);
+    setReviewError(null);
+
+    try {
+      const response = await customAxios.post("/book/summarize-review", {
+        title: book.title,
+        author: book.author,
+      });
+
+      if (response.data.success) {
+        setAiReview(response.data.summary);
+      } else {
+        throw new Error(response.data.message || "Failed to generate review");
+      }
+    } catch (error) {
+      console.error("Error generating AI review:", error);
+      setReviewError("Failed to generate AI review. Please try again.");
+    } finally {
+      setIsGeneratingReview(false);
+    }
+  };
 
   const isInWishlist = async () => {
     setIsWishlistLoading(true);
@@ -215,6 +256,81 @@ const BookDescPage = () => {
         </span>
       );
     }
+  };
+
+  const renderSummaryContent = () => {
+    if (isGeneratingReview) {
+      return (
+        <div className="text-center p-6 space-y-4">
+          <div className="animate-pulse flex flex-col items-center gap-4">
+            <div className="h-4 rounded w-3/4 bg-gray-200"></div>
+            <div className="h-4 rounded w-1/2 bg-gray-200"></div>
+            <div className="h-4 rounded w-2/3 bg-gray-200"></div>
+          </div>
+          <p className="text-sm text-gray-500">AI is analyzing the book...</p>
+        </div>
+      );
+    }
+
+    if (reviewError) {
+      return (
+        <div className="space-y-4">
+          <div className="bg-red-100 p-4 rounded flex items-center gap-2">
+            <span className="text-red-500">!</span>
+            <p className="text-red-500">{reviewError}</p>
+          </div>
+          <button
+            onClick={generateAIReview}
+            className="w-full p-2 border border-gray-300 rounded flex items-center justify-center hover:bg-gray-50 transition-colors"
+          >
+            <FaRobot className="mr-2 h-4 w-4" /> Try Again
+          </button>
+        </div>
+      );
+    }
+
+    if (!aiReview) {
+      return (
+        <div className="space-y-4">
+          <button
+            onClick={generateAIReview}
+            className="w-full p-3 border border-purple-300 rounded-md flex items-center justify-center hover:bg-purple-50 transition-colors group"
+          >
+            <FaRobot className="mr-2 h-4 w-4 text-purple-500" /> Generate AI
+            Review
+            <FaArrowRight className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </button>
+          <p className="text-sm text-gray-500 text-center">
+            Let AI create a quick analysis of this book based on its description
+          </p>
+        </div>
+      );
+    }
+
+    const cleanReview = aiReview
+      .replace(/```html\n?/g, "")
+      .replace(/```\n?/g, "")
+      .trim();
+
+    const sanitizedReview = DOMPurify.sanitize(cleanReview, {
+      ADD_ATTR: ["class"],
+    });
+
+    return (
+      <div className="prose prose-sm max-w-none">
+        <div className="[&>ul]:list-disc [&>ul]:ml-6 [&>ul]:space-y-2">
+          {parse(sanitizedReview)}
+        </div>
+        <div className="mt-4 flex items-center">
+          <button
+            onClick={generateAIReview}
+            className="px-3 py-1 text-xs bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 transition-colors flex items-center"
+          >
+            <FaRobot className="mr-1" /> Regenerate
+          </button>
+        </div>
+      </div>
+    );
   };
 
   if (isLoading) {
@@ -466,6 +582,22 @@ const BookDescPage = () => {
                         >
                           Shipping
                         </button>
+                        <button
+                          onClick={() => {
+                            setActiveTab("ai-review");
+                            if (!aiReview && !isGeneratingReview) {
+                              generateAIReview();
+                            }
+                          }}
+                          className={`py-3 px-4 font-medium text-sm flex items-center whitespace-nowrap ${
+                            activeTab === "ai-review"
+                              ? "border-b-2 border-purple-500 text-purple-600"
+                              : "text-gray-500 hover:text-gray-700"
+                          }`}
+                        >
+                          <FaRobot className="mr-1.5" />
+                          AI Review
+                        </button>
                       </div>
 
                       <div className="pt-4">
@@ -574,6 +706,23 @@ const BookDescPage = () => {
                             )}
                           </div>
                         )}
+
+                        {activeTab === "ai-review" && (
+                          <div className="space-y-4">
+                            {renderSummaryContent()}
+
+                            {aiReview && (
+                              <div className="mt-4 p-3 bg-gray-50 rounded-md text-xs text-gray-500">
+                                <p>
+                                  AI-generated reviews are based on the book
+                                  description and may not reflect actual reader
+                                  opinions. Always use your own judgment when
+                                  making purchase decisions.
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -621,7 +770,6 @@ const BookDescPage = () => {
                           </div>
                         </div>
                       ) : isOwner ? (
-                        // Owner view
                         <div className="space-y-4">
                           <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
                             <h3 className="font-medium text-amber-800 mb-2">
@@ -640,7 +788,6 @@ const BookDescPage = () => {
                           </button>
                         </div>
                       ) : isUnavailable ? (
-                        // Sold or donated
                         <div className="space-y-4">
                           <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                             <h3 className="font-medium text-gray-800 mb-2">
@@ -662,7 +809,6 @@ const BookDescPage = () => {
                           </button>
                         </div>
                       ) : book.forDonation ? (
-                        // Donation book
                         <div className="space-y-4">
                           <button
                             className="w-full px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 rounded-3xl text-white text-lg font-semibold shadow-md hover:from-green-600 hover:to-green-700 transition-colors"
@@ -679,7 +825,6 @@ const BookDescPage = () => {
                           </p>
                         </div>
                       ) : (
-                        // Normal purchase options
                         <div className="space-y-0">
                           {book.availability !== "rent" && (
                             <button
