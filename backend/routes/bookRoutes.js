@@ -19,8 +19,8 @@ const {
   getAllBooksForAdmin,
   getAuthors,
   generateBookDescription,
-
-  // myBook
+  generateReviewSummary,
+  aiBookSearch,
 } = require("../controllers/bookController");
 
 const authMiddleware = require("../middleware/authMiddleware");
@@ -51,5 +51,7 @@ router.patch("/inc/:id", incrementBookViews);
 router.patch("/toggle/:id", toggleFeaturedBook);
 router.post("/recommendations", publicRecommendation);
 router.post("/generate-description", generateBookDescription);
+router.post("/summarize-review", generateReviewSummary);
+router.post("/ai-book-search", aiBookSearch);
 
 module.exports = router;

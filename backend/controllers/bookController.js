@@ -4,7 +4,9 @@ const addCustomClassesToHtml = require("../utils/addCustomClass");
 const Donation = require("../models/Donation");
 const levenshtein = require("fast-levenshtein");
 const mongoose = require("mongoose");
-const fetch = require("node-fetch");
+const Category = require("../models/Category");
+
+// const fetch = require("node-fetch");
 // const { recordEvent } = require("../controllers/statsController");
 const {
   recordSale,
@@ -524,7 +526,7 @@ const searchBooks = async (req, res) => {
         pagination: {
           totalBooks: 0,
           totalPages: 0,
-          currentPage: page,
+          currentPage: 1,
           hasNextPage: false,
           hasPrevPage: false,
         },
@@ -963,8 +965,6 @@ const getAuthors = async (req, res) => {
   }
 };
 
-// Ensure this is installed in your project
-
 const generateBookDescription = async (req, res) => {
   try {
     const { title, author, condition } = req.body;
@@ -977,10 +977,21 @@ const generateBookDescription = async (req, res) => {
     }
 
     const prompt = `
-      Generate a compelling, grammatically correct description for a second-hand book titled "${title}" by ${author}. 
-      The book is in ${condition} condition and is available for selling/donation on a student-focused platform.
-    `;
+Generate a detailed and accurate description for a second-hand book titled "<strong>${title}</strong>" authored by <em>${author}</em>. 
 
+The description should:
+
+- Be specific to the book's content, themes, and key features.
+- Use HTML formatting suitable for a WYSIWYG editor (e.g., ckEditor):
+  - Use <strong> for bold text, <em> for italic text, and <p> for paragraphs.
+  - Include bullet points or lists where appropriate.
+- Highlight the book's storyline, themes, and unique aspects.
+- Avoid generic phrases, filler text, or unrelated information.
+- Emphasize its value as a second-hand book, including its condition (<strong>${condition}</strong>).
+- Keep the description concise and under 200 words.
+
+Return only the formatted description, without any additional commentary or placeholders.
+`;
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
@@ -1026,6 +1037,322 @@ const generateBookDescription = async (req, res) => {
   }
 };
 
+const generateReviewSummary = async (req, res) => {
+  try {
+    const { title, author } = req.body;
+
+    if (!title || !author) {
+      return res.status(400).json({
+        message: "Both title and author are required to generate a summary.",
+      });
+    }
+
+    const prompt = `
+You are an expert book reviewer. Summarize the book titled "<strong>${title}</strong>" authored by <em>${author}</em>.
+
+Format the summary using clean, semantic HTML that is compatible with CKEditor. Structure it into the following sections:
+
+<br><br><strong>Pros:</strong>
+<ul>
+  <li>List compelling strengths of the book (e.g., engaging storyline, valuable insights, clear writing)</li>
+</ul>
+
+<br><strong>Cons:</strong>
+<ul>
+  <li>List any notable weaknesses (e.g., outdated content, complex language, slow pacing)</li>
+</ul>
+
+<br><strong>Overall Verdict:</strong>
+<p>Write a concise, balanced conclusion about the book’s overall value, appeal, and who it is best suited for.</p>
+
+Guidelines:
+- Keep the full summary under 150 words.
+- Use proper paragraph spacing and indentation.
+- Avoid any content outside the requested format — no introductions, disclaimers, or unrelated remarks.
+- Do not add your own opinions — only summarize based on general book reviews.
+`;
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: prompt,
+                },
+              ],
+            },
+          ],
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Gemini API error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    const summary = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!summary) {
+      throw new Error("Failed to generate review summary.");
+    }
+
+    res.status(200).json({
+      success: true,
+      summary,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error generating review summary.",
+      error: error.message,
+    });
+  }
+};
+
+const aiBookSearch = async (req, res) => {
+  const { query } = req.body;
+  const startTime = Date.now();
+
+  if (!query || typeof query !== "string" || query.trim() === "") {
+    return res.status(400).json({
+      success: false,
+      error: "Valid search query is required",
+    });
+  }
+
+  try {
+    console.log(`Processing AI search: "${query}"`);
+
+    const prompt = `
+You are PustakBazzar’s AI assistant(PustakAI). You respond naturally to any user input—greetings, platform questions, or book‐search requests—and you also extract structured search filters when appropriate.
+
+Respond with a single JSON object like this:
+{
+  "reply": "<your friendly, helpful assistant reply>",
+  "filters": {
+    "category": [<strings>] or null,
+    "minPrice": <number> or null,
+    "maxPrice": <number> or null,
+    "sortBy": "price_asc" | "price_desc" | "rating" | "newest" or null,
+    "condition": "<good|excellent|fair>" or null,
+    "keyword": "<author or title text>" or null,
+    "language": "<English|Hindi|…>" or null
+  }
+}
+
+– If the user is not asking to search for books, set **all** fields in "filters" to null.  
+– Craft "reply" as if you’re a real personal assistant on PustakBazzar, even when no search is performed.
+– Payment option is khalti for nepali payment or stripe for international payment.
+– User to become seller need to fill a form and get approved by admin you can find it in profile section.
+– Made with MERN stack.
+– Made by: mandip shah(frontend, backend) and aadarsh kushuwaha(backend) (UI inspired from Idhathon (a hackathon) where we as a team F5(siddhartha singh  and mandip made UI there))  
+– Made in Nepal as of nepal
+– Project was supervised by Mr. Anish Ansari sir.
+– Don’t mention anything without asking about payment or something.
+– Don’t output any extra text—just valid JSON.
+  
+User query: """${query}"""
+`;
+
+const geminiResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 1024,
+          },
+        }),
+        signal: AbortSignal.timeout(4000),
+      }
+    );
+
+    if (!geminiResponse.ok) {
+      throw new Error(
+        `API error (${geminiResponse.status}): ${await geminiResponse.text()}`
+      );
+    }
+
+    const geminiData = await geminiResponse.json();
+    const rawText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!rawText) {
+      throw new Error("Empty response from AI service");
+    }
+
+    const cleanText = rawText
+      .replace(
+        /```(?:json)?([\s\S]*?)```|^([\s\S]*)$/g,
+        (_, p1, p2) => p1 || p2
+      )
+      .trim();
+
+    let parsedResponse;
+    try {
+      parsedResponse = JSON.parse(cleanText);
+    } catch (err) {
+      console.error("JSON parsing error:", err, "\nRaw text:", rawText);
+      throw new Error("Failed to parse AI response");
+    }
+
+    const { reply, filters } = parsedResponse;
+
+    if (
+      !filters ||
+      Object.values(filters).every(
+        (v) => v === null || (Array.isArray(v) && v.length === 0)
+      )
+    ) {
+      return res.status(200).json({
+        success: true,
+        results: {
+          count: 0,
+          books: [],
+          message: reply,
+        },
+        analytics: {
+          query,
+          extractedFilters: filters,
+          processingTime: `${Date.now() - startTime}ms`,
+        },
+      });
+    }
+
+    const queryObj = { status: "available", forDonation: false };
+
+    if (filters.category) {
+      const categories = Array.isArray(filters.category)
+        ? filters.category
+        : [filters.category];
+
+      if (categories.length > 0) {
+        const categoryDocs = await Category.find({
+          categoryName: { $in: categories.map((c) => new RegExp(c, "i")) },
+        });
+
+        if (categoryDocs.length > 0) {
+          queryObj.category = { $in: categoryDocs.map((doc) => doc._id) };
+          console.log(
+            `Found categories: ${categoryDocs
+              .map((c) => c.categoryName)
+              .join(", ")}`
+          );
+        } else {
+          console.log(
+            `No matching categories found for: ${categories.join(", ")}`
+          );
+
+          const hasOtherFilters = Object.entries(filters).some(
+            ([key, value]) =>
+              key !== "category" &&
+              value !== null &&
+              !(Array.isArray(value) && value.length === 0)
+          );
+
+          if (!hasOtherFilters) {
+            return res.status(200).json({
+              success: true,
+              results: {
+                count: 0,
+                books: [],
+                message: `${reply} I couldn't find any books in the ${
+                  categories.length > 1 ? "categories" : "category"
+                } you mentioned.`,
+              },
+              analytics: {
+                query,
+                extractedFilters: filters,
+                processingTime: `${Date.now() - startTime}ms`,
+              },
+            });
+          }
+        }
+      }
+    }
+
+    if (filters.minPrice || filters.maxPrice) {
+      queryObj.sellingPrice = {};
+      if (filters.minPrice !== null && !isNaN(filters.minPrice)) {
+        queryObj.sellingPrice.$gte = Number(filters.minPrice);
+      }
+      if (filters.maxPrice !== null && !isNaN(filters.maxPrice)) {
+        queryObj.sellingPrice.$lte = Number(filters.maxPrice);
+      }
+    }
+
+    if (filters.condition) {
+      queryObj.condition = filters.condition;
+    }
+
+    if (filters.language) {
+      queryObj.bookLanguage = new RegExp(filters.language, "i");
+    }
+
+    if (filters.keyword) {
+      queryObj.$or = [
+        { title: { $regex: filters.keyword, $options: "i" } },
+        { author: { $regex: filters.keyword, $options: "i" } },
+      ];
+    }
+
+    const sortOptions = {
+      price_asc: { sellingPrice: 1 },
+      price_desc: { sellingPrice: -1 },
+      rating: { rating: -1 },
+      newest: { createdAt: -1 },
+    };
+    const sortBy = sortOptions[filters.sortBy] || { createdAt: -1 };
+
+    console.log("Search query:", JSON.stringify(queryObj));
+
+    const books = await Book.find(queryObj)
+      .sort(sortBy)
+      .limit(10)
+      .select(
+        "title author sellingPrice images condition publishYear edition bookLanguage forDonation"
+      )
+      .populate("category", "categoryName")
+      .populate("addedBy", "profile.userName")
+      .lean();
+
+    const responseMessage = books.length
+      ? reply
+      : `${reply} I couldn't find any matching books with these criteria.`;
+
+    return res.status(200).json({
+      success: true,
+      results: {
+        count: books.length,
+        books,
+        message: responseMessage,
+      },
+      analytics: {
+        query,
+        extractedFilters: filters,
+        processingTime: `${Date.now() - startTime}ms`,
+      },
+    });
+  } catch (err) {
+    console.error("AI search error:", err);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to process your search request",
+      details: err.message,
+    });
+  }
+};
+
 module.exports = {
   createBook,
   getAllBooks,
@@ -1044,4 +1371,6 @@ module.exports = {
   getAllBooksForAdmin,
   getAuthors,
   generateBookDescription,
+  generateReviewSummary,
+  aiBookSearch,
 };
