@@ -12,7 +12,7 @@ import {
   Zap,
   Search,
 } from "lucide-react";
-import {baseURL} from "@/config/axios;
+import { baseURL } from "../config/axios.js";
 
 const AskAI = () => {
   const [isOpen, setIsOpen] = useState(false);
