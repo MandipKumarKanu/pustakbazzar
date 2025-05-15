@@ -1052,14 +1052,9 @@ You are an expert book reviewer. Summarize the book titled "<strong>${title}</st
 
 Format the summary using clean, semantic HTML that is compatible with CKEditor. Structure it into the following sections:
 
-<br><br><strong>Pros:</strong>
+<br><br><strong>Key Points:</strong>
 <ul>
   <li>List compelling strengths of the book (e.g., engaging storyline, valuable insights, clear writing)</li>
-</ul>
-
-<br><strong>Cons:</strong>
-<ul>
-  <li>List any notable weaknesses (e.g., outdated content, complex language, slow pacing)</li>
 </ul>
 
 <br><strong>Overall Verdict:</strong>
@@ -1157,24 +1152,25 @@ Respond with a single JSON object like this:
 – Made in Nepal as of nepal
 – Project was supervised by Mr. Anish Ansari sir.
 – Don’t mention anything without asking about payment or something.
+– If user is saying something about mood, make some catgory related to book and suggest some books to them
 – Don’t output any extra text—just valid JSON.
   
 User query: """${query}"""
 `;
 
-const geminiResponse = await fetch(
+    const geminiResponse = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.1,
-            maxOutputTokens: 1024,
-          },
+          // generationConfig: {
+          //   temperature: 0.1,
+          //   maxOutputTokens: 1024,
+          // },
         }),
-        signal: AbortSignal.timeout(4000),
+        // signal: AbortSignal.timeout(4000),
       }
     );
 
