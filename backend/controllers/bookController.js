@@ -5,6 +5,7 @@ const Donation = require("../models/Donation");
 const levenshtein = require("fast-levenshtein");
 const mongoose = require("mongoose");
 const Category = require("../models/Category");
+const Session = require("../models/Session");
 
 // const fetch = require("node-fetch");
 // const { recordEvent } = require("../controllers/statsController");
@@ -30,6 +31,7 @@ const createBook = async (req, res) => {
     publishYear,
     edition,
     language,
+    isbn,
   } = req.body;
 
   try {
@@ -59,6 +61,7 @@ const createBook = async (req, res) => {
       publishYear,
       edition,
       bookLanguage: language,
+      isbn,
     });
 
     const savedBook = await book.save();
@@ -204,6 +207,7 @@ const updateBook = async (req, res) => {
     publishYear,
     edition,
     bookLanguage,
+    isbn,
   } = req.body;
 
   try {
@@ -243,6 +247,7 @@ const updateBook = async (req, res) => {
         publishYear,
         edition,
         bookLanguage: bookLanguage,
+        isbn,
       },
       { new: true }
     );
@@ -413,9 +418,24 @@ const searchBooks = async (req, res) => {
           const authorMatch = book.author
             .toLowerCase()
             .includes(query.toLowerCase());
-          matchField = titleMatch ? "title" : authorMatch ? "author" : "query";
+          const isbnMatch = book.isbn
+            ? book.isbn.toLowerCase().includes(query.toLowerCase())
+            : false;
+          matchField = titleMatch
+            ? "title"
+            : authorMatch
+            ? "author"
+            : isbnMatch
+            ? "isbn"
+            : "query";
         } else {
-          matchField = title ? "title" : author ? "author" : "publishYear";
+          matchField = title
+            ? "title"
+            : author
+            ? "author"
+            : publishYear
+            ? "publishYear"
+            : "isbn";
         }
 
         return {
@@ -488,13 +508,25 @@ const searchBooks = async (req, res) => {
                   query.toLowerCase().startsWith(word)
               );
 
+          const isbnMatch = book.isbn
+            ? book.isbn.toLowerCase().includes(query.toLowerCase())
+            : false;
+
           matchField = titleMatch
             ? "title"
             : authorMatch
             ? "author"
+            : isbnMatch
+            ? "isbn"
             : "flexible";
         } else {
-          matchField = title ? "title" : author ? "author" : "publishYear";
+          matchField = title
+            ? "title"
+            : author
+            ? "author"
+            : publishYear
+            ? "publishYear"
+            : "isbn";
         }
 
         return {
@@ -588,10 +620,11 @@ function buildMongoQuery(query, title, author, publishYear) {
   const mongoQuery = {};
 
   if (query) {
-    // Search both title and author with single query parameter
+    // Search both title, author and ISBN with single query parameter
     mongoQuery.$or = [
       { title: { $regex: query, $options: "i" } },
       { author: { $regex: query, $options: "i" } },
+      { isbn: { $regex: query, $options: "i" } },
     ];
 
     // If the query looks like a year, also search in publishYear
@@ -639,6 +672,7 @@ function filterBooksWithFlexibleMatch(
     let authorMatch = true;
     let queryMatch = true;
     let yearMatch = true;
+    let isbnMatch = true;
 
     if (title) {
       const titleLower = book.title.toLowerCase();
@@ -677,6 +711,7 @@ function filterBooksWithFlexibleMatch(
       const queryLower = query.toLowerCase();
       const titleLower = book.title.toLowerCase();
       const authorLower = book.author.toLowerCase();
+      const isbn = book.isbn || "";
 
       const titleQueryMatch =
         titleLower.includes(queryLower) ||
@@ -694,10 +729,12 @@ function filterBooksWithFlexibleMatch(
             (word) => word.startsWith(queryLower) || queryLower.startsWith(word)
           );
 
-      queryMatch = titleQueryMatch || authorQueryMatch;
+      const isbnQueryMatch = isbn.includes(queryLower);
+
+      queryMatch = titleQueryMatch || authorQueryMatch || isbnQueryMatch;
     }
 
-    return titleMatch && authorMatch && queryMatch && yearMatch;
+    return titleMatch && authorMatch && queryMatch && yearMatch && isbnMatch;
   });
 }
 
@@ -719,6 +756,7 @@ function performFuzzySearch(
         const queryLower = query.toLowerCase();
         const titleWords = book.title.toLowerCase().split(/\s+/);
         const authorWords = book.author.toLowerCase().split(/\s+/);
+        const isbn = book.isbn || "";
 
         const titleDistance = Math.min(
           ...titleWords.map((word) => levenshtein.get(word, queryLower))
@@ -728,11 +766,26 @@ function performFuzzySearch(
           ...authorWords.map((word) => levenshtein.get(word, queryLower))
         );
 
-        const queryMinDistance = Math.min(titleDistance, authorDistance);
+        // Exact ISBN match gets distance 0, otherwise calculate Levenshtein
+        const isbnDistance =
+          isbn.toLowerCase() === queryLower
+            ? 0
+            : levenshtein.get(isbn.toLowerCase(), queryLower);
+
+        const queryMinDistance = Math.min(
+          titleDistance,
+          authorDistance,
+          isbnDistance
+        );
 
         if (queryMinDistance < minDistance) {
           minDistance = queryMinDistance;
-          matchField = titleDistance <= authorDistance ? "title" : "author";
+          matchField =
+            titleDistance <= authorDistance && titleDistance <= isbnDistance
+              ? "title"
+              : authorDistance <= isbnDistance
+              ? "author"
+              : "isbn";
         }
       }
 
@@ -1113,21 +1166,44 @@ Guidelines:
 };
 
 const aiBookSearch = async (req, res) => {
-  const { query } = req.body;
-  const startTime = Date.now();
-
-  if (!query || typeof query !== "string" || query.trim() === "") {
-    return res.status(400).json({
-      success: false,
-      error: "Valid search query is required",
-    });
-  }
-
   try {
-    console.log(`Processing AI search: "${query}"`);
+    const { sId, query } = req.body;
+    const startTime = Date.now();
 
-    const prompt = `
-You are PustakBazzar’s AI assistant(PustakAI). You respond naturally to any user input—greetings, platform questions, or book‐search requests—and you also extract structured search filters when appropriate.
+    if (!query || typeof query !== "string" || query.trim() === "") {
+      return res.status(400).json({
+        success: false,
+        error: "Valid search query is required.",
+      });
+    }
+
+    if (!sId || typeof sId !== "string") {
+      return res.status(400).json({
+        success: false,
+        error: "Missing or invalid session ID.",
+      });
+    }
+
+    let session = await Session.findOne({ sessionId: sId });
+
+    if (!session) {
+      session = await Session.create({
+        sessionId: sId,
+        lastActive: new Date(),
+        conversations: [],
+      });
+    }
+
+    let historyText = "";
+    if (Array.isArray(session.conversations)) {
+      const recent = session.conversations.slice(-3);
+      historyText = recent
+        .map((c) => `User: ${c.user}\nAssistant: ${c.ai}`)
+        .join("\n");
+      if (historyText) historyText += "\n";
+    }
+
+    const prompt = `You are PustakBazzar's AI assistant(PustakAI). You respond naturally to any user input—greetings, platform questions, or book‐search requests—and you also extract structured search filters when appropriate.
 
 Respond with a single JSON object like this:
 {
@@ -1139,38 +1215,34 @@ Respond with a single JSON object like this:
     "sortBy": "price_asc" | "price_desc" | "rating" | "newest" or null,
     "condition": "<good|excellent|fair>" or null,
     "keyword": "<author or title text>" or null,
+    "isbn": "<ISBN number>" or null,
     "language": "<English|Hindi|…>" or null
   }
 }
 
 – If the user is not asking to search for books, set **all** fields in "filters" to null.  
-– Craft "reply" as if you’re a real personal assistant on PustakBazzar, even when no search is performed.
+– Craft "reply" as if you're a real personal assistant on PustakBazzar, even when no search is performed.
 – Payment option is khalti for nepali payment or stripe for international payment.
 – User to become seller need to fill a form and get approved by admin you can find it in profile section.
 – Made with MERN stack.
 – Made by: mandip shah(frontend, backend) and aadarsh kushuwaha(backend) (UI inspired from Idhathon (a hackathon) where we as a team F5(siddhartha singh  and mandip made UI there))  
 – Made in Nepal as of nepal
 – Project was supervised by Mr. Anish Ansari sir.
-– Don’t mention anything without asking about payment or something.
-– If user is saying something about mood, make some catgory related to book and suggest some books to them
-– Don’t output any extra text—just valid JSON.
+– Don't mention anything without asking about payment or something.
+– If user is saying something about mood, make some catgory related to book and suggest some books to them.
+– Just reply what user is asking for, dont add extra things.
+– If i say naruto, search naruto dont ask question it will be nice or if askin question include previous question in the prompt where suitalbe, try to not ask question.
+– Make the tone polite
+– Don't output any extra text—just valid JSON.
   
-User query: """${query}"""
-`;
-
+${historyText}
+User: ${query}`;
     const geminiResponse = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          // generationConfig: {
-          //   temperature: 0.1,
-          //   maxOutputTokens: 1024,
-          // },
-        }),
-        // signal: AbortSignal.timeout(4000),
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
       }
     );
 
@@ -1183,9 +1255,7 @@ User query: """${query}"""
     const geminiData = await geminiResponse.json();
     const rawText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    if (!rawText) {
-      throw new Error("Empty response from AI service");
-    }
+    if (!rawText) throw new Error("Empty response from AI service");
 
     const cleanText = rawText
       .replace(
@@ -1199,17 +1269,28 @@ User query: """${query}"""
       parsedResponse = JSON.parse(cleanText);
     } catch (err) {
       console.error("JSON parsing error:", err, "\nRaw text:", rawText);
-      throw new Error("Failed to parse AI response");
+      throw new Error("Failed to parse AI response.");
     }
 
     const { reply, filters } = parsedResponse;
 
-    if (
-      !filters ||
-      Object.values(filters).every(
-        (v) => v === null || (Array.isArray(v) && v.length === 0)
-      )
-    ) {
+    await Session.findOneAndUpdate(
+      { sessionId: sId },
+      {
+        $set: { lastActive: new Date() },
+        $push: {
+          conversations: {
+            user: query,
+            ai: reply,
+            filters,
+          },
+        },
+      },
+      { upsert: true }
+    );
+
+    const queryObj = await buildQueryFromFilters(filters);
+    if (!queryObj) {
       return res.status(200).json({
         success: true,
         results: {
@@ -1225,95 +1306,8 @@ User query: """${query}"""
       });
     }
 
-    const queryObj = { status: "available", forDonation: false };
-
-    if (filters.category) {
-      const categories = Array.isArray(filters.category)
-        ? filters.category
-        : [filters.category];
-
-      if (categories.length > 0) {
-        const categoryDocs = await Category.find({
-          categoryName: { $in: categories.map((c) => new RegExp(c, "i")) },
-        });
-
-        if (categoryDocs.length > 0) {
-          queryObj.category = { $in: categoryDocs.map((doc) => doc._id) };
-          console.log(
-            `Found categories: ${categoryDocs
-              .map((c) => c.categoryName)
-              .join(", ")}`
-          );
-        } else {
-          console.log(
-            `No matching categories found for: ${categories.join(", ")}`
-          );
-
-          const hasOtherFilters = Object.entries(filters).some(
-            ([key, value]) =>
-              key !== "category" &&
-              value !== null &&
-              !(Array.isArray(value) && value.length === 0)
-          );
-
-          if (!hasOtherFilters) {
-            return res.status(200).json({
-              success: true,
-              results: {
-                count: 0,
-                books: [],
-                message: `${reply} I couldn't find any books in the ${
-                  categories.length > 1 ? "categories" : "category"
-                } you mentioned.`,
-              },
-              analytics: {
-                query,
-                extractedFilters: filters,
-                processingTime: `${Date.now() - startTime}ms`,
-              },
-            });
-          }
-        }
-      }
-    }
-
-    if (filters.minPrice || filters.maxPrice) {
-      queryObj.sellingPrice = {};
-      if (filters.minPrice !== null && !isNaN(filters.minPrice)) {
-        queryObj.sellingPrice.$gte = Number(filters.minPrice);
-      }
-      if (filters.maxPrice !== null && !isNaN(filters.maxPrice)) {
-        queryObj.sellingPrice.$lte = Number(filters.maxPrice);
-      }
-    }
-
-    if (filters.condition) {
-      queryObj.condition = filters.condition;
-    }
-
-    if (filters.language) {
-      queryObj.bookLanguage = new RegExp(filters.language, "i");
-    }
-
-    if (filters.keyword) {
-      queryObj.$or = [
-        { title: { $regex: filters.keyword, $options: "i" } },
-        { author: { $regex: filters.keyword, $options: "i" } },
-      ];
-    }
-
-    const sortOptions = {
-      price_asc: { sellingPrice: 1 },
-      price_desc: { sellingPrice: -1 },
-      rating: { rating: -1 },
-      newest: { createdAt: -1 },
-    };
-    const sortBy = sortOptions[filters.sortBy] || { createdAt: -1 };
-
-    console.log("Search query:", JSON.stringify(queryObj));
-
     const books = await Book.find(queryObj)
-      .sort(sortBy)
+      .sort(getSortOption(filters.sortBy))
       .limit(10)
       .select(
         "title author sellingPrice images condition publishYear edition bookLanguage forDonation"
@@ -1322,16 +1316,15 @@ User query: """${query}"""
       .populate("addedBy", "profile.userName")
       .lean();
 
-    const responseMessage = books.length
-      ? reply
-      : `${reply} I couldn't find any matching books with these criteria.`;
-
     return res.status(200).json({
       success: true,
       results: {
         count: books.length,
         books,
-        message: responseMessage,
+        message:
+          books.length > 0
+            ? reply
+            : `${reply} I couldn't find any matching books.`,
       },
       analytics: {
         query,
@@ -1343,11 +1336,94 @@ User query: """${query}"""
     console.error("AI search error:", err);
     return res.status(500).json({
       success: false,
-      error: "Failed to process your search request",
+      error: "Failed to process your search request.",
       details: err.message,
     });
   }
 };
+
+async function buildQueryFromFilters(filters) {
+  if (
+    !filters ||
+    Object.values(filters).every(
+      (v) => v === null || (Array.isArray(v) && v.length === 0)
+    )
+  ) {
+    return null;
+  }
+
+  const query = { status: "available", forDonation: false };
+
+  if (filters.category) {
+    const categories = Array.isArray(filters.category)
+      ? filters.category
+      : [filters.category];
+
+    if (categories.length > 0) {
+      const categoryDocs = await Category.find({
+        categoryName: { $in: categories.map((c) => new RegExp(c, "i")) },
+      });
+
+      if (categoryDocs.length > 0) {
+        query.category = { $in: categoryDocs.map((doc) => doc._id) };
+        console.log(
+          `Found categories: ${categoryDocs
+            .map((c) => c.categoryName)
+            .join(", ")}`
+        );
+      } else if (
+        categoryDocs.length === 0 &&
+        filters.minPrice == null &&
+        filters.maxPrice == null &&
+        filters.condition == null &&
+        filters.language == null &&
+        filters.keyword == null &&
+        filters.isbn == null
+      ) {
+        return null;
+      } else {
+        console.log(
+          `No matching categories found for: ${categories.join(", ")}`
+        );
+      }
+    }
+  }
+
+  if (filters.minPrice || filters.maxPrice) {
+    query.sellingPrice = {};
+    if (filters.minPrice !== null)
+      query.sellingPrice.$gte = Number(filters.minPrice);
+    if (filters.maxPrice !== null)
+      query.sellingPrice.$lte = Number(filters.maxPrice);
+  }
+
+  if (filters.condition) query.condition = filters.condition;
+  if (filters.language) query.bookLanguage = new RegExp(filters.language, "i");
+
+  if (filters.keyword) {
+    query.$or = [
+      { title: { $regex: filters.keyword, $options: "i" } },
+      { author: { $regex: filters.keyword, $options: "i" } },
+    ];
+  }
+
+  if (filters.isbn) {
+    if (!query.$or) query.$or = [];
+    query.$or.push({ isbn: { $regex: filters.isbn, $options: "i" } });
+  }
+
+  return query;
+}
+
+function getSortOption(sortBy) {
+  const sortOptions = {
+    price_asc: { sellingPrice: 1 },
+    price_desc: { sellingPrice: -1 },
+    rating: { rating: -1 },
+    newest: { createdAt: -1 },
+  };
+  return sortOptions[sortBy] || { createdAt: -1 };
+}
 
 module.exports = {
   createBook,

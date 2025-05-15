@@ -13,6 +13,7 @@ const bookSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+     isbn: { type: String, trim: true }, 
     category: [
       { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
     ],
