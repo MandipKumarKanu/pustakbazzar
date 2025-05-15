@@ -53,6 +53,7 @@ const AskAI = () => {
     "Mystery books",
     "Self-help books",
     "Computer science books",
+    "Who made you?"
   ];
 
   useEffect(() => {
@@ -186,78 +187,79 @@ const AskAI = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       onClick={() => navigate(`/book/${book._id}`)}
-      className="p-3 rounded-xl bg-white dark:bg-gray-800 border cursor-pointer border-gray-200 dark:border-gray-700 flex gap-3 my-2 hover:shadow-md transition-all duration-300 hover:border-purple-300 dark:hover:border-purple-500 group"
+      className="p-4 rounded-2xl bg-white dark:bg-gray-800 border cursor-pointer border-gray-200 dark:border-gray-700 flex gap-4 my-3 hover:shadow-lg transition-all duration-300 hover:border-purple-300 dark:hover:border-purple-500 group relative overflow-hidden"
     >
-      <div className="flex-shrink-0 w-16 h-24 overflow-hidden rounded-lg shadow-sm group-hover:shadow-md transition-all duration-300">
+      <div className="flex-shrink-0 w-20 h-30 overflow-hidden rounded-lg shadow-md group-hover:shadow-xl transition-all duration-300 relative">
         {book.images && book.images.length > 0 ? (
           <div className="relative w-full h-full overflow-hidden">
             <img
               src={book.images[0]}
               alt={book.title}
-              className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
+              className="object-contain w-full h-full transition-transform duration-500 group-hover:scale-110"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </div>
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/30 flex items-center justify-center">
-            <BookOpen size={24} className="text-purple-400" />
+          <div className="w-full h-full bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-900/30 dark:to-purple-800/40 flex items-center justify-center">
+            <BookOpen size={28} className="text-purple-500" />
           </div>
         )}
       </div>
-      <div className="flex-1 min-w-0">
-        <h4 className="text-sm font-semibold truncate text-gray-900 dark:text-gray-100 group-hover:text-purple-700 dark:group-hover:text-purple-400 transition-colors duration-300">
-          {book.title}
-        </h4>
-        <p className="text-xs text-gray-600 dark:text-gray-400 font-medium line-clamp-1">
-          by{" "}
-          <span className="text-gray-700 dark:text-gray-300">
-            {book.author}
-          </span>
-        </p>
-        {/* {book.category && book.category.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-1.5">
-            {book.category.slice(0, 2).map((cat) => (
-              <span
-                key={cat._id}
-                className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-medium"
-              >
-                {cat.categoryName}
-              </span>
-            ))}
-            {book.category.length > 2 && (
-              <span className="text-[10px] px-1 text-purple-500">
-                +{book.category.length - 2}
-              </span>
-            )}
-          </div>
-        )} */}
-        {book.category && book.category.length > 0 && (
-          <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-medium line-clamp-1">
-            {book.category[0].categoryName}
-          </span>
-        )}
-        <div className="flex items-center justify-between mt-2">
-          <div className="flex items-center gap-1">
-            <span className="text-sm font-bold text-purple-600 dark:text-purple-400">
-              ₹{book.sellingPrice.toLocaleString("en-IN")}
+
+      <div className="flex-1 min-w-0 flex flex-col justify-between">
+        <div>
+          <h4 className="text-sm font-bold truncate text-gray-900 dark:text-gray-100 group-hover:text-purple-700 dark:group-hover:text-purple-400 transition-colors duration-300">
+            {book.title}
+          </h4>
+
+          <p className="text-xs text-gray-600 dark:text-gray-400 font-medium line-clamp-1 mt-0.5">
+            by{" "}
+            <span className="text-purple-600 dark:text-purple-400">
+              {book.author}
             </span>
-            {book.mrp > book.sellingPrice && (
-              <span className="text-xs text-gray-500 line-through">
-                ₹{book.mrp.toLocaleString("en-IN")}
-              </span>
-            )}
-          </div>
-          <span className="text-xs uppercase tracking-wider px-2 py-0.5 rounded-full bg-gradient-to-r from-purple-100 to-purple-200 dark:from-purple-900/30 dark:to-purple-800/40 text-purple-800 dark:text-purple-200 font-medium">
-            {formatCondition(book.condition)}
-          </span>
+          </p>
+
+          {book.category && book.category.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {book.category.slice(0, 2).map((cat) => (
+                <span
+                  key={cat._id || cat}
+                  className="text-[9px] uppercase tracking-wider px-1.5 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-medium pl-3"
+                >
+                  {cat.categoryName || cat}
+                </span>
+              ))}
+              {book.category.length > 2 && (
+                <span className="text-[9px] px-1 text-purple-500">
+                  +{book.category.length - 2}
+                </span>
+              )}
+            </div>
+          )}
         </div>
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className="w-full mt-2 text-xs py-1.5 rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 text-white font-medium flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-        >
-          <Search size={12} /> View Details
-        </motion.button>
+
+        <div className="mt-2">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-extrabold text-purple-600 dark:text-purple-400">
+                ₹{book.sellingPrice.toLocaleString("en-IN")}
+              </span>
+              {book.mrp > book.sellingPrice && (
+                <span className="text-xs text-gray-500 line-through">
+                  ₹{book.mrp.toLocaleString("en-IN")}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="w-full text-xs py-1.5 rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 text-white font-medium flex items-center justify-center gap-1.5 shadow-sm group-hover:shadow-md transition-all duration-300"
+          >
+            <Search size={12} /> View Details
+          </motion.button> */}
+        </div>
       </div>
     </motion.div>
   );
