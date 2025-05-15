@@ -54,6 +54,7 @@ import MessagePage from "./pages/MessagePage";
 import PlatformFeeReport from "./components/PlatformFeeReport";
 import SalesPerformanceReport from "./components/SalesPerformanceReport";
 import AskAI from "./components/AskAI";
+import NotFoundPage from "./pages/NotFoundPage";
 // import AdminOrder from "./pages/AdminOrder";
 
 // import ContactPage from "./pages/ContactPage";
@@ -143,6 +144,7 @@ function App() {
           <Route path="/category" element={<CategoryPage />} />
           <Route path="/category/:cname" element={<ParticularCategory />} />
           <Route path="/contact" element={<ContactPage />} />
+          <Route path="*" element={<NotFoundPage />} />
           <Route
             path="/terms-and-conditions"
             element={<TermsAndConditions />}
