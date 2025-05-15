@@ -654,6 +654,14 @@ const BookDescPage = () => {
                                     "Unknown"}
                                 </span>
                               </div>
+                              <div className="flex flex-col">
+                                <span className="text-sm text-gray-500">
+                                  ISBN
+                                </span>
+                                <span className="font-medium">
+                                  {book?.isbn || "N/A"}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         )}

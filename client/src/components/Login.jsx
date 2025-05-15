@@ -55,7 +55,7 @@ const Login = ({ switchToSignup }) => {
       });
 
       const user = jwtDecode(data.accessToken);
-      console.log("Decoded User:", user);
+      // console.log("Decoded User:", user);
       setUser(user);
       setToken(data.accessToken);
       navigate("/", { replace: true });
@@ -85,7 +85,7 @@ const Login = ({ switchToSignup }) => {
 
   const onLoginSubmit = async (data) => {
     try {
-      console.log(data);
+      // console.log(data);
       await login(data.email, data.password, navigate, setName);
       await fetchCart();
     } catch (err) {

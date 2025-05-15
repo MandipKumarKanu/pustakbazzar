@@ -30,7 +30,7 @@ export const useAuthStore = create((set) => ({
       const response = await authSignIn({ email, password });
       const token = response?.data?.accessToken;
       const decodedUser = jwtDecode(token);
-      console.log(decodedUser);
+      // console.log(decodedUser);
       set({ loading: false, user: decodedUser, token });
       setName(decodedUser.interest);
       toast.success("Logged-in Successful");
@@ -46,7 +46,7 @@ export const useAuthStore = create((set) => ({
     try {
       const response = await authSignUp(data);
       const token = response?.data?.accessToken;
-      console.log(token);
+      // console.log(token);
       const decodedUser = jwtDecode(token);
       set({ loading: false, user: decodedUser, token });
       toast.success(response.data.message);
@@ -81,7 +81,7 @@ export const useAuthStore = create((set) => ({
     set({ loading: true, error: null });
     try {
       const response = await getProfileApi();
-      console.log(response?.data);
+      // console.log(response?.data);
       set({ loading: false, user: response?.data });
     } catch (error) {
       // toast.error(getErrorMessage(error));

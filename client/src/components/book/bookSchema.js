@@ -4,11 +4,18 @@ export const bookSchema = z
   .object({
     bookName: z
       .string()
-      .min(1, "Book name is required")
+      .min(1, { message: "Book name is required" })
       .regex(
         /^[A-Za-z][A-Za-z0-9\s!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]*$/,
         "Book name must start with a letter and can contain letters, numbers, spaces, and symbols"
       ),
+    isbn: z
+      .string()
+      .min(1, { message: "ISBN is required" })
+      .regex(/^(?:\d{10}|\d{13})$/, {
+        message: "ISBN must be 10 or 13 digits",
+      })
+      .optional(),
     bookLanguage: z.string().min(1, "Language is required"),
     author: z.string().min(1, "Author is required"),
     edition: z.string().min(1, "Edition is required"),

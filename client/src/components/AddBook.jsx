@@ -136,6 +136,7 @@ const AddBook = () => {
       const dataToSend = {
         title: data.bookName,
         description: desc,
+        isbn: data.isbn,
         author: data.author,
         category: categoryValue,
         markedPrice: data.bookFor === "donation" ? 0 : data.markedPrice,
@@ -220,7 +221,14 @@ const AddBook = () => {
   const getStepFields = (step) => {
     switch (step) {
       case 1:
-        return ["bookName", "bookLanguage", "author", "edition", "publishYear"];
+        return [
+          "bookName",
+          "isbn",
+          "bookLanguage",
+          "author",
+          "edition",
+          "publishYear",
+        ];
       case 2:
         return ["markedPrice", "sellingPrice", "bookFor", "condition"];
       case 3:
@@ -316,13 +324,12 @@ const AddBook = () => {
         toast.success("Description generated successfully!");
       } else {
         toast.error("Failed to generate description. Please try again.");
-        setDesc("")
+        setDesc("");
       }
     } catch (error) {
       console.error("Error generating description:", error);
       toast.error("Error generating description. Please try again.");
-        setDesc("")
-
+      setDesc("");
     } finally {
       setGeneratingDesc(false);
     }
@@ -354,6 +361,30 @@ const AddBook = () => {
                 {errors.bookName && (
                   <p className="text-red-500 text-xs mt-1">
                     {errors.bookName.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label
+                  htmlFor="isbn"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  ISBN
+                </label>
+                <input
+                  id="isbn"
+                  {...register("isbn")}
+                  placeholder="Enter ISBN (e.g., 9781234567897)"
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                    errors.isbn
+                      ? "border-red-500 ring-1 ring-red-500"
+                      : "border-gray-300"
+                  }`}
+                />
+                {errors.isbn && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.isbn.message}
                   </p>
                 )}
               </div>
