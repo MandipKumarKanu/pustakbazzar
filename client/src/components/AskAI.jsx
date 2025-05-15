@@ -103,7 +103,7 @@ const AskAI = () => {
     }, 300);
 
     try {
-      const response = await axios.post(`${baseURL}/book/ai-book-search`, {
+      const response = await axios.post(`${baseURL}book/ai-book-search`, {
   query: userMessage,
         });
 

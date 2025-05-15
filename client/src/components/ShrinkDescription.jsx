@@ -53,7 +53,7 @@ const ShrinkDescription = ({ desc, maxHeight = 400 }) => {
             className="group hover:bg-accent/50 transition-colors duration-300"
           >
             <span className="flex items-center gap-2 text-lg">
-              {expanded ? "Show Less" : "Read Full Blog"}
+              {expanded ? "Show Less" : "Read Full Description"}
               <FaChevronDown
                 className={`w-4 h-4 transition-transform duration-300 group-hover:translate-y-1 ${
                   expanded ? "rotate-180" : ""
