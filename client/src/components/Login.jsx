@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -7,6 +7,9 @@ import { FaEye, FaEyeSlash, FaGoogle } from "react-icons/fa";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useCartStore } from "@/store/useCartStore";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { baseURL, customAxios } from "@/config/axios";
+import { jwtDecode } from "jwt-decode";
+import { toast } from "sonner";
 
 const loginSchema = z.object({
   email: z.string().min(1, "Email is required").email("Invalid email address"),
@@ -15,11 +18,54 @@ const loginSchema = z.object({
 
 const Login = ({ switchToSignup }) => {
   const [showLoginPassword, setShowLoginPassword] = useState(false);
-  const { login, loading } = useAuthStore();
+  const { login, loading, setUser, setToken } = useAuthStore();
   const { fetchCart } = useCartStore();
   const [name, setName] = useLocalStorage("interest", []);
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (window.google) {
+      window.google.accounts.id.initialize({
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+        callback: handleGoogleResponse,
+      });
+
+      window.google.accounts.id.prompt();
+
+      window.google.accounts.id.renderButton(
+        document.getElementById("googleBtn"),
+        {
+          theme: "filled_blue",
+          size: "large",
+          width: "100%",
+          text: "continue_with",
+          shape: "pill",
+          logo_alignment: "left",
+        }
+      );
+    }
+  }, []);
+
+  const handleGoogleResponse = async (response) => {
+    try {
+      const { credential } = response;
+      const { data } = await customAxios.post(`${baseURL}auth/google-login`, {
+        token: credential,
+      });
+
+      const user = jwtDecode(data.accessToken);
+      // console.log("Decoded User:", user);
+      setUser(user);
+      setToken(data.accessToken);
+      navigate("/", { replace: true });
+      setName((user && user.interest) || []);
+      toast.success("Logged-in Successful");
+      await fetchCart();
+    } catch (error) {
+      console.error("Google login failed:", error);
+    }
+  };
 
   const {
     register,
@@ -30,14 +76,6 @@ const Login = ({ switchToSignup }) => {
     mode: "onChange",
   });
 
-  const handleGoogleSignIn = async () => {
-    try {
-      console.log("Google sign-in initiated");
-    } catch (error) {
-      console.error("Google sign-in error:", error);
-    }
-  };
-
   const inputClasses =
     "w-full border-[1px] border-gray-300 px-4 py-3 rounded-3xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none bg-white";
   const labelClasses = "block text-gray-700 font-medium mb-2";
@@ -47,7 +85,7 @@ const Login = ({ switchToSignup }) => {
 
   const onLoginSubmit = async (data) => {
     try {
-      console.log(data);
+      // console.log(data);
       await login(data.email, data.password, navigate, setName);
       await fetchCart();
     } catch (err) {
@@ -82,7 +120,6 @@ const Login = ({ switchToSignup }) => {
     </>
   );
 
-  // Spinner component for the loading animation
   const LoadingSpinner = () => (
     <svg
       className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
@@ -109,7 +146,7 @@ const Login = ({ switchToSignup }) => {
   return (
     <form
       onSubmit={handleSubmit(onLoginSubmit)}
-      className="flex flex-col gap-6 mt-6 bg-white p-8 rounded-2xl border-2 shadow-xl mb-10"
+      className="flex flex-col gap-6 mt-6 bg-white p-8 rounded-2xl border-2 shadow-xl mb-10 "
     >
       <div>
         <label htmlFor="loginEmail" className={labelClasses}>
@@ -173,12 +210,9 @@ const Login = ({ switchToSignup }) => {
       </div>
       <button
         type="button"
-        className="flex items-center justify-center gap-3 bg-white text-gray-700 p-3 rounded-3xl hover:bg-gray-50 transition-all duration-300 shadow-md border-2 border-gray-300 font-bold"
-        onClick={handleGoogleSignIn}
-      >
-        <FaGoogle className="text-xl" />
-        Login with Google
-      </button>
+        className="flex items-center justify-center gap-3 bg-white text-gray-700 p-3 rounded-3xl hover:bg-gray-50 transition-all duration-300 "
+        id="googleBtn"
+      ></button>
     </form>
   );
 };

@@ -1,10 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { FaEye, FaEyeSlash, FaGoogle } from "react-icons/fa";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useCartStore } from "@/store/useCartStore";
 import { useNavigate } from "react-router-dom";
+import { baseURL, customAxios } from "@/config/axios";
+import { jwtDecode } from "jwt-decode";
+import { toast } from "sonner";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 const formatPhoneNumber = (value) => {
   if (!value) return value;
@@ -71,8 +76,10 @@ const Signup = ({ switchToLogin }) => {
   const [phoneValue, setPhoneValue] = useState("");
 
   const navigate = useNavigate();
-  const { signUp, loading } = useAuthStore();
-
+  const { signUp, loading, setUser, setToken } = useAuthStore(); 
+  const { fetchCart } = useCartStore(); 
+  const [name, setName] = useLocalStorage("interest", []); 
+  
   const {
     register,
     handleSubmit,
@@ -83,11 +90,47 @@ const Signup = ({ switchToLogin }) => {
     mode: "onChange",
   });
 
-  const handleGoogleSignIn = async () => {
+  useEffect(() => {
+    if (window.google) {
+      window.google.accounts.id.initialize({
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+        callback: handleGoogleResponse,
+      });
+
+      window.google.accounts.id.prompt(); 
+
+      window.google.accounts.id.renderButton(
+        document.getElementById("googleBtn"),
+        {
+          theme: "filled_blue",
+          size: "large",
+          width: "100%",
+          text: "continue_with",
+          shape: "pill",
+          logo_alignment: "left",
+        }
+      );
+    }
+  }, []);
+
+  const handleGoogleResponse = async (response) => {
     try {
-      console.log("Google sign-up initiated");
+      const { credential } = response;
+      const { data } = await customAxios.post(`${baseURL}auth/google-login`, {
+        token: credential,
+      });
+
+      const user = jwtDecode(data.accessToken);
+      console.log("Decoded User:", user);
+      setUser(user);
+      setToken(data.accessToken);
+      navigate("/", { replace: true });
+      setName((user && user.interest) || []);
+      toast.success("Logged-in Successful");
+      await fetchCart();
     } catch (error) {
-      console.error("Google sign-in error:", error);
+      console.error("Google login failed:", error);
+      toast.error("Google login failed. Please try again.");
     }
   };
 
@@ -330,12 +373,9 @@ const Signup = ({ switchToLogin }) => {
       </div>
       <button
         type="button"
-        className="flex items-center justify-center gap-2 bg-white text-gray-700 p-2 rounded-3xl hover:bg-gray-50 transition-all duration-300 shadow-md border-2 border-gray-300 font-bold"
-        onClick={handleGoogleSignIn}
-      >
-        <FaGoogle size={14} />
-        <span className="text-sm">Sign up with Google</span>
-      </button>
+        className="flex items-center justify-center gap-3 bg-white text-gray-700 p-3 rounded-3xl hover:bg-gray-50 transition-all duration-300 "
+        id="googleBtn"
+      ></button>
     </form>
   );
 };

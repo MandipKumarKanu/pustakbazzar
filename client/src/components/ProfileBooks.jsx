@@ -6,7 +6,7 @@ const ProfileBooks = ({ user }) => {
   const [activeTab, setActiveTab] = useState("bought");
 
   const tabs = [
-    { name: "Bought", value: "bought", count: user?.bought?.length  || 0 },
+    { name: "Bought", value: "bought", count: user?.bought?.length || 0 },
     { name: "Donated", value: "donated", count: user?.donated?.length || 0 },
   ];
 
@@ -32,8 +32,6 @@ const ProfileBooks = ({ user }) => {
             <MyBookPage isDonation={false} />
           </>
         );
-      // case "rented":
-      //   return <div>Your rented books will be listed here.</div>;
       case "donated":
         return (
           <>

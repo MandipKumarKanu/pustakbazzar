@@ -21,7 +21,7 @@
   font-style: normal;
   font-weight: 200 700;
   font-display: swap;
-  src: url("./assets/fonts/sfpro.OTF") format("OTF");
+  src: url("./assets/fonts/SFPro.ttf") format("truetype");
 }
 
 @font-face {
@@ -29,7 +29,15 @@
   font-style: normal;
   font-weight: 200 700;
   font-display: swap;
-  src: url("./assets/fonts/Suntage.otf") format("OTF");
+  src: url("./assets/fonts/Suntage.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: Cyber;
+  font-style: normal;
+  font-weight: 200 700;
+  font-display: swap;
+  src: url("./assets/fonts/cyber.otf") format("OTF");
 }
 
 /* *{
@@ -469,4 +477,75 @@
     background-color: var(--white);
     transform: translate3d(0, 0, 1px) rotateY(0);
   }
+}
+
+/* Add this to your CSS */
+.hide-scrollbar {
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none; /* Firefox */
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}
+
+/* pustakAi */
+
+.hide-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.hide-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.hide-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.3);
+  border-radius: 20px;
+}
+
+.hide-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.5);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(139, 92, 246, 0.1);
+  border-radius: 20px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.5);
+  border-radius: 20px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.7);
+}
+
+.custom-horizontal-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 92, 246, 0.5) rgba(139, 92, 246, 0.1);
+}
+
+.custom-horizontal-scrollbar::-webkit-scrollbar {
+  height: 4px;
+}
+
+.custom-horizontal-scrollbar::-webkit-scrollbar-track {
+  background: rgba(139, 92, 246, 0.1);
+  border-radius: 20px;
+}
+
+.custom-horizontal-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.5);
+  border-radius: 20px;
+}
+
+.custom-horizontal-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.7);
 }

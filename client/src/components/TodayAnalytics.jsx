@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { BookOpen, Users, Heart, Eye, BarChart3, Library } from "lucide-react";
 
 const TodayAnalytics = ({ analyticsData }) => {
-  //   console.log(analyticsData);
+    console.log(analyticsData);
   const [analytics, setAnalytics] = useState({
     booksAdded: analyticsData?.booksAdded || 0,
     totalDonations: analyticsData?.totalDonations || 0,

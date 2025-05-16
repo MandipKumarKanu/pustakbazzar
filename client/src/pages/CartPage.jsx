@@ -221,6 +221,12 @@ const CartPage = () => {
       return total + cart.books.reduce((sum, book) => sum + book.quantity, 0);
     }, 0) || 0;
 
+  const hasUnavailableBooks = () => {
+    return cartData?.carts?.some((cart) =>
+      cart.books.some((book) => book.bookId.status !== "available")
+    );
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       {hasItems ? (
@@ -265,16 +271,18 @@ const CartPage = () => {
                             <p className="font-semibold text-lg">
                               ₹{book.currentPrice} x {book.quantity}
                             </p>
+                            {book.bookId.status !== "available" && (
+                              <p className="text-red-500 text-sm font-medium mt-1">
+                                This book is not available
+                              </p>
+                            )}
                           </div>
                           <div className="flex space-x-3">
                             <button
-                              onClick={() =>
-                                // handleRemoveItem(book.bookId._id, cart._id)
-                                {
-                                  setCurrentBook(book);
-                                  setIsDeleteDialogOpen(true);
-                                }
-                              }
+                              onClick={() => {
+                                setCurrentBook(book);
+                                setIsDeleteDialogOpen(true);
+                              }}
                               className="text-red-500 hover:text-red-700 transition duration-300"
                               title="Remove from cart"
                             >
@@ -392,6 +400,16 @@ const CartPage = () => {
                         APPLY
                       </button>
                     </div>
+                    {hasUnavailableBooks() && (
+                      <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
+                        <p className="font-medium">
+                          Some items in your cart are no longer available
+                        </p>
+                        <p>
+                          Please remove these items to proceed with checkout.
+                        </p>
+                      </div>
+                    )}
                     <div className="flex justify-between font-semibold text-lg mb-6">
                       <span>Total</span>
                       <span>
@@ -401,8 +419,12 @@ const CartPage = () => {
                       </span>
                     </div>
                     <button
-                      className="w-full py-3  transition duration-300  flex items-center justify-center bg-gradient-to-t from-primaryColor to-secondaryColor rounded-3xl text-white text-xl font-bold shadow-lg"
-                      disabled={isLoading}
+                      className={`w-full py-3 transition duration-300 flex items-center justify-center ${
+                        hasUnavailableBooks()
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-gradient-to-t from-primaryColor to-secondaryColor"
+                      } rounded-3xl text-white text-xl font-bold shadow-lg`}
+                      disabled={isLoading || hasUnavailableBooks()}
                       onClick={handleCheckout}
                     >
                       <FiShoppingCart className="mr-2" />
@@ -431,10 +453,12 @@ const CartPage = () => {
                   Continue Shopping
                 </>
               }
+              disabled={hasUnavailableBooks()}
             />
           </Link>
         </div>
       )}
+      {/* {console.log(hasUnavailableBooks(),"hasUnavailableBooks")} */}
 
       {isWishlistDialogOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-xs  flex items-center justify-center z-50 p-4">

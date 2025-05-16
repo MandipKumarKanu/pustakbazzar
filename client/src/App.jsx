@@ -49,6 +49,12 @@ import SellerPayoutHistoryPage from "./pages/SellerPayoutHistoryPage";
 import AdminBooks from "./pages/AdminBooks";
 import PaymentSuccess from "./components/PaymentSuccess";
 import PaymentCancel from "./components/PaymentCancel";
+import SearchPage from "./pages/SearchPage";
+import MessagePage from "./pages/MessagePage";
+import PlatformFeeReport from "./components/PlatformFeeReport";
+import SalesPerformanceReport from "./components/SalesPerformanceReport";
+import AskAI from "./components/AskAI";
+import NotFoundPage from "./pages/NotFoundPage";
 // import AdminOrder from "./pages/AdminOrder";
 
 // import ContactPage from "./pages/ContactPage";
@@ -132,11 +138,13 @@ function App() {
             <Route path="/order-success" element={<OrderSuccessPage />} />
             <Route path="/wishlist" element={<WishListPage />} />
           </Route>
+          <Route path="/search" element={<SearchPage />} />
           <Route path="/allbooks" element={<AllBookPage />} />
           <Route path="/book/:id" element={<BookDescPage />} />
           <Route path="/category" element={<CategoryPage />} />
           <Route path="/category/:cname" element={<ParticularCategory />} />
           <Route path="/contact" element={<ContactPage />} />
+          <Route path="*" element={<NotFoundPage />} />
           <Route
             path="/terms-and-conditions"
             element={<TermsAndConditions />}
@@ -162,6 +170,9 @@ function App() {
               <Route path="/admin/allUsers" element={<ManageUser />} />
               <Route path="/admin/admin-order" element={<AdminOrder />} />
               <Route path="/admin/payout" element={<PayOut />} />
+              <Route path="/admin/messages" element={<MessagePage />} />
+              <Route path="/admin/PlatformFeeReport" element={<PlatformFeeReport />} />
+              <Route path="/admin/SalesPerformanceReport" element={<SalesPerformanceReport />} />
               <Route
                 path="/admin/payout-history"
                 element={<SellerPayoutHistoryPage />}
@@ -170,7 +181,7 @@ function App() {
           </Route>
         </Routes>
       </div>
-      {!pathname.includes("/admin") && <Footer />} <GotoTop />
+      {!pathname.includes("/admin") && <Footer />} <AskAI />
       <Toaster richColors />
     </>
   );

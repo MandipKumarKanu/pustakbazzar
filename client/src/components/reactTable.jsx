@@ -196,7 +196,7 @@ export const DataTable = ({
                         maxWidth:
                           cell.column.columnDef.meta?.maxWidth || "auto",
                       }}
-                      className="px-4 py-3"
+                      className="px-4 py-3 capitalize"
                     >
                       <div
                         className={

@@ -15,15 +15,21 @@ export const homeSearchBook = async (searchFields) => {
     if (searchFields.year) {
       params.append("publishYear", searchFields.year);
     }
-
-    params.append("limit", 20);
+    
+    if (searchFields.query) {
+      params.append("query", searchFields.query);
+    }
+    
+    if (searchFields.page) {
+      params.append("page", searchFields.page);
+    }
+    
+    params.append("limit", searchFields.limit || 6);
 
     const response = await searchBookAPI(params.toString());
-
-    console.log(response.data.books)
-
-   return response.data.books;
-   
+    
+    return response.data;
+    
   } catch (error) {
     console.error("Error searching books:", error);
     throw error;

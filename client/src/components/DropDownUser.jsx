@@ -11,10 +11,11 @@ const DropdownUser = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
-
+  const isAdmin = user?.profile?.role === "admin";
+  const isApprovedSeller = user?.isSeller?.status === "approved";
   const handleLogout = async () => {
     try {
-      logout()
+      logout();
       navigate("/");
     } catch (e) {
       console.error(e);
@@ -77,16 +78,18 @@ const DropdownUser = () => {
                 <FaBoxOpen className="text-lg" /> My Profile
               </Link>
             </li>
-            <li>
-              <Link
-                to="/admin/home"
-                className="flex items-center gap-3.5 text-sm font-medium hover:text-primary lg:text-base"
-                onClick={() => setDropdownOpen(false)}
-              >
-                <FaBoxOpen className="text-lg" /> Dashboard
-              </Link>
-            </li>
-            <li>
+            {(isAdmin || isApprovedSeller) && (
+              <li>
+                <Link
+                  to="/admin/home"
+                  className="flex items-center gap-3.5 text-sm font-medium hover:text-primary lg:text-base"
+                  onClick={() => setDropdownOpen(false)}
+                >
+                  <FaBoxOpen className="text-lg" /> Dashboard
+                </Link>
+              </li>
+            )}
+            {/* <li>
               <Link
                 to="/myapproved"
                 className="flex items-center gap-3.5 text-sm font-medium hover:text-primary lg:text-base"
@@ -94,8 +97,8 @@ const DropdownUser = () => {
               >
                 <FaBoxOpen className="text-lg" /> My Books
               </Link>
-            </li>
-            <li>
+            </li> */}
+            {/* <li>
               <Link
                 to="/myorders"
                 className="flex items-center gap-3.5 text-sm font-medium hover:text-primary lg:text-base"
@@ -103,7 +106,7 @@ const DropdownUser = () => {
               >
                 <FaBoxOpen className="text-lg" /> My Orders
               </Link>
-            </li>
+            </li> */}
             <li>
               <Link
                 to="/wishlist"

@@ -27,7 +27,8 @@ const BookCard = ({
           src={img}
           alt={name}
           loading="lazy"
-          className="w-full h-full object-cover rounded-lg"
+          className="w-full h-full object-contain rounded-lg"
+          style={{ mixBlendMode: "multiply" }}
         />
         {showAva && (
           <div
@@ -47,7 +48,7 @@ const BookCard = ({
               {name}
             </div>
           </div>
-          <p className="text-gray-600 text-sm mt-1">{author}</p>
+          <p className="text-gray-600 text-sm mt-1 line-clamp-2">{author}</p>
           <p className="text-gray-600 text-sm mt-1">{publishYear}</p>
         </div>
 

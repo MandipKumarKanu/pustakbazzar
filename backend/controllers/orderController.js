@@ -62,9 +62,6 @@ const createOrder = async (req, res) => {
     });
     await newOrder.save();
 
-    cart.carts = [];
-    await cart.save();
-
     if (payment === "khalti") {
       const payload = {
         return_url: `${process.env.FRONTEND_URL}/payment/verify`,
@@ -89,9 +86,13 @@ const createOrder = async (req, res) => {
         orderId: newOrder._id,
         amount: netTotal,
         khaltiPaymentId: khaltiResponse.pidx,
+        paymentMethod: "khalti",
         khaltiResponse,
       });
       await transaction.save();
+
+      cart.carts = [];
+      await cart.save();
 
       return res.status(201).json({
         message: "Order created and Khalti transaction initiated successfully",
@@ -224,12 +225,7 @@ const createOrderWithStripe = async (req, res) => {
     newOrder.stripeSessionId = session.id;
     await newOrder.save();
 
-
-
-    await Cart.findOneAndUpdate(
-      { userId },
-      { $set: { carts: [] } }
-    );
+    await Cart.findOneAndUpdate({ userId }, { $set: { carts: [] } });
 
     const transaction = new Transaction({
       orderId: newOrder._id,
@@ -271,7 +267,7 @@ const getOrdersForUser = async (req, res) => {
       .lean();
 
     if (!orders || orders.length === 0) {
-      return res.status(404).json({ message: "No orders found for this user" });
+      return res.status(200).json({ orders: [] });
     }
 
     return res.status(200).json({ orders });

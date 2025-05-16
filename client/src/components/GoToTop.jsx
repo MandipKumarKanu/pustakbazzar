@@ -32,7 +32,7 @@ const GotoTop = () => {
   return (
     <animated.button
       style={buttonAnimation}
-      className="goto-top-btn fixed bottom-8 right-8 z-50 flex items-center justify-center focus:outline-none"
+      className="goto-top-btn fixed bottom-8 sm:bottom-24 right-8 z-50 flex items-center justify-center focus:outline-none"
       onClick={gotoTop}
     >
       <div className="rocket w-6 h-6">

@@ -2,15 +2,34 @@ const Transaction = require("../models/Transaction");
 const Order = require("../models/Order");
 const Book = require("../models/Book");
 const User = require("../models/User");
+// const axios = require("axios");
+const { validationResult } = require("express-validator");
 const { khaltiRequest } = require("../utils/khaltiRequest");
-const { recordSale } = require("../controllers/statsController");
+const {
+  recordSale,
+  recordDonation,
+  recordBookAdded,
+  recordUserSignup,
+  recordVisit,
+} = require("./statsController");
+
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const {
+  calculatePlatformFee,
+  recordPlatformFee,
+} = require("../services/platformFeeService");
 
+const generatePID = () => {
+  return Math.floor(10000000 + Math.random() * 90000000).toString();
+};
 
-const platformFeePercentage = 0.2;
-
-const initiateTransaction = async (req, res) => {
+const processTransaction = async (req, res) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     const { orderId, amount } = req.body;
     const order = await Order.findById(orderId);
     if (!order) {
@@ -20,12 +39,15 @@ const initiateTransaction = async (req, res) => {
       return res.status(400).json({ error: "Order cannot be paid" });
     }
 
-    order.orders.forEach((sellerOrder) => {
-      sellerOrder.books.forEach((book) => {
-        const sellerEarnings = book.price * (1 - platformFeePercentage);
+    for (const sellerOrder of order.orders) {
+      for (const book of sellerOrder.books) {
+        const { feePercentage, platformFee, sellerEarnings } =
+          calculatePlatformFee(book.price, book.quantity);
+        book.platformFeePercentage = feePercentage;
+        book.platformFee = platformFee;
         book.sellerEarnings = sellerEarnings;
-      });
-    });
+      }
+    }
     await order.save();
 
     const payload = {
@@ -58,7 +80,7 @@ const initiateTransaction = async (req, res) => {
   }
 };
 
-const verifyTransaction = async (req, res) => {
+const verifyKhaltiPayment = async (req, res) => {
   try {
     const { pidx } = req.body;
     if (!pidx) {
@@ -86,8 +108,20 @@ const verifyTransaction = async (req, res) => {
         for (const book of sellerOrder.books) {
           const seller = await User.findById(sellerOrder.sellerId);
           if (seller) {
-            seller.balance += book.sellerEarnings;
+            const { sellerEarnings, platformFee } = calculatePlatformFee(
+              book.price,
+              book.quantity
+            );
+
+            seller.balance += sellerEarnings;
             await seller.save();
+
+            await recordPlatformFee(
+              transaction._id,
+              order._id,
+              platformFee,
+              sellerOrder.sellerId
+            );
           }
 
           if (!user.bought.includes(book.bookId.toString())) {
@@ -123,9 +157,9 @@ const verifyTransaction = async (req, res) => {
 };
 
 const handleStripeWebhook = async (req, res) => {
-  const sig = req.headers['stripe-signature'];
+  const sig = req.headers["stripe-signature"];
   let event;
-  
+
   try {
     event = stripe.webhooks.constructEvent(
       req.body,
@@ -135,107 +169,56 @@ const handleStripeWebhook = async (req, res) => {
   } catch (err) {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
-  
-  if (event.type === 'checkout.session.completed') {
+
+  if (event.type === "checkout.session.completed") {
     const session = event.data.object;
-    
-    try {
-      const order = await Order.findOne({ stripeSessionId: session.id });
-      
-      if (!order) {
-        console.error(`No order found with session ID: ${session.id}`);
-        return res.json({ received: true });
-      }
-      
-      order.paymentStatus = "paid";
-      
-      const allApproved = order.orders.every(subOrder => subOrder.status === "approved");
-      if (allApproved) {
-        order.orderStatus = "confirmed";
-      }
-      
-      await order.save();
-      
-      await recordSale(order.netTotal);
-      
-      await Transaction.updateOne(
-        { stripeSessionId: session.id },
-        { $set: { status: "completed" } }
+
+    const transaction = await Transaction.findOne({
+      stripeSessionId: session.id,
+    });
+
+    if (transaction && transaction.status !== "completed") {
+      transaction.status = "completed";
+      await transaction.save();
+
+      const order = await Order.findById(transaction.orderId).populate(
+        "orders.sellerId"
       );
-      
-      const user = await User.findById(order.userId);
-      if (!user) {
-        console.error(`User not found with ID: ${order.userId}`);
-        return res.json({ received: true });
-      }
-      
+
+      await recordSale(order.netTotal);
+
+      order.status = "confirmed";
+      await order.save();
+
       for (const sellerOrder of order.orders) {
         for (const book of sellerOrder.books) {
+          const { sellerEarnings, platformFee } = calculatePlatformFee(
+            book.price,
+            book.quantity
+          );
+
           const seller = await User.findById(sellerOrder.sellerId);
           if (seller) {
-            seller.balance += book.sellerEarnings;
+            seller.balance += sellerEarnings;
             await seller.save();
-          }
-          
-          if (!user.bought.includes(book.bookId.toString())) {
-            user.bought.push(book.bookId);
-          }
-          
-          const bookToUpdate = await Book.findById(book.bookId);
-          if (bookToUpdate) {
-            bookToUpdate.status = "sold";
-            await bookToUpdate.save();
+
+            await recordPlatformFee(
+              transaction._id,
+              order._id,
+              platformFee,
+              sellerOrder.sellerId
+            );
           }
         }
       }
-      
-      await user.save();
-    } catch (error) {
-      console.error("Error processing Stripe webhook:", error);
     }
   }
-  
-  // Handle failed payments
-  else if (event.type === 'checkout.session.expired' || 
-          event.type === 'payment_intent.payment_failed') {
-    try {
-      const session = event.data.object;
-      const sessionId = session.id;
-      
-      // Find the order and mark it as failed
-      const order = await Order.findOne({ 
-        stripeSessionId: sessionId 
-      });
-      
-      if (order) {
-        order.paymentStatus = "failed";
-        await order.save();
-        
-        // Update transaction
-        await Transaction.updateOne(
-          { stripeSessionId: sessionId },
-          { 
-            $set: { 
-              status: "failed",
-              paymentDetails: {
-                error: "Payment failed or expired",
-                failedAt: new Date()
-              }
-            } 
-          }
-        );
-      }
-    } catch (error) {
-      console.error("Error processing failed payment:", error);
-    }
-  }
-  
-  // Return a response to acknowledge receipt of the event
-  res.json({ received: true });
+
+  return res.status(200).json({ received: true });
 };
 
 module.exports = {
-  initiateTransaction,
-  verifyTransaction,
+  processTransaction,
+  verifyKhaltiPayment,
   handleStripeWebhook,
 };

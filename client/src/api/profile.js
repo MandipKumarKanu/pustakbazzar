@@ -10,3 +10,7 @@ export async function getMyBook(fn) {
   const url = `auth/mybooks/${fn}`;
   return await customAxios.get(`${baseURL}${url}`);
 }
+export async function deleteBook(fn) {
+  const url = `book/${fn}`;
+  return await customAxios.delete(`${baseURL}${url}`);
+}

@@ -5,6 +5,7 @@ import PrimaryBtn from "./PrimaryBtn";
 // import { homeSearchBook } from "../hooks/HomeSearchBook";
 import SearchBookCard from "./SearchBookCard";
 import { homeSearchBook } from "@/hooks/HomeSearchBook";
+import SkeletonBookCard from "@/components/SkeletonBookCard";
 
 function HomeSearch() {
   const [searchFields, setSearchFields] = useState({
@@ -41,10 +42,10 @@ function HomeSearch() {
 
     try {
       const results = await homeSearchBook(searchFields);
-      setBooks(results);
+      setBooks(results?.books);
 
       console.log(
-        `Found ${results.length} books matching criteria:`,
+        `Found ${results?.books?.length} books matching criteria:`,
         searchFields
       );
     } catch (error) {
@@ -66,7 +67,6 @@ function HomeSearch() {
   };
 
   const handleDeepSearch = () => {
-    // Pass the current search parameters to the advanced search page
     const params = new URLSearchParams();
     if (searchFields.title) params.append("title", searchFields.title);
     if (searchFields.author) params.append("author", searchFields.author);
@@ -126,8 +126,10 @@ function HomeSearch() {
           </button>
           <div>
             {loading ? (
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primaryColor mx-auto"></div>
+              <div className="grid gap-6 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <SkeletonBookCard key={index} />
+                ))}
               </div>
             ) : error ? (
               <div className="text-center text-red-600">
@@ -146,21 +148,29 @@ function HomeSearch() {
                   {books.some((book) => book._fuzzyMatch) &&
                     " (including similar matches)"}
                 </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid gap-6 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
                   {books.map((book) => (
                     <SearchBookCard key={book._id} book={book} />
                   ))}
                 </div>
-                {books.length > 8 && (
-                  <div className="mt-6 text-center">
-                    <button
-                      onClick={handleDeepSearch}
-                      className="px-4 py-2 bg-primaryColor text-white rounded-lg hover:bg-primaryColorDark"
-                    >
-                      View All Results
-                    </button>
-                  </div>
-                )}
+                <div className="mt-6 flex justify-center gap-4">
+                  {/* <button
+                    onClick={handleDeepSearch}
+                    className="px-4 py-2 bg-primaryColor text-white rounded-lg hover:bg-primaryColorDark"
+                  >
+                    Deep Search
+                  </button> */}
+                  <button
+                    onClick={() =>
+                      navigate(
+                        `/search?${new URLSearchParams(searchFields).toString()}`
+                      )
+                    }
+                    className="px-4 py-2 border border-primaryColor text-primaryColor rounded-lg hover:bg-gray-100"
+                  >
+                    Show More Results
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="text-center text-xl text-gray-600">
@@ -170,7 +180,7 @@ function HomeSearch() {
                 </p>
                 <button
                   onClick={handleDeepSearch}
-                  className="mt-4 text-primaryColor"
+                  className="mt-4 px-4 py-2 bg-primaryColor text-white rounded-lg hover:bg-primaryColorDark"
                 >
                   Go to Deep Search
                 </button>

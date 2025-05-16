@@ -8,3 +8,31 @@ export const formatDate = (dateString) => {
     minute: "2-digit",
   }).format(date);
 };
+
+export const languageOptions = [
+  "English",
+  "Hindi",
+  "Nepali",
+  "Bhojpuri",
+  "Maithili",
+  "Others",
+];
+
+export const editionOptions = [
+  "First",
+  "Second",
+  "Third",
+  "Fourth",
+  "Fifth",
+  "Sixth",
+  "Seventh",
+  "Eighth",
+  "Ninth",
+  "Tenth",
+  "Eleventh",
+  "Twelfth",
+  "Thirteenth",
+  "Fourteenth",
+  "Fifteenth",
+  "> Fifteenth",
+];

@@ -11,16 +11,15 @@ const ProtectedRoute = () => {
 const AdminProtectedRoute = () => {
     const {token, user} = useAuthStore()
 
-    return token && user?.profile?.role === "admin" ? <Outlet /> : <Navigate to="/auth" />
+    return token && user?.profile?.role === "admin" ? <Outlet /> : <Navigate to="/" />
 }
 
 const SellerAdminProtectedRoute = () => {
     const {token, user} = useAuthStore()
-    
     const isAdmin = user?.profile?.role === "admin";
     const isApprovedSeller = user?.isSeller?.status === "approved";
     
-    return token && (isAdmin || isApprovedSeller) ? <Outlet /> : <Navigate to="/auth" />
+    return token && (isAdmin || isApprovedSeller) ? <Outlet /> : <Navigate to="/" />
 }
 
 export { ProtectedRoute, AdminProtectedRoute, SellerAdminProtectedRoute };

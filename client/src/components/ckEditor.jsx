@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
+import PrimaryBtn from "./PrimaryBtn";
+import { FiTrash2, FiFileText } from "react-icons/fi";
 import {
   ClassicEditor,
   AccessibilityHelp,
@@ -150,38 +152,34 @@ export const CKEditorComp = ({ content, setContent, disableCK }) => {
   };
 
   return (
-    // <div className="main-container rounded-md shadow-lg p-4">
-      <div className="editor-container editor-container_classic-editor ">
-        <div className="editor-container__editor">
-          {isLayoutReady && (
-            <>
-              <CKEditor
-                editor={ClassicEditor}
-                data={content}
-                config={editorConfig}
-                disabled={disableCK}
-                onReady={(editor) => {
-                  editorRef.current = editor;
-                }}
-                onChange={(_, editor) => {
-                  const data = editor.getData();
-                  console.log(data)
-                  setContent(data);
-                }}
-              />
-              {/* <div className="flex items-center justify-between mt-3">
-                <button
-                  onClick={() => setContent("")}
-                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-                >
-                  Clear Content
-                </button>
-                <WordCount content={content} />
-              </div> */}
-            </>
-          )}
-        </div>
-      {/* </div> */}
+    <div className="editor-container editor-container_classic-editor ">
+      <div className="editor-container__editor">
+        {isLayoutReady && (
+          <>
+            <CKEditor
+              editor={ClassicEditor}
+              data={content}
+              config={editorConfig}
+              disabled={disableCK}
+              onReady={(editor) => {
+                editorRef.current = editor;
+              }}
+              onChange={(_, editor) => {
+                const data = editor.getData();
+                setContent(data);
+              }}
+            />
+            {content && (
+              <div className="flex items-center justify-end mt-4 px-1">
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-2.5 rounded-xl text-sm text-gray-700 font-medium border border-blue-100 flex items-center gap-2 shadow-sm">
+                  <FiFileText className="text-blue-600" />
+                  <WordCount content={content} />
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 };

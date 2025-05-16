@@ -38,6 +38,7 @@ const AdminHome = () => {
     try {
       const response = await getStats(days);
       if (response.data && Array.isArray(response.data)) {
+        console.log(response.data)
         setStats(response.data);
         setError(null);
       } else {

@@ -24,12 +24,24 @@ const MyBookCard = ({
   onEdit,
   onDelete,
   status,
-  forDonation
+  forDonation,
 }) => {
   const navigate = useNavigate();
 
   const editNavigate = () => {
     navigate(`/book/edit/${id}`);
+  };
+
+  const hideDropdown = status === "sold" || status === "donated";
+
+  const handleDelete = (event) => {
+    event.stopPropagation();
+    console.log(typeof onDelete);
+    if (typeof onDelete === "function") {
+      onDelete(id);
+    } else {
+      console.warn("onDelete prop is not a function");
+    }
   };
 
   return (
@@ -38,7 +50,7 @@ const MyBookCard = ({
       spotlightColor="rgba(108, 39, 199, 0.5)"
       onClick={() => navigate(`/book/${id}`)}
     >
-      {status !== "sold" && (
+      {!hideDropdown && (
         <div className="absolute top-4 right-4">
           <DropdownMenu>
             <DropdownMenuTrigger>
@@ -53,10 +65,7 @@ const MyBookCard = ({
               >
                 Edit
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => onDelete(id)}
-                className="text-red-500"
-              >
+              <DropdownMenuItem onClick={handleDelete} className="text-red-500">
                 Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -69,7 +78,8 @@ const MyBookCard = ({
           src={img}
           alt={name}
           loading="lazy"
-          className="w-full h-full object-cover rounded-lg"
+          className="w-full h-full object-contain rounded-lg"
+          style={{ mixBlendMode: "multiply" }}
         />
         {showAva && (
           <div
@@ -81,6 +91,11 @@ const MyBookCard = ({
         {status === "sold" && (
           <div className="absolute top-0 left-0 py-1.5 px-3 text-sm text-white font-bold rounded-br-xl bg-red-500 uppercase">
             Sold
+          </div>
+        )}
+        {status === "donated" && (
+          <div className="absolute top-0 left-0 py-1.5 px-3 text-sm text-white font-bold rounded-br-xl bg-blue-500 uppercase">
+            Donated
           </div>
         )}
       </div>
@@ -111,7 +126,7 @@ const MyBookCard = ({
               <>₹ 0.00</>
             )}
           </div>
-          <PrimaryBtn name={"View Book"} style=" w-full" />
+          <PrimaryBtn name={"View Book"} style=" w-full" w/>
         </div>
       </div>
     </SpotlightCard>

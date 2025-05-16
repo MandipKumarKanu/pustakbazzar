@@ -3,7 +3,14 @@ import PrimaryBtn from "./PrimaryBtn";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { FaPlus, FaTimes } from "react-icons/fa";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { FaPlus, FaTimes, FaCamera, FaUpload } from "react-icons/fa";
 import { Cloudinary } from "cloudinary-core";
 import { appySeller, updateProfileApi } from "@/api/auth";
 import Badge from "@assets/image/badge.png";
@@ -24,6 +31,7 @@ const Profile = ({ user }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalOpenForSeller, setIsModalOpenForSeller] = useState(false);
   const [docFile, setDocFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const [profileData, setProfileData] = useState({
     name: `${profile.firstName} ${profile.lastName}`,
@@ -71,6 +79,7 @@ const Profile = ({ user }) => {
 
   const handleSave = async () => {
     try {
+      setIsUploading(true);
       let profileImageUrl = profileData.image;
 
       if (profileData.image && profileData.image.startsWith("blob:")) {
@@ -92,12 +101,12 @@ const Profile = ({ user }) => {
       }
 
       const [firstName, lastName] = profileData.name.split(" ");
-        const updatedProfile = {
-          firstName: firstName || "",
-          lastName: lastName || "",
-          phNo: profileData.phone,
-          profileImg: profileImageUrl,
-        };
+      const updatedProfile = {
+        firstName: firstName || "",
+        lastName: lastName || "",
+        phNo: profileData.phone,
+        profileImg: profileImageUrl,
+      };
 
       const response = await updateProfileApi(updatedProfile);
       setUser(response.data);
@@ -105,6 +114,8 @@ const Profile = ({ user }) => {
       handleCloseModal();
     } catch (error) {
       toast.error(getErrorMessage(error));
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -115,6 +126,7 @@ const Profile = ({ user }) => {
     }
 
     try {
+      setIsUploading(true);
       const formData = new FormData();
       formData.append("file", docFile);
       formData.append("upload_preset", "pustakbazar");
@@ -135,25 +147,66 @@ const Profile = ({ user }) => {
       toast.success(res.data.message);
     } catch (error) {
       toast.error(getErrorMessage(error));
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const renderSellerStatusButton = () => {
+    switch (usr?.isSeller?.status) {
+      case "no":
+        return (
+          <div className="w-full sm:w-auto sm:absolute sm:top-20 sm:right-4 md:right-20">
+            <PrimaryBtn
+              name="Become a Seller"
+              style="w-full sm:max-w-[180px]"
+              onClick={handleOpenModalForSeller}
+            />
+          </div>
+        );
+      case "applied":
+        return (
+          <div className="w-full sm:w-auto sm:absolute sm:top-20 sm:right-4 md:right-20">
+            <PrimaryBtn
+              name="Application Status"
+              style="w-full sm:max-w-[180px] bg-yellow-500 hover:bg-yellow-600"
+              onClick={handleOpenModalForSeller}
+            />
+          </div>
+        );
+      case "rejected":
+        return (
+          <div className="w-full sm:w-auto sm:absolute sm:top-20 sm:right-4 md:right-20">
+            <PrimaryBtn
+              name="Re-apply as Seller"
+              style="w-full sm:max-w-[180px] bg-red-600 hover:bg-red-700"
+              onClick={handleOpenModalForSeller}
+            />
+          </div>
+        );
+      case "approved":
+        return null; // Already showing badge for approved sellers
+      default:
+        return null;
     }
   };
 
   const renderProfileHeader = () => (
-    <div className="m-auto flex flex-col items-center gap-4 relative mt-10 px-4">
-      <div className="w-32 h-32 sm:w-48 sm:h-48 md:w-60 md:h-60 relative">
-        <Avatar className="w-full h-full">
+    <div className="m-auto flex flex-col items-center gap-4 relative mt-6 md:mt-10 px-4">
+      <div className="w-28 h-28 sm:w-40 sm:h-40 md:w-60 md:h-60 relative">
+        <Avatar className="w-full h-full border-4 border-gray-100 shadow-lg">
           <AvatarImage
             src={profile.profileImg}
             alt={`${profile.firstName} ${profile.lastName}`}
             className="object-cover"
           />
-          <AvatarFallback className="text-4xl sm:text-5xl md:text-6xl font-medium bg-primary/10 text-primary">
+          <AvatarFallback className="text-3xl sm:text-4xl md:text-6xl font-medium bg-primary/10 text-primary">
             {getInitials()}
           </AvatarFallback>
         </Avatar>
         {usr?.isSeller?.status === "approved" && (
           <div
-            className="absolute bottom-2 right-4 w-14 h-14 bg-white rounded-full border-4 border-primaryColor"
+            className="absolute bottom-0 right-0 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-white rounded-full border-4 border-primaryColor shadow-md"
             title="Verified Seller"
           >
             <img src={Badge} alt="Seller Badge" className="w-full" />
@@ -162,130 +215,141 @@ const Profile = ({ user }) => {
       </div>
 
       <div className="flex flex-col gap-2 items-center">
-        <h1 className="text-3xl sm:text-4xl font-bold font-sfpro text-center">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold font-sfpro text-center">
           {profile.firstName} {profile.lastName}
         </h1>
 
-        <div className="flex items-center gap-5">
+        <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-5 w-full">
           <PrimaryBtn
             name="Edit Profile"
-            style="max-w-[180px]"
+            style="w-full sm:max-w-[180px]"
             onClick={handleOpenModal}
           />
-          <div className="w-[190px] sm:absolute sm:top-4 sm:right-20 sm:w-auto">
+
+          <div className="w-full sm:w-auto sm:absolute sm:top-4 sm:right-4 md:right-20">
             <PrimaryBtn
               name="Add Book +"
-              style="max-w-[180px]"
+              style="w-full sm:max-w-[180px]"
               onClick={() => navigate("/addbook")}
             />
           </div>
-          {usr?.isSeller?.status !== "approved" && (
-            <div className="w-[190px] sm:absolute sm:top-20 sm:right-20 sm:w-auto">
-              <PrimaryBtn
-                name="Become a Seller"
-                style="max-w-[180px]"
-                onClick={handleOpenModalForSeller}
-              />
-            </div>
-          )}
+
+          {renderSellerStatusButton()}
         </div>
       </div>
     </div>
   );
 
-  const renderEditProfileModal = () => {
-    if (!isModalOpen) return null;
+  const renderEditProfileModal = () => (
+    <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+      <DialogContent className="sm:max-w-lg w-[95%] max-h-[90vh] overflow-y-auto bg-white rounded-xl shadow-xl p-0">
+        <DialogHeader className="px-6 pt-6 pb-2">
+          <DialogTitle className="text-2xl sm:text-3xl font-semibold text-gray-900 flex justify-between items-center">
+            Edit Profile
+          </DialogTitle>
+        </DialogHeader>
 
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50">
-        <div className="bg-white p-8 rounded-lg max-w-lg w-full shadow-lg mx-6 max-h-[90vh] overflow-y-auto">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-3xl font-semibold text-gray-900">
-              Edit Profile
-            </h2>
-            <button
-              onClick={handleCloseModal}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <FaTimes size={24} />
-            </button>
-          </div>
-
-          <div className="flex flex-col gap-6">
-            <div className="flex justify-center mb-4 relative">
-              <Avatar className="w-24 h-24">
+        <div className="px-6 py-4 flex flex-col gap-6">
+          <div className="flex justify-center mb-4 relative">
+            <div className="relative group">
+              <Avatar className="w-28 h-28 border-4 border-gray-100 shadow-md transition-all duration-300 group-hover:opacity-80">
                 <AvatarImage
                   src={profileData.image}
                   alt="Profile Preview"
                   className="object-cover"
                 />
-                <AvatarFallback className="text-2xl font-medium bg-primary/10 text-primary">
+                <AvatarFallback className="text-3xl font-medium bg-primary/10 text-primary">
                   {getInitials()}
                 </AvatarFallback>
               </Avatar>
 
+              <label className="absolute inset-0 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="bg-primary/70 text-white p-2 rounded-full">
+                  <FaCamera size={20} />
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+              </label>
+
               {profileData.image && (
                 <button
                   onClick={handleRemoveImage}
-                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 transition-colors shadow-md"
                   title="Remove image"
                 >
-                  <FaTimes size={14} />
+                  <FaTimes size={12} />
                 </button>
               )}
             </div>
+          </div>
 
+          <div className="space-y-4">
             <label className="block">
-              <span className="text-lg font-medium">Name</span>
+              <span className="text-base sm:text-lg font-medium text-gray-700">
+                Full Name
+              </span>
               <input
                 type="text"
                 name="name"
                 value={profileData.name}
                 onChange={handleInputChange}
-                className="mt-2 block w-full border border-gray-300 rounded-lg px-4 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-2 block w-full border border-gray-300 rounded-lg px-4 py-2.5 text-base sm:text-lg focus:outline-none focus:ring-2 focus:ring-primary/70 transition-all duration-200"
+                placeholder="Your full name"
               />
             </label>
 
-            {/* <label className="block">
-              <span className="text-lg font-medium">Phone Number</span>
-              <input
-                type="text"
-                name="phone"
-                value={profileData.phone}
-                onChange={handleInputChange}
-                className="mt-2 block w-full border border-gray-300 rounded-lg px-4 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </label> */}
-
-            <label className="block">
-              <span className="text-lg font-medium">Profile Image</span>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="mt-2 block w-full border border-gray-300 rounded-lg px-4 py-2 text-lg"
-              />
+            <label className="block relative">
+              <span className="text-base sm:text-lg font-medium text-gray-700">
+                Profile Image
+              </span>
+              <div className="mt-2 relative flex items-center">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  id="profile-image-upload"
+                  className="hidden"
+                />
+                <label
+                  htmlFor="profile-image-upload"
+                  className="flex-1 cursor-pointer bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-base flex items-center gap-2 hover:bg-gray-100 transition-colors"
+                >
+                  <FaUpload className="text-gray-500" />
+                  <span className="text-gray-500 truncate">
+                    {profileData.imageFile
+                      ? profileData.imageFile.name
+                      : "Choose an image"}
+                  </span>
+                </label>
+              </div>
             </label>
-
-            <div className="flex justify-end gap-4 mt-8">
-              <button
-                onClick={handleCloseModal}
-                className="text-lg bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition duration-150"
-              >
-                Cancel
-              </button>
-
-              <PrimaryBtn
-                name="Save"
-                style="max-w-[150px]"
-                onClick={handleSave}
-              />
-            </div>
           </div>
         </div>
-      </div>
-    );
-  };
+
+        <DialogFooter className="px-6 py-4 bg-gray-50 rounded-b-xl border-t border-gray-100">
+          <div className="flex justify-end gap-4 w-full">
+            <button
+              onClick={handleCloseModal}
+              className="text-base sm:text-lg bg-gray-200 text-gray-800 px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg hover:bg-gray-300 transition duration-150"
+            >
+              Cancel
+            </button>
+
+            <PrimaryBtn
+              name={isUploading ? "Saving..." : "Save Changes"}
+              style="w-auto max-w-none"
+              onClick={handleSave}
+              disabled={isUploading}
+            />
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 
   return (
     <>
@@ -296,6 +360,8 @@ const Profile = ({ user }) => {
         handleCloseModalForSeller={handleCloseModalForSeller}
         handleSaveDoc={handleSaveDoc}
         setDocFile={setDocFile}
+        isUploading={isUploading}
+        userSellerStatus={usr?.isSeller?.status}
       />
     </>
   );

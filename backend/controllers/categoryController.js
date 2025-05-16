@@ -11,12 +11,18 @@ const createCategory = async (req, res) => {
   }
 
   try {
-    const existingCategory = await Category.findOne({ categoryName });
+    const normalizedCategoryName = categoryName.toLowerCase();
+
+    const existingCategory = await Category.findOne({
+      categoryName: normalizedCategoryName,
+    });
     if (existingCategory) {
       return res.status(400).json({ error: "Category already exists" });
     }
 
-    const category = await Category.create({ categoryName });
+    const category = await Category.create({
+      categoryName: normalizedCategoryName,
+    });
     res
       .status(201)
       .json({ message: "Category created successfully", category });
@@ -44,14 +50,18 @@ const updateCategory = async (req, res) => {
       return res.status(404).json({ error: "Category not found" });
     }
 
-    if (category.name !== categoryName) {
-      const existingCategory = await Category.findOne({ categoryName });
+    const normalizedCategoryName = categoryName.toLowerCase();
+
+    if (category.categoryName !== normalizedCategoryName) {
+      const existingCategory = await Category.findOne({
+        categoryName: normalizedCategoryName,
+      });
       if (existingCategory) {
         return res.status(400).json({ error: "Category name already exists" });
       }
     }
 
-    category.categoryName = categoryName;
+    category.categoryName = normalizedCategoryName;
     await category.save();
 
     res

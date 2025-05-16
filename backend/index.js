@@ -13,6 +13,8 @@ const orderRoutes = require("./routes/orderRoutes");
 const donationRoutes = require("./routes/donationRoutes");
 const transactionRoutes = require("./routes/transactionRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const contactRoutes = require("./routes/contactRoutes");
+const sellerRoutes = require("./routes/sellerRoutes");
 
 const app = express();
 
@@ -32,12 +34,21 @@ app.use(
       process.env.CLIENT_URL || "http://localhost:5173",
       "https://pustakbazzar-h74q.vercel.app",
       "https://pustakbazzar.mandipkk.com.np",
+      "http://192.168.100.236:5173",
+      "http://192.168.100.64:5173",
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+
+app.use((req, res, next) => {
+  res.setHeader('Referrer-Policy', 'no-referrer-when-downgrade');
+  next();
+});
+
 
 app.get("/", (req, res) => {
   res.send("API is running...");
@@ -53,7 +64,9 @@ app.use("/api/order", orderRoutes);
 app.use("/api/donation", donationRoutes);
 app.use("/api/khaltipay", transactionRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api/transactions", require("./routes/transactionRoutes"));
+app.use("/api/transactions", transactionRoutes);
+app.use("/api/contact", contactRoutes);
+app.use("/api/seller", sellerRoutes);
 
 const PORT = process.env.PORT || 8000;
 

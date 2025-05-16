@@ -50,6 +50,10 @@ export async function getWeeklyTopBook() {
   let url = `book/weeklytop`;
   return axios.get(`${baseURL}${url}`);
 }
+export async function getAuthor() {
+  let url = `book/get-author`;
+  return axios.get(`${baseURL}${url}`);
+}
 
 export async function updateBook(id, data) {
   let url = `book/${id}`;
