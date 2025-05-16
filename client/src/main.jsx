@@ -1,3 +1,4 @@
+// import { scan } from "react-scan";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
@@ -12,6 +13,10 @@ setupInterceptors(
   useAuthStore.getState().setToken,
   useAuthStore.getState().setUser
 );
+
+// scan({
+//   enabled: true,
+// });
 
 createRoot(document.getElementById("root")).render(
   // <StrictMode>
@@ -28,7 +33,5 @@ createRoot(document.getElementById("root")).render(
   </BrowserRouter>
   // </StrictMode>
 );
-
-
 
 // serviceWorkerRegistration.register();

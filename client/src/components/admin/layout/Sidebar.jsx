@@ -13,8 +13,25 @@ import {
   FaTags,
   FaMoneyCheckAlt,
   FaChartLine,
+  FaCommentDots,
+  FaFileInvoiceDollar,
+  FaBookReader,
+  FaChartBar,
+  FaChartPie,
+  FaUsersCog,
+  FaMoneyBillWave,
 } from "react-icons/fa";
 import { useAuthStore } from "@/store/useAuthStore";
+
+const scrollbarHideStyles = `
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+`;
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
   const { user } = useAuthStore();
@@ -22,6 +39,10 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   const isApprovedSeller = user?.isSeller?.status === "approved";
 
   useEffect(() => {
+    const styleEl = document.createElement("style");
+    styleEl.innerHTML = scrollbarHideStyles;
+    document.head.appendChild(styleEl);
+
     const handleResize = () => {
       if (window.innerWidth < 768) {
         toggleSidebar(false);
@@ -29,7 +50,10 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     };
 
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      document.head.removeChild(styleEl);
+    };
   }, [toggleSidebar]);
 
   const NavItem = ({ to, icon: Icon, children }) => {
@@ -62,6 +86,18 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     );
   };
 
+  const SectionHeader = ({ title }) => {
+    if (!isOpen) return null;
+
+    return (
+      <div className="px-1 py-2 mt-3 mb-1">
+        <p className="text-xs uppercase text-purple-300 font-semibold tracking-wider">
+          {title}
+        </p>
+      </div>
+    );
+  };
+
   return (
     <div
       className={`fixed top-0 left-0 h-full bg-purple-900 shadow-2xl transition-all duration-300 ease-in-out z-30 ${
@@ -69,7 +105,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       }`}
     >
       <div className="flex items-center justify-between p-4 border-b border-purple-700/50">
-        {isOpen ? (
+        {isOpen && (
           <div className="flex items-center">
             <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center mr-2 shadow-inner shadow-purple-800">
               <FaBookOpen className="text-white text-lg" />
@@ -77,10 +113,6 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             <h2 className="text-xl font-bold text-white tracking-tight">
               PustakBazzar
             </h2>
-          </div>
-        ) : (
-          <div className="w-10 h-10 mx-auto bg-purple-600 rounded-lg flex items-center justify-center shadow-inner shadow-purple-800">
-            <FaBookOpen className="text-white text-lg" />
           </div>
         )}
         <button
@@ -96,15 +128,9 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         </button>
       </div>
 
-      {isOpen && (
-        <div className="px-4 py-2 mt-2">
-          <p className="text-xs uppercase text-purple-300 font-semibold tracking-wider">
-            Main Menu
-          </p>
-        </div>
-      )}
+      <SectionHeader title="Main Menu" />
 
-      <nav className="mt-2">
+      <nav className="mt-2 pb-16 overflow-y-auto scrollbar-hide max-h-full">
         <ul className="space-y-1 px-3">
           <li>
             <NavItem to="/admin/home" icon={FaHome}>
@@ -114,24 +140,20 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
           {isAdmin && (
             <>
+              <SectionHeader title="Catalog" />
+
               <li>
                 <NavItem to="/admin/managecategory" icon={FaTags}>
                   Categories
                 </NavItem>
               </li>
               <li>
-                <NavItem to="/admin/books" icon={FaBookOpen}>
+                <NavItem to="/admin/books" icon={FaBookReader}>
                   Books
                 </NavItem>
               </li>
 
-              {isOpen && (
-                <div className="px-1 py-2 mt-3">
-                  <p className="text-xs uppercase text-purple-300 font-semibold tracking-wider">
-                    Operations
-                  </p>
-                </div>
-              )}
+              <SectionHeader title="Orders & Donations" />
 
               <li>
                 <NavItem to="/admin/admin-order" icon={FaClipboardList}>
@@ -144,16 +166,10 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                 </NavItem>
               </li>
 
-              {isOpen && (
-                <div className="px-1 py-2 mt-3">
-                  <p className="text-xs uppercase text-purple-300 font-semibold tracking-wider">
-                    Users & Finance
-                  </p>
-                </div>
-              )}
+              <SectionHeader title="Users & Sellers" />
 
               <li>
-                <NavItem to="/admin/allUsers" icon={FaUsers}>
+                <NavItem to="/admin/allUsers" icon={FaUsersCog}>
                   Manage Users
                 </NavItem>
               </li>
@@ -163,37 +179,45 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                 </NavItem>
               </li>
               <li>
-                <NavItem to="/admin/payout" icon={FaMoneyCheckAlt}>
-                  Payouts
-                </NavItem>
-              </li>
-              <li>
-                <NavItem to="/admin/messages" icon={FaMoneyCheckAlt}>
+                <NavItem to="/admin/messages" icon={FaCommentDots}>
                   Messages
                 </NavItem>
               </li>
+
+              <SectionHeader title="Finance" />
+
               <li>
-                <NavItem to="/admin/PlatformFeeReport" icon={FaMoneyCheckAlt}>
+                <NavItem to="/admin/payout" icon={FaMoneyBillWave}>
+                  Payouts
+                </NavItem>
+              </li>
+
+              <SectionHeader title="Reports & Analytics" />
+
+              <li>
+                <NavItem
+                  to="/admin/PlatformFeeReport"
+                  icon={FaFileInvoiceDollar}
+                >
                   Platform Fee Report
                 </NavItem>
               </li>
               <li>
-                <NavItem to="/admin/SalesPerformanceReport" icon={FaChartLine}>
-                  Sales Performance Report
+                <NavItem to="/admin/SalesPerformanceReport" icon={FaChartBar}>
+                  Sales Performance
+                </NavItem>
+              </li>
+              <li>
+                <NavItem to="/admin/bookreport" icon={FaChartPie}>
+                  Book Report
                 </NavItem>
               </li>
             </>
           )}
 
-          {(isApprovedSeller || isAdmin) && (
+          {(isApprovedSeller || isAdmin) && !isAdmin && (
             <>
-              {isOpen && !isAdmin && (
-                <div className="px-1 py-2 mt-3">
-                  <p className="text-xs uppercase text-purple-300 font-semibold tracking-wider">
-                    Seller Menu
-                  </p>
-                </div>
-              )}
+              <SectionHeader title="Seller Menu" />
 
               <li>
                 <NavItem to="/admin/sellerorder" icon={FaShoppingBag}>
@@ -205,11 +229,11 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         </ul>
       </nav>
 
-      {isOpen && (
-        <div className="absolute bottom-0 left-0 right-0 p-4 text-center text-purple-300 text-xs">
+      {/* {isOpen && (
+        <div className="absolute bottom-0 left-0 right-0 p-4 text-center text-purple-300 text-xs border-t border-purple-700/30 bg-purple-900">
           <p>&copy; {new Date().getFullYear()} PustakBazzar</p>
         </div>
-      )}
+      )} */}
     </div>
   );
 };

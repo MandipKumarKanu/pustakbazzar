@@ -1,8 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaTimes } from "react-icons/fa";
 import PrimaryBtn from "./PrimaryBtn";
-// import { homeSearchBook } from "../hooks/HomeSearchBook";
 import SearchBookCard from "./SearchBookCard";
 import { homeSearchBook } from "@/hooks/HomeSearchBook";
 import SkeletonBookCard from "@/components/SkeletonBookCard";
@@ -20,15 +19,25 @@ function HomeSearch() {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  const handleInputChange = (e) => {
+  // Add debounce functionality
+  const debounceTimerRef = useRef(null);
+
+  const handleInputChange = useCallback((e) => {
     const { name, value } = e.target;
+
+    // Clear any pending debounce timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Update the field immediately for responsive UI
     setSearchFields((prev) => ({
       ...prev,
       [name]: value,
     }));
-  };
+  }, []);
 
-  const handleSearch = async (e) => {
+  const handleSearch = useCallback(async (e) => {
     e.preventDefault();
 
     if (!searchFields.title && !searchFields.author && !searchFields.year) {
@@ -54,9 +63,9 @@ function HomeSearch() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchFields]);
 
-  const handleCloseResults = () => {
+  const handleCloseResults = useCallback(() => {
     setShowResults(false);
     setSearchFields({
       title: "",
@@ -64,16 +73,16 @@ function HomeSearch() {
       year: "",
     });
     setError(null);
-  };
+  }, []);
 
-  const handleDeepSearch = () => {
+  const handleDeepSearch = useCallback(() => {
     const params = new URLSearchParams();
     if (searchFields.title) params.append("title", searchFields.title);
     if (searchFields.author) params.append("author", searchFields.author);
     if (searchFields.year) params.append("year", searchFields.year);
 
     navigate(`/search?${params.toString()}`);
-  };
+  }, [navigate, searchFields]);
 
   return (
     <div className="flex flex-col items-center mx-4">
@@ -154,12 +163,6 @@ function HomeSearch() {
                   ))}
                 </div>
                 <div className="mt-6 flex justify-center gap-4">
-                  {/* <button
-                    onClick={handleDeepSearch}
-                    className="px-4 py-2 bg-primaryColor text-white rounded-lg hover:bg-primaryColorDark"
-                  >
-                    Deep Search
-                  </button> */}
                   <button
                     onClick={() =>
                       navigate(
