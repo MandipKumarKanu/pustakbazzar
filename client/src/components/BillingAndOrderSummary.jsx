@@ -13,7 +13,7 @@ import {
 } from "react-icons/fi";
 import { Wallet } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
-import { loadStripe } from "@stripe/stripe-js";
+// import { loadStripe } from "@stripe/stripe-js";
 
 const MAX_ADDRESSES = 5;
 
@@ -127,46 +127,47 @@ function BillingAndOrderSummary() {
         console.error("Payment initiation failed:", error);
         alert("Payment initiation failed. Please try again.");
       }
-    } else if (paymentMethod === "stripe") {
-      try {
-        const stripe = await loadStripe(
-          "pk_test_51RIJMdRtB48XzpAm9slu81fUQhYql4Siyf1hD6Cba5n4BiLxG4hqQPfvLbHBeHqKn7tfB9NEbsHWT8mYiHU2clvD00qfB6gYc8"
-        );
-        const body = {
-          shippingFee: shippingFee.toFixed(2),
-          products: cartData.carts,
-          shippingAddress: {
-            firstName: selectedAddress.firstName,
-            lastName: selectedAddress.lastName,
-            street: selectedAddress.street,
-            province: selectedAddress.province,
-            town: selectedAddress.town,
-            landmark: selectedAddress.landmark,
-            phone: selectedAddress.phone,
-            email: selectedAddress.email,
-          },
-        };
-
-        // console.log(body);
-
-        const response = await customAxios.post(`order/stripe-checkout`, body);
-
-        console.log(response);
-        const { sessionId } = response.data;
-
-        const stripeResponse = await stripe.redirectToCheckout({
-          sessionId,
-        });
-
-        if (stripeResponse.error) {
-          console.error("Stripe checkout error:", stripeResponse.error);
-          alert("Failed to redirect to Stripe checkout. Please try again.");
-        }
-      } catch (error) {
-        console.error("Failed to create order:", error);
-        alert("There was an error processing your order. Please try again.");
-      }
     }
+    //  else if (paymentMethod === "stripe") {
+    //   try {
+    //     const stripe = await loadStripe(
+    //       "pk_test_51RIJMdRtB48XzpAm9slu81fUQhYql4Siyf1hD6Cba5n4BiLxG4hqQPfvLbHBeHqKn7tfB9NEbsHWT8mYiHU2clvD00qfB6gYc8"
+    //     );
+    //     const body = {
+    //       shippingFee: shippingFee.toFixed(2),
+    //       products: cartData.carts,
+    //       shippingAddress: {
+    //         firstName: selectedAddress.firstName,
+    //         lastName: selectedAddress.lastName,
+    //         street: selectedAddress.street,
+    //         province: selectedAddress.province,
+    //         town: selectedAddress.town,
+    //         landmark: selectedAddress.landmark,
+    //         phone: selectedAddress.phone,
+    //         email: selectedAddress.email,
+    //       },
+    //     };
+
+    //     // console.log(body);
+
+    //     const response = await customAxios.post(`order/stripe-checkout`, body);
+
+    //     console.log(response);
+    //     const { sessionId } = response.data;
+
+    //     const stripeResponse = await stripe.redirectToCheckout({
+    //       sessionId,
+    //     });
+
+    //     if (stripeResponse.error) {
+    //       console.error("Stripe checkout error:", stripeResponse.error);
+    //       alert("Failed to redirect to Stripe checkout. Please try again.");
+    //     }
+    //   } catch (error) {
+    //     console.error("Failed to create order:", error);
+    //     alert("There was an error processing your order. Please try again.");
+    //   }
+    // }
 
     setIsPaymentDialogOpen(false);
   };
