@@ -6,7 +6,8 @@ const {
   rejectSeller,
   getApprovedSellers,
   getPlatformFeeReport,
-  getSalesPerformanceReport
+  getSalesPerformanceReport,
+  getBookActivityReport
 } = require("../controllers/adminController");
 const { getAllStats } = require("../controllers/statsController");
 const authMiddleWare = require("../middleware/authMiddleware");
@@ -19,5 +20,6 @@ router.get("/stats", authMiddleWare, roleMiddleware(["admin"]), getAllStats);
 router.get("/sellers", authMiddleWare, roleMiddleware(["admin"]), getApprovedSellers);
 router.get("/get-platform-fee-report", authMiddleWare, roleMiddleware(["admin"]), getPlatformFeeReport);
 router.get("/get-sales-performance-report", authMiddleWare, roleMiddleware(["admin"]), getSalesPerformanceReport);
+router.get("/book-activity-report", authMiddleWare, roleMiddleware(["admin"]), getBookActivityReport);
 
 module.exports = router;
