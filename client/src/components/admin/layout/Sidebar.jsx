@@ -130,7 +130,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
       <SectionHeader title="Main Menu" />
 
-      <nav className="mt-2 pb-16 overflow-y-auto scrollbar-hide max-h-full">
+      <nav className="mt-2 pb-16 overflow-y-auto scrollbar-hide max-h-[calc(100dvh-80px)]">
         <ul className="space-y-1 px-3">
           <li>
             <NavItem to="/admin/home" icon={FaHome}>
@@ -215,7 +215,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             </>
           )}
 
-          {(isApprovedSeller || isAdmin) && !isAdmin && (
+          {(isApprovedSeller || isAdmin) && (
             <>
               <SectionHeader title="Seller Menu" />
 
