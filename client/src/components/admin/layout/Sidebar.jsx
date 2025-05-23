@@ -179,8 +179,8 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                 </NavItem>
               </li>
               <li>
-                <NavItem to="/admin/messages" icon={FaCommentDots}>
-                  Messages
+                <NavItem to="/admin/messages" icon={FaCommentDots}> {/* Admin Messages Link */}
+                  Messages 
                 </NavItem>
               </li>
 
@@ -222,6 +222,11 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
               <li>
                 <NavItem to="/admin/sellerorder" icon={FaShoppingBag}>
                   Orders
+                </NavItem>
+              </li>
+              <li>
+                <NavItem to="/admin/messages" icon={FaCommentDots}> {/* Seller Messages Link */}
+                  Messages
                 </NavItem>
               </li>
             </>

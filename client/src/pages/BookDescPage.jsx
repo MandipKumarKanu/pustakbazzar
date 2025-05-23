@@ -27,6 +27,7 @@ import {
   FaBarcode,
   FaCheckCircle,
   FaFileAlt,
+  FaComments, // Added for chat icon
 } from "react-icons/fa";
 import { FaRegHeart } from "react-icons/fa";
 import { RWebShare } from "react-web-share";
@@ -46,6 +47,7 @@ import { toast } from "sonner";
 import { customAxios } from "@/config/axios";
 import parse from "html-react-parser";
 import DOMPurify from "dompurify";
+import ChatModal from "@/components/ChatModal"; // Import ChatModal
 
 const BookDescPage = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -64,6 +66,7 @@ const BookDescPage = () => {
   const [aiReview, setAiReview] = useState(null);
   const [isGeneratingReview, setIsGeneratingReview] = useState(false);
   const [reviewError, setReviewError] = useState(null);
+  const [isChatModalOpen, setIsChatModalOpen] = useState(false); // State for chat modal
 
   let cartCount = typeof cCnt === "function" ? cCnt() : cCnt;
 
@@ -358,6 +361,14 @@ const BookDescPage = () => {
   const isOwner =
     user?._id === book?.addedBy?._id || user?.id === book?.addedBy?._id;
   const isUnavailable = book.status === "sold" || book.status === "donated";
+
+  const handleOpenChatModal = () => {
+    if (user && book && book.addedBy && !isOwner) {
+      setIsChatModalOpen(true);
+    } else if (!user) {
+      toast.error("Please login to chat with the seller.");
+    }
+  };
 
   return (
     <div className="flex  bg-gray-50 min-h-screen py-12 ">
@@ -792,6 +803,16 @@ const BookDescPage = () => {
                     </div>
 
                     <div className="mt-auto pt-6 border-t border-gray-100">
+                      {/* Chat with Seller Button */}
+                      {user && !isOwner && !isUnavailable && book?.addedBy && (
+                        <button
+                          onClick={handleOpenChatModal}
+                          className="w-full px-6 py-3 mb-3 rounded-3xl text-white text-lg font-semibold shadow-md bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 transition-colors flex items-center justify-center"
+                        >
+                          <FaComments className="mr-2" /> Chat with Seller
+                        </button>
+                      )}
+
                       {!user ? (
                         <div className="space-y-0">
                           <div className="relative group">
@@ -940,6 +961,16 @@ const BookDescPage = () => {
           </div>
         </div>
       </div>
+      {isChatModalOpen && book && book.addedBy && (
+        <ChatModal
+          sellerId={book.addedBy._id}
+          sellerName={book.addedBy.profile?.userName || book.addedBy.name || "Seller"}
+          bookId={book._id}
+          bookTitle={book.title}
+          isOpen={isChatModalOpen}
+          onClose={() => setIsChatModalOpen(false)}
+        />
+      )}
     </div>
   );
 };

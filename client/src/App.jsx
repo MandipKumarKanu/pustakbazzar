@@ -57,6 +57,8 @@ import AskAI from "./components/AskAI";
 import NotFoundPage from "./pages/NotFoundPage";
 import ForgetPassword from "./pages/ForgetPassword";
 import BookReport from "./components/BookReport";
+import SellerChatPage from "./pages/SellerChatPage";
+import { SocketProvider } from "./context/SocketContext"; // Import SocketProvider
 // import AdminOrder from "./pages/AdminOrder";
 
 // import ContactPage from "./pages/ContactPage";
@@ -117,7 +119,7 @@ function App() {
   }
 
   return (
-    <>
+    <SocketProvider> {/* Wrap with SocketProvider */}
       {!pathname.includes("/admin") && <Navbar />}
       {/* <Pointer /> */}
       <div className="min-h-[100dvh]">
@@ -173,9 +175,9 @@ function App() {
               <Route path="/admin/allUsers" element={<ManageUser />} />
               <Route path="/admin/admin-order" element={<AdminOrder />} />
               <Route path="/admin/payout" element={<PayOut />} />
-              <Route path="/admin/messages" element={<MessagePage />} />
+              <Route path="/admin/messages" element={<SellerChatPage />} /> {/* Changed MessagePage to SellerChatPage */}
               <Route path="/admin/PlatformFeeReport" element={<PlatformFeeReport />} />
-              <Route path="/admin/SalesPerformanceReport" element={<SalesPerformanceReport />} />
+              <Route path="/admin/SalesPerformanceReport"={<SalesPerformanceReport />} />
               <Route path="/admin/bookreport" element={<BookReport />} />
               <Route
                 path="/admin/payout-history"
@@ -187,7 +189,7 @@ function App() {
       </div>
       {!pathname.includes("/admin") && <Footer />} <AskAI />
       <Toaster richColors />
-    </>
+    </SocketProvider>
   );
 }
 
