@@ -58,7 +58,8 @@ import NotFoundPage from "./pages/NotFoundPage";
 import ForgetPassword from "./pages/ForgetPassword";
 import BookReport from "./components/BookReport";
 import SellerChatPage from "./pages/SellerChatPage";
-import { SocketProvider } from "./context/SocketContext"; // Import SocketProvider
+import { SocketProvider } from "./context/SocketContext";
+import { NotificationProvider } from "./context/NotificationContext"; // Import NotificationProvider
 // import AdminOrder from "./pages/AdminOrder";
 
 // import ContactPage from "./pages/ContactPage";
@@ -119,10 +120,11 @@ function App() {
   }
 
   return (
-    <SocketProvider> {/* Wrap with SocketProvider */}
-      {!pathname.includes("/admin") && <Navbar />}
-      {/* <Pointer /> */}
-      <div className="min-h-[100dvh]">
+    <SocketProvider>
+      <NotificationProvider> {/* Wrap SocketProvider with NotificationProvider */}
+        {!pathname.includes("/admin") && <Navbar />}
+        {/* <Pointer /> */}
+        <div className="min-h-[100dvh]">
         <Routes>
           <Route
             path="/auth"
@@ -187,8 +189,9 @@ function App() {
           </Route>
         </Routes>
       </div>
-      {!pathname.includes("/admin") && <Footer />} <AskAI />
-      <Toaster richColors />
+        {!pathname.includes("/admin") && <Footer />} <AskAI />
+        <Toaster richColors />
+      </NotificationProvider>
     </SocketProvider>
   );
 }

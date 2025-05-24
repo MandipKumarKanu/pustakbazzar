@@ -2,6 +2,7 @@ const Donation = require("../models/Donation");
 const User = require("../models/User");
 const Book = require("../models/Book");
 const handleError = require("../utils/errorHandler");
+const { createNotification } = require('../services/notificationService'); // Added
 
 const createDonation = async (req, res) => {
   try {
@@ -98,8 +99,34 @@ const updateDonationStatus = async (req, res) => {
     if (!donation)
       return res.status(404).json({ message: "Donation not found." });
 
+    const oldStatus = donation.status;
     donation.status = status;
     await donation.save();
+    
+    // --- Notification for Donation Status Update ---
+    if (oldStatus !== status) { // Only notify if status actually changed
+      const io = req.app.get('io');
+      let notifMessage = `Your donation request for the book "${donation.book.title}" has been updated to: ${status}.`;
+      if (status === 'rejected' && req.body.reason) { // Assuming a reason might be passed in req.body for rejection
+        notifMessage += ` Reason: ${req.body.reason}`;
+      } else if (status === 'approved') {
+        notifMessage = `Congratulations! Your donation of "${donation.book.title}" has been approved. Please prepare it for collection/delivery.`;
+      } else if (status === 'completed') {
+        notifMessage = `Thank you! Your donation of "${donation.book.title}" has been successfully completed.`;
+      }
+
+      // Ensure donation.donor is populated or is just an ID. createNotification expects a userId string.
+      const donorId = donation.donor._id ? donation.donor._id.toString() : donation.donor.toString();
+
+      await createNotification(
+        io,
+        donorId,
+        'donation_status',
+        notifMessage,
+        { entityType: 'Donation', entityId: donation._id }
+      );
+    }
+    // --- End Notification ---
 
     if (status === "completed") {
       const book = await Book.findById(donation.book._id);

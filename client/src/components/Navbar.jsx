@@ -8,9 +8,12 @@ import {
   FaListAlt,
   FaEnvelope,
   FaBars,
+  FaRegBell, // Added Bell icon
 } from "react-icons/fa";
 import { NavLink, useNavigate, useLocation, Link } from "react-router-dom";
 import DropdownUser from "./DropDownUser";
+import NotificationsPanel from "./NotificationsPanel"; // To be created
+import { useNotification } from "@/context/NotificationContext"; // Added
 import Logo from "../assets/image/logo.png";
 import { ScrollProgress } from "./magicui/scroll-progress";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -18,14 +21,15 @@ import { useCategoryStore } from "@/store/useCategoryStore";
 import { useCartStore } from "@/store/useCartStore";
 import { NumberTicker } from "./magicui/number-ticker";
 
+
 const Navbar = () => {
   const { user } = useAuthStore();
   const { category: categories } = useCategoryStore();
   const { cartCount: cCnt } = useCartStore();
+  const { unreadCount: unreadNotificationCount } = useNotification(); // Added
 
   let cartCount = typeof cCnt === "function" ? cCnt() : cCnt;
 
-  const cartLength = 0;
   const navigate = useNavigate();
   const location = useLocation();
   const isCartPage = location.pathname === "/cart";
@@ -34,7 +38,9 @@ const Navbar = () => {
   const [isFixed, setIsFixed] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const [categoryOpen, setCategoryOpen] = useState(false);
+  const [isNotificationsPanelOpen, setIsNotificationsPanelOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("/");
+  const notificationPanelRef = React.useRef(null); // Added ref for notification panel
 
   const handleTabChange = (path) => {
     setActiveTab(path);
@@ -61,6 +67,28 @@ const Navbar = () => {
   useEffect(() => {
     setActiveTab(location.pathname);
   }, [location.pathname]);
+
+  // Click outside handler for notification panel
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (notificationPanelRef.current && !notificationPanelRef.current.contains(event.target)) {
+        // Check if the click is on the bell icon itself to avoid immediate re-closing
+        // This requires the bell button to NOT be a child of notificationPanelRef
+        const bellButton = event.target.closest('button[aria-label="Notifications"]');
+        if (!bellButton) {
+          setIsNotificationsPanelOpen(false);
+        }
+      }
+    }
+    if (isNotificationsPanelOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isNotificationsPanelOpen]);
 
   const navbarClasses = `
     w-full 
@@ -193,31 +221,58 @@ const Navbar = () => {
               </NavLink>
             ) : (
               <>
-                <DropdownUser />
-                {
-                  <NavLink
-                    to="/cart"
-                    className="hidden md:flex relative items-center justify-center group"
+                {/* Notification Bell Icon */}
+                <div className="relative hidden md:block">
+                  <button
+                    onClick={() => setIsNotificationsPanelOpen(prev => !prev)}
+                    className="relative group"
+                    aria-label="Notifications"
                   >
-                    <div className="absolute -inset-1 bg-gradient-to-r from-red-500 to-orange-500 rounded-full blur opacity-0 group-hover:opacity-100 transition duration-300"></div>
+                    <div className="absolute -inset-1 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
                     <div className="relative p-2 bg-white rounded-full hover:shadow-md transition duration-200">
-                      <FaShoppingCart className="text-gray-700 group-hover:text-primary text-lg" />
-                      {user && (
+                      <FaRegBell className="text-gray-700 group-hover:text-primary text-xl" />
+                      {unreadNotificationCount > 0 && (
                         <span className="absolute -top-1 -right-1 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center text-white text-xs font-bold">
-                          <NumberTicker
-                            value={cartCount}
-                            className="whitespace-pre-wrap font-medium tracking-tighter text-white"
-                          />
+                           <NumberTicker value={unreadNotificationCount} />
                         </span>
                       )}
                     </div>
-                  </NavLink>
-                }
+                  </button>
+                  {/* Notification Panel itself */}
+                  {isNotificationsPanelOpen && (
+                     <div ref={notificationPanelRef} className="absolute right-0 mt-2 z-[60]"> {/* Attached ref */}
+                       <NotificationsPanel onClose={() => setIsNotificationsPanelOpen(false)} />
+                    </div>
+                  )}
+                </div>
+
+                <DropdownUser />
+                
+                <NavLink
+                  to="/cart"
+                  className="hidden md:flex relative items-center justify-center group"
+                >
+                  <div className="absolute -inset-1 bg-gradient-to-r from-red-500 to-orange-500 rounded-full blur opacity-0 group-hover:opacity-100 transition duration-300"></div>
+                  <div className="relative p-2 bg-white rounded-full hover:shadow-md transition duration-200">
+                    <FaShoppingCart className="text-gray-700 group-hover:text-primary text-lg" />
+                    {user && ( 
+                      <span className="absolute -top-1 -right-1 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center text-white text-xs font-bold">
+                        <NumberTicker
+                          value={cartCount}
+                          className="whitespace-pre-wrap font-medium tracking-tighter text-white"
+                        />
+                      </span>
+                    )}
+                  </div>
+                </NavLink>
               </>
             )}
           </div>
         </div>
       </nav>
+      
+      {/* The full-screen overlay for click-outside was removed as the useEffect now handles it more precisely by listening to mousedown on document */}
+
 
       <div
         className={`fixed inset-0 bg-white z-50 transition-all duration-500 ease-in-out md:hidden ${
@@ -262,18 +317,39 @@ const Navbar = () => {
                 >
                   <span className="text-xl">{item.icon}</span>
                   <span className="text-lg font-medium">{item.label}</span>
-                  {item.path === "/cart" && user && cartCount > 0 && (
-                    <span className="ml-auto bg-white text-primaryColor rounded-full h-6 min-w-6 px-2 flex items-center justify-center text-sm font-bold">
+                    {item.path === "/cart" && user && ( // Show badge even if cartCount is 0 but user is logged in
+                      <span className={`ml-auto rounded-full h-6 min-w-6 px-2 flex items-center justify-center text-sm font-bold ${cartCount > 0 ? 'bg-white text-primaryColor' : 'bg-gray-200 text-gray-500'}`}>
                       <NumberTicker
                         value={cartCount}
-                        className="whitespace-pre-wrap font-medium"
+                          className={`whitespace-pre-wrap font-medium ${cartCount > 0 ? '' : 'text-gray-500'}`}
                       />
                     </span>
                   )}
                 </NavLink>
               </li>
             ))}
+               {/* Mobile Notification Link/Button */}
+              {user && (
+                <li className="overflow-hidden">
+                  <button
+                    onClick={() => {
+                      setIsMenuOpen(false); // Close main menu
+                      setIsNotificationsPanelOpen(true); // Open notification panel
+                    }}
+                     className="flex items-center gap-3 p-4 rounded-xl transition-all duration-300 text-gray-700 hover:bg-gray-100 w-full"
+                  >
+                    <span className="text-xl"><FaRegBell /></span>
+                    <span className="text-lg font-medium">Notifications</span>
+                    {unreadNotificationCount > 0 && (
+                       <span className="ml-auto bg-red-500 text-white rounded-full h-6 min-w-6 px-2 flex items-center justify-center text-sm font-bold">
+                        <NumberTicker value={unreadNotificationCount} />
+                      </span>
+                    )}
+                  </button>
+                </li>
+              )}
           </ul>
+            
 
           {categories.length > 0 && (
             <div className="mt-8">

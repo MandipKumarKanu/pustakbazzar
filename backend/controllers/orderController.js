@@ -4,6 +4,7 @@ const Book = require("../models/Book");
 const { khaltiRequest } = require("../utils/khaltiRequest");
 const Transaction = require("../models/Transaction");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const { createNotification } = require('../services/notificationService'); // Added
 
 const createOrder = async (req, res) => {
   try {
@@ -61,6 +62,41 @@ const createOrder = async (req, res) => {
       shippingAddress,
     });
     await newOrder.save();
+
+    // --- Notification for Order Placed ---
+    const io = req.app.get('io');
+    const orderIdShort = newOrder._id.toString().slice(-6);
+    const orderItemsHtml = newOrder.orders.flatMap(subOrder => 
+        subOrder.books.map(bookItem => {
+            // Find the book details from the populated cart or fetch if necessary
+            // For simplicity, let's assume bookItem.bookId has title if populated, otherwise use placeholder
+            // In a real scenario, ensure book details are fully populated before this step.
+            const bookDetails = cart.carts.flatMap(sc => sc.books).find(b => b.bookId._id.toString() === bookItem.bookId.toString());
+            const title = bookDetails?.bookId.title || 'Book Title';
+            return `<tr><td>${title}</td><td>${bookItem.quantity}</td><td>NPR ${bookItem.price.toFixed(2)}</td></tr>`;
+        })
+    ).join('');
+
+    await createNotification(
+      io,
+      newOrder.userId.toString(),
+      'order_update', // This type will trigger orderStatusUpdate.html by default
+      `Your order #${orderIdShort} has been placed.`, // In-app message
+      { 
+        entityType: 'Order', 
+        entityId: newOrder._id,
+        // Details for email template (orderConfirmation.html)
+        isConfirmation: true, // Flag for notificationService to use orderConfirmation.html
+        orderNumber: orderIdShort,
+        orderItemsHtml: orderItemsHtml,
+        subTotal: newOrder.totalPrice.toFixed(2),
+        shippingFee: newOrder.shippingFee.toFixed(2),
+        discount: newOrder.discount.toFixed(2),
+        netTotal: newOrder.netTotal.toFixed(2),
+        orderStatus: newOrder.orderStatus, // Will be 'pending'
+      }
+    );
+    // --- End Notification ---
 
     if (payment === "khalti") {
       const payload = {
@@ -225,6 +261,38 @@ const createOrderWithStripe = async (req, res) => {
     newOrder.stripeSessionId = session.id;
     await newOrder.save();
 
+    // --- Notification for Order Placed (Stripe) ---
+    const orderIdShortStripe = newOrder._id.toString().slice(-6);
+    const orderItemsHtmlStripe = newOrder.orders.flatMap(subOrder => 
+        subOrder.books.map(bookItem => {
+             // Assuming products array in req.body for createOrderWithStripe has populated bookId.title
+            const productDetails = products.flatMap(p => p.books).find(b => b.bookId._id.toString() === bookItem.bookId.toString());
+            const title = productDetails?.bookId.title || 'Book Title';
+            return `<tr><td>${title}</td><td>${bookItem.quantity}</td><td>NPR ${bookItem.price.toFixed(2)}</td></tr>`;
+        })
+    ).join('');
+
+    await createNotification(
+      req.app.get('io'), 
+      newOrder.userId.toString(),
+      'order_update',
+      `Order #${orderIdShortStripe} placed, awaiting payment.`, // In-app message
+      { 
+        entityType: 'Order', 
+        entityId: newOrder._id,
+        // Details for email template (orderConfirmation.html)
+        isConfirmation: true,
+        orderNumber: orderIdShortStripe,
+        orderItemsHtml: orderItemsHtmlStripe,
+        subTotal: newOrder.totalPrice.toFixed(2),
+        shippingFee: newOrder.shippingFee.toFixed(2),
+        discount: newOrder.discount.toFixed(2),
+        netTotal: newOrder.netTotal.toFixed(2),
+        orderStatus: newOrder.orderStatus, // Will be 'pending'
+      }
+    );
+    // --- End Notification ---
+    
     await Cart.findOneAndUpdate({ userId }, { $set: { carts: [] } });
 
     const transaction = new Transaction({
@@ -412,7 +480,8 @@ const getOrdersForAdmin = async (req, res) => {
 const approveRejectOrder = async (req, res) => {
   try {
     const { orderId, status, message } = req.body;
-    const sellerId = req.user.id;
+    const sellerId = req.user.id; // This is the seller performing the action
+    const io = req.app.get('io'); // Get io instance
 
     if (!["approved", "rejected"].includes(status)) {
       return res
@@ -420,7 +489,7 @@ const approveRejectOrder = async (req, res) => {
         .json({ error: "Invalid status. Must be 'approved' or 'rejected'." });
     }
 
-    const order = await Order.findById(orderId).populate("orders.books.bookId");
+    const order = await Order.findById(orderId).populate("orders.books.bookId").populate("userId", "name"); // Populate userId for notification
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
     }
@@ -440,6 +509,34 @@ const approveRejectOrder = async (req, res) => {
       order.orderStatus = "cancelled by seller";
       order.cancellationMessage =
         message || "Order was cancelled by one of the sellers.";
+      
+      // --- Notification for Buyer: Order Cancelled by Seller ---
+      const orderNumberCancelled = order._id.toString().slice(-6);
+      const sellerName = sellerUser?.name || sellerUser?.profile?.name || `Seller ID ${sellerId.toString().slice(-4)}`; // Assuming sellerUser is populated or fetched
+      
+      // Attempt to get seller name if not readily available (this might be an extra DB call if not populated)
+      // For now, this part is simplified. In a real app, ensure seller name is available.
+      // const sellerInfo = await User.findById(sellerId).select('name profile.name').lean();
+      // const sellerDisplayName = sellerInfo?.profile?.name || sellerInfo?.name || `Seller (#${sellerId.toString().slice(-4)})`;
+
+      const inAppCancelMsg = `Order #${orderNumberCancelled} cancelled by seller. ${order.cancellationMessage || ''}`.trim();
+      const emailAdditionalMsg = `Unfortunately, your order #${orderNumberCancelled} has been cancelled by the seller (Seller: ${sellerName}). Reason: ${order.cancellationMessage || 'No specific reason provided.'} Any applicable refunds will be processed accordingly.`;
+
+      await createNotification(
+        io,
+        order.userId._id.toString(), 
+        'order_update',
+        inAppCancelMsg,
+        { 
+          entityType: 'Order', 
+          entityId: order._id,
+          orderNumber: orderNumberCancelled,
+          orderStatus: "Cancelled by Seller", // More specific status for email
+          statusClass: 'status-cancelled',
+          additionalMessage: emailAdditionalMsg 
+        }
+      );
+      // --- End Notification ---
 
       const bookUpdatePromises = order.orders.flatMap((subOrder) =>
         subOrder.books.map(async (bookItem) => {
@@ -480,6 +577,36 @@ const approveRejectOrder = async (req, res) => {
 
     await order.save();
 
+    // --- Notification for Buyer: Order Status Updated by Seller Action ---
+    const orderNumberApproved = order._id.toString().slice(-6);
+    let inAppSellerActionMsg = `Seller action on order #${orderNumberApproved}: Item(s) ${status}.`;
+    let emailSellerActionMsg = `An item in your order #${orderNumberApproved} has been ${status} by a seller.`;
+    let emailOrderStatus = order.orderStatus; // e.g. "confirmed", "partially approved"
+    
+    if (order.orderStatus === "confirmed") {
+      inAppSellerActionMsg = `Order #${orderNumberApproved} is now confirmed!`;
+      emailSellerActionMsg = `Great news! All items in your order #${orderNumberApproved} have been approved by the sellers. Your order is now confirmed and will be processed shortly.`;
+    } else if (order.orderStatus === "partially approved") {
+      inAppSellerActionMsg = `Order #${orderNumberApproved} is partially approved.`;
+      emailSellerActionMsg = `There's an update on your order #${orderNumberApproved}. Some items have been approved, and the order is now 'partially approved'. Please check your order details for more information.`;
+    }
+    
+    await createNotification(
+      io,
+      order.userId._id.toString(),
+      'order_update',
+      inAppSellerActionMsg,
+      { 
+        entityType: 'Order', 
+        entityId: order._id,
+        orderNumber: orderNumberApproved,
+        orderStatus: emailOrderStatus,
+        statusClass: order.orderStatus === "confirmed" ? 'status-delivered' : 'status-default', // Using 'delivered' class for confirmed, or default
+        additionalMessage: emailSellerActionMsg
+      }
+    );
+    // --- End Notification ---
+    
     return res.status(200).json({
       message: "Order updated successfully",
       order,
@@ -524,6 +651,25 @@ const cancelOrder = async (req, res) => {
     order.orderStatus = "cancelled";
     await order.save();
 
+    // --- Notification for Order Cancelled by User ---
+    const ioCancel = req.app.get('io');
+    const orderNumberUserCancel = order._id.toString().slice(-6);
+    await createNotification(
+      ioCancel,
+      order.userId.toString(),
+      'order_update',
+      `Order #${orderNumberUserCancel} has been cancelled.`, // In-app
+      { 
+        entityType: 'Order', 
+        entityId: order._id,
+        orderNumber: orderNumberUserCancel,
+        orderStatus: "Cancelled by You",
+        statusClass: 'status-cancelled',
+        additionalMessage: `You have successfully cancelled your order #${orderNumberUserCancel}. If you have any questions, please contact support.`
+      }
+    );
+    // --- End Notification ---
+
     return res.status(200).json({
       message: "Order cancelled successfully",
       order,
@@ -548,6 +694,36 @@ const updateOrderStatus = async (req, res) => {
 
     order.orderStatus = status;
     await order.save();
+    
+    // --- Notification for Order Status Update by Admin ---
+    const ioAdminUpdate = req.app.get('io');
+    const orderNumberAdminUpdate = order._id.toString().slice(-6);
+    const statusClassAdmin = status === 'shipped' ? 'status-shipped' : (status === 'delivered' ? 'status-delivered' : (status === 'cancelled' ? 'status-cancelled' : 'status-default'));
+    
+    let emailAdminMsg = `The status of your order #${orderNumberAdminUpdate} has been updated to "${status}".`;
+    if (status === 'shipped') {
+        emailAdminMsg = `Great news! Your order #${orderNumberAdminUpdate} has been shipped. You can track its progress via your order details page.`;
+    } else if (status === 'delivered') {
+        emailAdminMsg = `Your order #${orderNumberAdminUpdate} has been delivered. We hope you enjoy your books!`;
+    } else if (status === 'cancelled') {
+        emailAdminMsg = `Unfortunately, your order #${orderNumberAdminUpdate} has been cancelled by administration. Please contact support for more details.`;
+    }
+
+    await createNotification(
+      ioAdminUpdate,
+      order.userId.toString(), 
+      'order_update',
+      `Order #${orderNumberAdminUpdate} status: ${status}.`, // In-app
+      { 
+        entityType: 'Order', 
+        entityId: order._id,
+        orderNumber: orderNumberAdminUpdate,
+        orderStatus: status,
+        statusClass: statusClassAdmin,
+        additionalMessage: emailAdminMsg
+      }
+    );
+    // --- End Notification ---
 
     res
       .status(200)

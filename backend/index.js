@@ -16,8 +16,9 @@ const adminRoutes = require("./routes/adminRoutes");
 const contactRoutes = require("./routes/contactRoutes");
 const sellerRoutes = require("./routes/sellerRoutes");
 const chatRoutes = require("./routes/chatRoutes");
+const notificationRoutes = require('./routes/notificationRoutes'); // Added
 
-const http = require('http'); // Added
+const http = require('http');
 const { Server } = require("socket.io"); // Added
 
 const app = express();
@@ -135,10 +136,15 @@ app.use("/api/transactions", transactionRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/seller", sellerRoutes);
 app.use("/api/chat", chatRoutes);
+app.use('/api/notifications', notificationRoutes); // Added
 
 const PORT = process.env.PORT || 8000;
 
-// Start the server
-server.listen(PORT, () => { // Changed app.listen to server.listen
-  console.log(`Server running on port ${PORT}`);
-});
+// Start the server only if not in test environment
+if (process.env.NODE_ENV !== 'test') {
+  server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+module.exports = { app, server }; // Export app and server (server might be useful for socket tests later)

@@ -1,5 +1,6 @@
 const User = require("../models/User");
-const Book = require("../models/Book"); // Add this import
+const Book = require("../models/Book");
+const { createNotification } = require('../services/notificationService'); // Added
 
 const getUsers = async (req, res) => {
   try {
@@ -20,6 +21,40 @@ const approveSeller = async (req, res) => {
     user.isSeller.status = "approved";
     await user.save();
 
+    // --- Notification for Seller Approved ---
+    const io = req.app.get('io');
+    const approvedInAppMessage = 'Your seller application has been approved!';
+    const approvedEmailMessage = 'Congratulations! Your seller application has been approved. You can now start listing your books and reach thousands of readers on PustakBazzar.';
+    
+    await createNotification(
+      io,
+      user._id.toString(),
+      'seller_status',
+      approvedInAppMessage, // Concise for in-app
+      { 
+        entityType: 'User', 
+        entityId: user._id,
+        // For email template:
+        applicationStatus: 'Approved',
+        statusClass: 'status-approved', // CSS class for email styling
+        // The main message for the email body will be built from the in-app message or a more detailed one
+        // For `sellerApplicationStatus.html`, the `message` param to createNotification becomes `additionalMessage`
+        // So, we pass the detailed email message directly as the `message` param for createNotification
+        // if we want it in the email. Or, construct it in notificationService.
+        // Let's pass the more detailed message for the email part.
+        // The in-app notif will use the `message` from createNotification.
+        // The email service will use the `message` for the {{additionalMessage}} placeholder.
+        // The notification's own `message` field will store `approvedInAppMessage`.
+        // This means `notificationService` needs to be smart or we pass all details.
+        // Let's make `message` the core in-app message and pass email-specifics in relatedEntityDetails.
+        // So, the `message` in createNotification will be `approvedInAppMessage`.
+        // And `relatedEntityDetails` will carry `emailBodyMessage`.
+        emailBodyMessage: approvedEmailMessage, // This will be used as {{additionalMessage}} in the template
+        dashboardLinkHtml: `<p><a href="${process.env.FRONTEND_URL}/admin/home" class="button">Go to Dashboard</a></p>` // Example
+      }
+    );
+    // --- End Notification ---
+
     res.status(200).json({ message: "Seller approved." });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -32,7 +67,36 @@ const rejectSeller = async (req, res) => {
     if (!user) return res.status(404).json({ message: "User not found." });
 
     user.isSeller.status = "rejected";
+    // Optionally, you might want to clear some isSeller fields if rejected.
+    // user.isSeller.businessName = undefined; 
+    // user.isSeller.reason = req.body.reason || "Your application did not meet the criteria."; // If admin provides a reason
     await user.save();
+
+    // --- Notification for Seller Rejected ---
+    const io = req.app.get('io');
+    const adminProvidedReason = req.body.reason; // Assuming admin can provide a reason in the request
+    const defaultRejectionReason = "Unfortunately, your seller application did not meet our current criteria. Please review our seller guidelines and feel free to reapply in the future if applicable.";
+    const finalRejectionReason = adminProvidedReason || defaultRejectionReason;
+
+    const rejectedInAppMessage = `Your seller application has been rejected.`;
+    const rejectedEmailMessage = `We regret to inform you that your seller application has been rejected. <br>Reason: ${finalRejectionReason}`;
+
+    await createNotification(
+      io,
+      user._id.toString(),
+      'seller_status',
+      rejectedInAppMessage, // Concise for in-app
+      { 
+        entityType: 'User', 
+        entityId: user._id,
+        // For email template:
+        applicationStatus: 'Rejected',
+        statusClass: 'status-rejected',
+        emailBodyMessage: rejectedEmailMessage, // This will be used as {{additionalMessage}}
+        dashboardLinkHtml: '' // No specific action link needed for rejection, or link to contact support
+      }
+    );
+    // --- End Notification ---
 
     res.status(200).json({ message: "Seller application rejected." });
   } catch (error) {

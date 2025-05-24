@@ -2,6 +2,7 @@ const Message = require('../models/Message');
 const User = require('../models/User');
 const Book = require('../models/Book');
 const asyncHandler = require('express-async-handler');
+const { createNotification } = require('../services/notificationService'); // Added
 
 // @desc    Send a new message
 // @route   POST /api/chat/send
@@ -45,28 +46,51 @@ const sendMessage = asyncHandler(async (req, res) => {
   // Emit the new message to the receiver via Socket.IO
   const io = req.app.get('io');
   if (io && populatedMessage) {
-    const receiverSocketId = req.app.get('userSockets')?.[receiverId.toString()];
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit('newMessage', populatedMessage);
-      console.log(`Emitted newMessage to ${receiverId} via socket ${receiverSocketId}`);
-    } else {
-      console.log(`Socket ID for receiver ${receiverId} not found.`);
+    // Emit to receiver's room
+    io.to(receiverId.toString()).emit('newMessage', populatedMessage);
+    console.log(`Emitted 'newMessage' to user room: ${receiverId.toString()}`);
+
+    // Emit to sender's room for multi-device sync
+    io.to(senderId.toString()).emit('newMessage', populatedMessage);
+    console.log(`Emitted 'newMessage' to sender room: ${senderId.toString()} for sync.`);
+
+    // Create notification for the receiver
+    const senderName = populatedMessage.senderId?.name || 'User'; // Use 'User' as a generic fallback
+    const bookTitle = populatedMessage.bookId?.title;
+    
+    // This is the message for the in-app notification
+    let inAppNotifMessage = `New message from ${senderName}`;
+    if (bookTitle) {
+      inAppNotifMessage += ` about "${bookTitle}"`;
     }
-    // Also emit to sender's other connected sockets if any (for multi-device sync)
-    const senderSocketId = req.app.get('userSockets')?.[senderId.toString()];
-    if (senderSocketId && senderSocketId !== req.ioSocketId) { // req.ioSocketId would be the sender's current socket
-        // This part is tricky as we don't have req.ioSocketId directly here.
-        // A better approach for sender sync is for the client to handle it or use a message queue.
-        // For now, we'll focus on receiver.
-        // Consider emitting back to a sender's room if they are joined in multiple places:
-        io.to(senderId.toString()).emit('newMessage', populatedMessage); // Emitting to sender's room (userId)
-         console.log(`Emitted newMessage also to sender ${senderId} room for sync.`);
-    }
+    inAppNotifMessage += `: ${content.substring(0, 30)}${content.length > 30 ? '...' : ''}`;
+
+
+    // Details for the email template
+    const emailRelatedEntityDetails = {
+        entityType: 'Chat',
+        entityId: populatedMessage._id, // Using message ID, or could be chat room ID
+        senderName: senderName,
+        messagePreview: content.substring(0, 100) + (content.length > 100 ? '...' : ''),
+        bookTitle: bookTitle,
+        // Pass original sender ID for chat link generation, assuming `senderId` is the ID string from req.user.id
+        originalSenderId: senderId.toString(), 
+        bookId: bookId // Pass bookId for chat link generation
+    };
+
+    await createNotification(
+      io,
+      receiverId.toString(),
+      'new_message',
+      inAppNotifMessage, // Concise message for in-app notification
+      emailRelatedEntityDetails // Enriched details for email
+    );
+
   } else {
-    console.log('Socket.IO instance or populatedMessage not available.');
+    console.log('Socket.IO instance or populatedMessage not available for chat message emission/notification.');
   }
 
-  res.status(201).json(populatedMessage); // Return the populated message
+  res.status(201).json(populatedMessage);
 });
 
 // @desc    Get chat history with another user

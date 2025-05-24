@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Message on PustakBazzar</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; color: #333; }
+        .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .header { background-color: #4A90E2; color: white; padding: 10px 20px; text-align: center; border-top-left-radius: 8px; border-top-right-radius: 8px; }
+        .header h1 { margin: 0; font-size: 24px; }
+        .content { padding: 20px; line-height: 1.6; }
+        .content p { margin: 10px 0; }
+        .button { display: inline-block; background-color: #4A90E2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 15px; }
+        .footer { text-align: center; padding: 15px; font-size: 12px; color: #777; border-top: 1px solid #eee; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>PustakBazzar</h1>
+        </div>
+        <div class="content">
+            <p>Hello {{userName}},</p>
+            <p>You have received a new message from <strong>{{senderName}}</strong>{{bookContext}}.</p>
+            <p>Message: <em>"{{messagePreview}}"</em></p>
+            <p>
+                <a href="{{chatLink}}" class="button">View Message</a>
+            </p>
+            <p>If you are not expecting this message or have concerns, please contact our support team.</p>
+        </div>
+        <div class="footer">
+            &copy; {{currentYear}} PustakBazzar. All rights reserved.
+        </div>
+    </div>
+</body>
+</html>

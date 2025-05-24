@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PustakBazzar - Order Confirmed</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; color: #333; }
+        .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .header { background-color: #28a745; color: white; padding: 10px 20px; text-align: center; border-top-left-radius: 8px; border-top-right-radius: 8px; }
+        .header h1 { margin: 0; font-size: 24px; }
+        .content { padding: 20px; line-height: 1.6; }
+        .content p { margin: 10px 0; }
+        .order-details { margin-top: 20px; margin-bottom: 20px; border-collapse: collapse; width: 100%; }
+        .order-details th, .order-details td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .order-details th { background-color: #f0f0f0; }
+        .button { display: inline-block; background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 15px; }
+        .footer { text-align: center; padding: 15px; font-size: 12px; color: #777; border-top: 1px solid #eee; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Order Confirmed!</h1>
+        </div>
+        <div class="content">
+            <p>Hello {{userName}},</p>
+            <p>Thank you for your order! Your order #<strong>{{orderNumber}}</strong> has been successfully placed and is now being processed.</p>
+            
+            <p><strong>Order Summary:</strong></p>
+            <table class="order-details">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{orderItems}}
+                    <!-- Example item row (repeat for each item):
+                    <tr>
+                        <td>Book Title 1</td>
+                        <td>1</td>
+                        <td>NPR 500</td>
+                    </tr>
+                    -->
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="2" style="text-align:right;"><strong>Subtotal:</strong></td>
+                        <td>NPR {{subTotal}}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="text-align:right;"><strong>Shipping:</strong></td>
+                        <td>NPR {{shippingFee}}</td>
+                    </tr>
+                     <tr>
+                        <td colspan="2" style="text-align:right;"><strong>Discount:</strong></td>
+                        <td>NPR {{discount}}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="text-align:right;"><strong>Total:</strong></td>
+                        <td><strong>NPR {{netTotal}}</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <p>You can view your order details and track its progress by clicking the button below:</p>
+            <p>
+                <a href="{{orderDetailsLink}}" class="button">View Your Order</a>
+            </p>
+            <p>We will notify you again once your order has been shipped.</p>
+        </div>
+        <div class="footer">
+            &copy; {{currentYear}} PustakBazzar. All rights reserved.
+        </div>
+    </div>
+</body>
+</html>
