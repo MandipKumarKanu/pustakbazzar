@@ -172,7 +172,10 @@ const Login = ({ switchToSignup }) => {
           setShowLoginPassword
         )}
       </div>
-      <div className="text-sm text-purple-600 cursor-pointer hover:underline font-medium text-right">
+      <div
+        className="text-sm text-purple-600 cursor-pointer hover:underline font-medium text-right"
+        onClick={() => navigate("/forget-password")}
+      >
         Forgot password?
       </div>
       <button

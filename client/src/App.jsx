@@ -55,6 +55,8 @@ import PlatformFeeReport from "./components/PlatformFeeReport";
 import SalesPerformanceReport from "./components/SalesPerformanceReport";
 import AskAI from "./components/AskAI";
 import NotFoundPage from "./pages/NotFoundPage";
+import ForgetPassword from "./pages/ForgetPassword";
+import BookReport from "./components/BookReport";
 // import AdminOrder from "./pages/AdminOrder";
 
 // import ContactPage from "./pages/ContactPage";
@@ -144,6 +146,7 @@ function App() {
           <Route path="/category" element={<CategoryPage />} />
           <Route path="/category/:cname" element={<ParticularCategory />} />
           <Route path="/contact" element={<ContactPage />} />
+          <Route path="/forget-password" element={<ForgetPassword />} />
           <Route path="*" element={<NotFoundPage />} />
           <Route
             path="/terms-and-conditions"
@@ -173,6 +176,7 @@ function App() {
               <Route path="/admin/messages" element={<MessagePage />} />
               <Route path="/admin/PlatformFeeReport" element={<PlatformFeeReport />} />
               <Route path="/admin/SalesPerformanceReport" element={<SalesPerformanceReport />} />
+              <Route path="/admin/bookreport" element={<BookReport />} />
               <Route
                 path="/admin/payout-history"
                 element={<SellerPayoutHistoryPage />}

@@ -5,6 +5,42 @@ const Book = require("../models/Book");
 const { recordUserSignup } = require("../controllers/statsController");
 const { OAuth2Client } = require('google-auth-library');
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const nodemailer = require('nodemailer');
+
+const transporter = nodemailer.createTransport({
+  service: process.env.EMAIL_SERVICE, 
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD
+  }
+});
+
+const sendEmail = 
+async (to, subject, htmlContent) => {
+  try {
+    const info = await transporter.sendMail({
+      from: `"PustakBazzar" <${process.env.EMAIL_USER}>`,
+      to: to,
+      subject: subject,
+      html: htmlContent
+    });
+    
+    console.log(`Email sent successfully to ${to}: ${info.messageId}`);
+    return true;
+  } catch (error) {
+    console.error(`Error sending email to ${to}:`, error);
+    return false;
+  }
+};
+
+const generateOTP = () => {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let otp = '';
+  for (let i = 0; i < 6; i++) {
+    otp += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return otp;
+};
 
 const generateAccessToken = (user) => {
   return jwt.sign(
@@ -85,19 +121,6 @@ const login = async (req, res) => {
   }
 };
 
-// const getUsers = async (req, res) => {
-//   try {
-//     if (req.user.profile.role !== "admin")
-//       return res.status(403).json({ message: "Access denied." });
-//     const users = await User.find()
-//       .select("-password -refreshToken")
-//       .sort({ createdAt: -1 });
-//     res.status(200).json(users);
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
-
 const getUserById = async (req, res) => {
   try {
     if (req.user._id !== req.params.id && req.user.profile.role !== "admin") {
@@ -163,19 +186,52 @@ const deleteUser = async (req, res) => {
   }
 };
 
-// const addAddress = async (req, res) => {
-//   try {
-//     const { address } = req.body;
-//     const user = await User.findByIdAndUpdate(
-//       req.user._id,
-//       { "profile.address": address },
-//       { new: true }
-//     );
-//     res.status(200).json(user);
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
+const addAddress = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const {
+      firstName,
+      lastName,
+      street,
+      province,
+      town,
+      landmark,
+      phone,
+      email,
+      isDefault,
+    } = req.body;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    if (user.profile.address.length >= 3) {
+      return res
+        .status(400)
+        .json({ message: "You can only add up to 3 addresses." });
+    }
+    const newAddress = {
+      firstName,
+      lastName,
+      street,
+      province,
+      town,
+      landmark,
+      phone,
+      email,
+      isDefault: isDefault || false,
+    };
+
+    user.profile.address.push(newAddress);
+
+    await user.save();
+
+    res.status(201).json({ message: "Address added successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 const logout = async (req, res) => {
   try {
@@ -244,87 +300,6 @@ const applyForSeller = async (req, res) => {
     await user.save();
 
     res.status(200).json({ message: "Seller application submitted." });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// const approveSeller = async (req, res) => {
-//   try {
-//     if (req.user.profile.role !== "admin")
-//       return res.status(403).json({ message: "Access denied." });
-
-//     const user = await User.findById(req.params.id);
-//     if (!user) return res.status(404).json({ message: "User not found." });
-
-//     user.isSeller.status = "approved";
-//     await user.save();
-
-//     res.status(200).json({ message: "Seller approved." });
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
-
-// const rejectSeller = async (req, res) => {
-//   try {
-//     if (req.user.profile.role !== "admin")
-//       return res.status(403).json({ message: "Access denied." });
-
-//     const user = await User.findById(req.params.id);
-//     if (!user) return res.status(404).json({ message: "User not found." });
-
-//     user.isSeller.status = "rejected";
-//     await user.save();
-
-//     res.status(200).json({ message: "Seller application rejected." });
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
-
-const addAddress = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const {
-      firstName,
-      lastName,
-      street,
-      province,
-      town,
-      landmark,
-      phone,
-      email,
-      isDefault,
-    } = req.body;
-
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    if (user.profile.address.length >= 3) {
-      return res
-        .status(400)
-        .json({ message: "You can only add up to 3 addresses." });
-    }
-    const newAddress = {
-      firstName,
-      lastName,
-      street,
-      province,
-      town,
-      landmark,
-      phone,
-      email,
-      isDefault: isDefault || false,
-    };
-
-    user.profile.address.push(newAddress);
-
-    await user.save();
-
-    res.status(201).json({ message: "Address added successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -405,6 +380,143 @@ const googleLogin = async (req, res) => {
   }
 };
 
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const user = await User.findOne({ "profile.email": email });
+    if (!user) {
+      return res.status(200).json({ message: "If your email exists in our system, you will receive a reset code." });
+    }
+
+    const otp = generateOTP();
+    
+    user.resetPasswordOTP = {
+      code: otp,
+      expiry: new Date(Date.now() + 15 * 60 * 1000),
+      attempts: 0,
+      verified: false
+    };
+    
+    await user.save();
+    
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e4e4e4; border-radius: 5px;">
+        <h2 style="color: #333;">Password Reset Code</h2>
+        <p>Hello ${user.profile.firstName} ${user.profile.lastName},</p>
+        <p>You've requested to reset your password. Please use the following code to verify your identity:</p>
+        <div style="background-color: #f7f7f7; padding: 15px; border-radius: 5px; text-align: center; font-size: 24px; letter-spacing: 5px; font-weight: bold; margin: 20px 0;">
+          ${otp}
+        </div>
+        <p>This code will expire in 15 minutes.</p>
+        <p>If you didn't request a password reset, please ignore this email or contact support if you have concerns.</p>
+        <p>Thank you,<br>PustakBazzar Team</p>
+      </div>
+    `;
+    
+    await sendEmail(
+      email, 
+      "Password Reset Code - PustakBazzar", 
+      htmlContent
+    );
+    
+    res.status(200).json({ message: "If your email exists in our system, you will receive a reset code." });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const verifyOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ message: "Email and OTP are required" });
+    }
+
+    const user = await User.findOne({ "profile.email": email });
+    if (!user || !user.resetPasswordOTP || !user.resetPasswordOTP.code) {
+      return res.status(400).json({ message: "OTP expired or invalid. Please request a new one." });
+    }
+
+    const otpData = user.resetPasswordOTP;
+    
+    otpData.attempts += 1;
+    user.markModified('resetPasswordOTP');
+    await user.save();
+    
+    if (otpData.attempts > 5) {
+      user.resetPasswordOTP = undefined;
+      await user.save();
+      return res.status(400).json({ message: "Too many incorrect attempts. Please request a new OTP." });
+    }
+
+    if (new Date() > new Date(otpData.expiry)) {
+      user.resetPasswordOTP = undefined;
+      await user.save();
+      return res.status(400).json({ message: "OTP expired. Please request a new one." });
+    }
+
+    if (otpData.code !== otp) {
+      await user.save();
+      return res.status(400).json({ message: "Invalid OTP. Please try again." });
+    }
+
+    user.resetPasswordOTP.verified = true;
+    await user.save();
+    
+    res.status(200).json({ message: "OTP verified successfully." });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const { email, otp, password } = req.body;
+    if (!email || !otp || !password) {
+      return res.status(400).json({ message: "Email, OTP and new password are required" });
+    }
+
+    const user = await User.findOne({ "profile.email": email });
+    if (!user || !user.resetPasswordOTP || !user.resetPasswordOTP.verified) {
+      return res.status(400).json({ message: "Please verify your OTP first." });
+    }
+
+    if (user.resetPasswordOTP.code !== otp) {
+      return res.status(400).json({ message: "Invalid OTP. Please try again." });
+    }
+
+    user.password = password;
+    user.resetPasswordOTP = undefined;
+    
+    await user.save();
+    
+    const currentDate = new Date().toLocaleString();
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e4e4e4; border-radius: 5px;">
+        <h2 style="color: #333;">Password Changed Successfully</h2>
+        <p>Hello ${user.profile.firstName} ${user.profile.lastName},</p>
+        <p>Your password has been successfully reset on ${currentDate}.</p>
+        <p>If you did not make this change, please contact our support team immediately.</p>
+        <p>Thank you,<br>PustakBazzar Team</p>
+      </div>
+    `;
+    
+    await sendEmail(
+      email, 
+      "Password Changed - PustakBazzar", 
+      htmlContent
+    );
+    
+    res.status(200).json({ message: "Password reset successful." });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -422,4 +534,7 @@ module.exports = {
   myBook,
   getUserAddresses,
   googleLogin,
+  forgotPassword,
+  verifyOTP,
+  resetPassword,
 };

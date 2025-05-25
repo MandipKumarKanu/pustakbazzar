@@ -13,6 +13,20 @@ import {
   FaRobot,
   FaArrowRight,
   FaStar,
+  FaHome,
+  FaBook,
+  FaBookOpen,
+  FaMoneyBillWave,
+  FaCalendarAlt,
+  FaUserEdit,
+  FaShippingFast,
+  FaExchangeAlt,
+  FaTags,
+  FaLanguage,
+  FaClock,
+  FaBarcode,
+  FaCheckCircle,
+  FaFileAlt,
 } from "react-icons/fa";
 import { FaRegHeart } from "react-icons/fa";
 import { RWebShare } from "react-web-share";
@@ -351,20 +365,20 @@ const BookDescPage = () => {
         <nav className="flex items-center text-sm text-gray-500 mb-6">
           <button
             onClick={() => navigate("/")}
-            className="hover:text-purple-600 transition-colors"
+            className="hover:text-purple-600 transition-colors flex items-center"
           >
-            Home
+            <FaHome className="mr-1" /> Home
           </button>
           <span className="mx-2">/</span>
           <button
             onClick={() => navigate("/allbooks")}
-            className="hover:text-purple-600 transition-colors"
+            className="hover:text-purple-600 transition-colors flex items-center"
           >
-            Books
+            <FaBook className="mr-1" /> Books
           </button>
           <span className="mx-2">/</span>
-          <span className="text-gray-900 font-medium truncate max-w-xs">
-            {book.title}
+          <span className="text-gray-900 font-medium truncate max-w-xs flex items-center">
+            <FaBookOpen className="mr-1" /> {book.title}
           </span>
         </nav>
 
@@ -373,7 +387,7 @@ const BookDescPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0">
               <div className=" p-6 md:p-8 bg-white border-b md:border-b-0 md:border-r border-gray-100">
                 <div className="sticky top-24 space-y-6">
-                  <div className="aspect-[3/4] bg-gray-50 rounded-lg overflow-hidden">
+                  <div className="aspect-[3/4] bg-gray-50 rounded-lg overflow-hidden shadow-md mx-auto max-w-sm w-full">
                     <Lens
                       zoomFactor={2}
                       lensSize={200}
@@ -386,26 +400,37 @@ const BookDescPage = () => {
                         className="object-contain w-full h-full cursor-crosshair"
                         loading="lazy"
                         style={{ mixBlendMode: "multiply" }}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src =
+                            "https://via.placeholder.com/300x450?text=No+Image";
+                        }}
                       />
                     </Lens>
                   </div>
 
                   {book.images.length > 1 && (
-                    <div className="flex gap-3 overflow-x-auto p-2 snap-x">
+                    <div className="flex gap-2 overflow-x-auto py-3 px-1 snap-x scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 justify-center">
                       {book.images.map((image, index) => (
                         <button
                           key={index}
                           onClick={() => setCurrentImageIndex(index)}
-                          className={`flex-shrink-0 w-16 h-20 rounded-md overflow-hidden snap-start ${
+                          className={`flex-shrink-0 w-16 h-20 rounded-md overflow-hidden snap-start transition-all duration-200 ${
                             currentImageIndex === index
-                              ? "ring-2 ring-purple-500"
-                              : "ring-1 ring-gray-200"
+                              ? "ring-2 ring-purple-500 scale-105"
+                              : "ring-1 ring-gray-200 hover:ring-gray-400"
                           }`}
                         >
                           <img
                             src={image}
                             alt={`Book image ${index + 1}`}
                             className="w-full h-full object-contain"
+                            loading="lazy"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src =
+                                "https://via.placeholder.com/64x80?text=Error";
+                            }}
                           />
                         </button>
                       ))}
@@ -492,7 +517,8 @@ const BookDescPage = () => {
                       <div className="flex flex-col">
                         {isUnavailable ? (
                           <div className="flex items-center">
-                            <span className="text-3xl font-bold text-gray-400 line-through">
+                            <span className="text-3xl font-bold text-gray-400 line-through flex items-center">
+                              {/* <FaMoneyBillWave className="mr-2" />{" "} */}
                               {formatPrice(book.sellingPrice)}
                             </span>
                             <span className="ml-3 text-red-600 font-semibold">
@@ -501,19 +527,24 @@ const BookDescPage = () => {
                           </div>
                         ) : book.availability === "rent" ? (
                           <>
-                            <span className="text-3xl font-bold text-indigo-600">
+                            <span className="text-3xl font-bold text-indigo-600 flex items-center">
+                              {/* <FaMoneyBillWave className="mr-2" />{" "} */}
                               {formatPrice(book.perWeekPrice)}
-                              <span className="text-lg font-normal">/week</span>
+                              <span className="text-lg font-normal">
+                                /week
+                              </span>
                             </span>
                             {book.markedPrice > 0 && (
                               <span className="text-sm text-gray-500">
-                                Original Price: {formatPrice(book.markedPrice)}
+                                Original Price:{" "}
+                                {formatPrice(book.markedPrice)}
                               </span>
                             )}
                           </>
                         ) : (
                           <>
-                            <span className="text-3xl font-bold text-emerald-600">
+                            <span className="text-3xl font-bold text-emerald-600 flex items-center">
+                              {/* <FaMoneyBillWave className="mr-2" />{" "} */}
                               {formatPrice(book.sellingPrice)}
                             </span>
                             {book.markedPrice > book.sellingPrice && (
@@ -521,9 +552,11 @@ const BookDescPage = () => {
                                 <span className="text-sm text-gray-500 line-through">
                                   {formatPrice(book.markedPrice)}
                                 </span>
-                                <span className="ml-2 px-2 py-0.5 text-xs font-semibold bg-green-100 text-green-800 rounded-full">
+                                <span className="ml-2 px-2 py-0.5 text-xs font-semibold bg-green-100 text-green-800 rounded-full flex items-center">
+                                  <FaCheckCircle className="mr-1" />
                                   {Math.round(
-                                    ((book.markedPrice - book.sellingPrice) /
+                                    ((book.markedPrice -
+                                      book.sellingPrice) /
                                       book.markedPrice) *
                                       100
                                   )}
@@ -551,55 +584,62 @@ const BookDescPage = () => {
                     </div>
 
                     <div className="mb-6">
-                      <div className="flex border-b border-gray-200">
-                        <button
-                          onClick={() => setActiveTab("description")}
-                          className={`py-3 px-4 font-medium text-sm ${
-                            activeTab === "description"
-                              ? "border-b-2 border-purple-500 text-purple-600"
-                              : "text-gray-500 hover:text-gray-700"
-                          }`}
-                        >
-                          Description
-                        </button>
-                        <button
-                          onClick={() => setActiveTab("details")}
-                          className={`py-3 px-4 font-medium text-sm ${
-                            activeTab === "details"
-                              ? "border-b-2 border-purple-500 text-purple-600"
-                              : "text-gray-500 hover:text-gray-700"
-                          }`}
-                        >
-                          Book Details
-                        </button>
-                        <button
-                          onClick={() => setActiveTab("delivery")}
-                          className={`py-3 px-4 font-medium text-sm ${
-                            activeTab === "delivery"
-                              ? "border-b-2 border-purple-500 text-purple-600"
-                              : "text-gray-500 hover:text-gray-700"
-                          }`}
-                        >
-                          Shipping
-                        </button>
-                        <button
-                          onClick={() => {
-                            setActiveTab("ai-review");
-                            if (!aiReview && !isGeneratingReview) {
-                              generateAIReview();
-                            }
-                          }}
-                          className={`py-3 px-4 font-medium text-sm flex items-center whitespace-nowrap ${
-                            activeTab === "ai-review"
-                              ? "border-b-2 border-purple-500 text-purple-600"
-                              : "text-gray-500 hover:text-gray-700"
-                          }`}
-                        >
-                          <FaRobot className="mr-1.5" />
-                          AI Review
-                        </button>
+                      {/* Hide scrollbar but keep functionality */}
+                      <div className="overflow-x-auto scrollbar-none -mx-4 px-4 overflow-auto">
+                        <div className="flex border-b border-gray-200 min-w-max overflow-auto">
+                          <button
+                            onClick={() => setActiveTab("description")}
+                            className={`py-2 px-3 sm:px-4 font-medium text-xs sm:text-sm flex items-center ${
+                              activeTab === "description"
+                                ? "border-b-2 border-purple-500 text-purple-600"
+                                : "text-gray-500 hover:text-gray-700"
+                            }`}
+                          >
+                            <FaFileAlt className="mr-1 sm:mr-1.5" />
+                            <span>Description</span>
+                          </button>
+                          <button
+                            onClick={() => setActiveTab("details")}
+                            className={`py-2 px-3 sm:px-4 font-medium text-xs sm:text-sm flex items-center ${
+                              activeTab === "details"
+                                ? "border-b-2 border-purple-500 text-purple-600"
+                                : "text-gray-500 hover:text-gray-700"
+                            }`}
+                          >
+                            <FaInfoCircle className="mr-1 sm:mr-1.5" />
+                            <span>Details</span>
+                          </button>
+                          <button
+                            onClick={() => setActiveTab("delivery")}
+                            className={`py-2 px-3 sm:px-4 font-medium text-xs sm:text-sm flex items-center ${
+                              activeTab === "delivery"
+                                ? "border-b-2 border-purple-500 text-purple-600"
+                                : "text-gray-500 hover:text-gray-700"
+                            }`}
+                          >
+                            <FaTruck className="mr-1 sm:mr-1.5" />
+                            <span>Shipping</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              setActiveTab("ai-review");
+                              if (!aiReview && !isGeneratingReview) {
+                                generateAIReview();
+                              }
+                            }}
+                            className={`py-2 px-3 sm:px-4 font-medium text-xs sm:text-sm flex items-center ${
+                              activeTab === "ai-review"
+                                ? "border-b-2 border-purple-500 text-purple-600"
+                                : "text-gray-500 hover:text-gray-700"
+                            }`}
+                          >
+                            <FaRobot className="mr-1 sm:mr-1.5" />
+                            <span>AI Review</span>
+                          </button>
+                        </div>
                       </div>
-
+                      
+                      {/* Rest of the code remains the same */}
                       <div className="pt-4">
                         {activeTab === "description" && (
                           <div className="text-gray-700 leading-relaxed prose max-w-none">
@@ -609,67 +649,83 @@ const BookDescPage = () => {
                             />
                           </div>
                         )}
-
                         {activeTab === "details" && (
                           <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
-                              <div className="flex flex-col">
-                                <span className="text-sm text-gray-500">
-                                  Availability
-                                </span>
-                                <span className="font-medium uppercase">
-                                  {book.availability || "SELL"}
-                                </span>
+                              <div className="flex items-center">
+                                <FaTags className="text-gray-400 mr-2" />
+                                <div className="flex flex-col">
+                                  <span className="text-sm text-gray-500">
+                                    Availability
+                                  </span>
+                                  <span className="font-medium uppercase">
+                                    {book.availability || "SELL"}
+                                  </span>
+                                </div>
                               </div>
-                              <div className="flex flex-col">
-                                <span className="text-sm text-gray-500">
-                                  Edition
-                                </span>
-                                <span className="font-medium">
-                                  {book.edition || "First"}
-                                </span>
+                              <div className="flex items-center">
+                                <FaBookOpen className="text-gray-400 mr-2" />
+                                <div className="flex flex-col">
+                                  <span className="text-sm text-gray-500">
+                                    Edition
+                                  </span>
+                                  <span className="font-medium">
+                                    {book.edition || "First"}
+                                  </span>
+                                </div>
                               </div>
-                              <div className="flex flex-col">
-                                <span className="text-sm text-gray-500">
-                                  Language
-                                </span>
-                                <span className="font-medium capitalize">
-                                  {book.bookLanguage || "English"}
-                                </span>
+                              <div className="flex items-center">
+                                <FaLanguage className="text-gray-400 mr-2" />
+                                <div className="flex flex-col">
+                                  <span className="text-sm text-gray-500">
+                                    Language
+                                  </span>
+                                  <span className="font-medium capitalize">
+                                    {book.bookLanguage || "English"}
+                                  </span>
+                                </div>
                               </div>
-                              <div className="flex flex-col">
-                                <span className="text-sm text-gray-500">
-                                  Publish Year
-                                </span>
-                                <span className="font-medium">
-                                  {book.publishYear}
-                                </span>
+                              <div className="flex items-center">
+                                <FaCalendarAlt className="text-gray-400 mr-2" />
+                                <div className="flex flex-col">
+                                  <span className="text-sm text-gray-500">
+                                    Publish Year
+                                  </span>
+                                  <span className="font-medium">
+                                    {book.publishYear}
+                                  </span>
+                                </div>
                               </div>
-                              <div className="flex flex-col">
-                                <span className="text-sm text-gray-500">
-                                  Seller
-                                </span>
-                                <span className="font-medium">
-                                  {book?.addedBy?.profile?.userName ||
-                                    "Unknown"}
-                                </span>
+                              <div className="flex items-center">
+                                <FaUserEdit className="text-gray-400 mr-2" />
+                                <div className="flex flex-col">
+                                  <span className="text-sm text-gray-500">
+                                    Seller
+                                  </span>
+                                  <span className="font-medium">
+                                    {book?.addedBy?.profile?.userName ||
+                                      "Unknown"}
+                                  </span>
+                                </div>
                               </div>
-                              <div className="flex flex-col">
-                                <span className="text-sm text-gray-500">
-                                  ISBN
-                                </span>
-                                <span className="font-medium">
-                                  {book?.isbn || "N/A"}
-                                </span>
+                              <div className="flex items-center">
+                                <FaBarcode className="text-gray-400 mr-2" />
+                                <div className="flex flex-col">
+                                  <span className="text-sm text-gray-500">
+                                    ISBN
+                                  </span>
+                                  <span className="font-medium">
+                                    {book?.isbn || "N/A"}
+                                  </span>
+                                </div>
                               </div>
                             </div>
                           </div>
                         )}
-
                         {activeTab === "delivery" && (
                           <div className="space-y-4">
                             <div className="flex items-center mb-3">
-                              <FaTruck className="text-gray-400 w-5 mr-2" />
+                              <FaShippingFast className="text-gray-400 w-5 mr-2" />
                               <span className="text-gray-700">
                                 Delivery Charge:{" "}
                                 <span className="font-medium">₹50</span> on all
@@ -678,47 +734,48 @@ const BookDescPage = () => {
                             </div>
                             {book.availability !== "rent" && (
                               <div className="mb-3 flex items-center">
-                                <FaInfoCircle className="text-gray-400 w-5 mr-2" />
+                                <FaExchangeAlt className="text-gray-400 w-5 mr-2" />
                                 <span className="text-gray-700">
                                   No return policy is available.
                                 </span>
                               </div>
                             )}
-
                             {book.availability === "rent" && (
-                              <div className="p-4 bg-blue-50 rounded-lg">
-                                <h3 className="font-medium text-blue-800 mb-2">
-                                  Rental Information
-                                </h3>
-                                <p className="text-gray-700">
-                                  Enjoy reading with our flexible rental option.
-                                  Rent the book for ₹{book.perWeekPrice}/week
-                                  and return it anytime!
-                                </p>
+                              <div className="p-4 bg-blue-50 rounded-lg flex">
+                                <FaClock className="text-blue-700 w-5 h-5 mr-3 mt-1" />
+                                <div>
+                                  <h3 className="font-medium text-blue-800 mb-2">
+                                    Rental Information
+                                  </h3>
+                                  <p className="text-gray-700">
+                                    Enjoy reading with our flexible rental
+                                    option. Rent the book for ₹{book.perWeekPrice}
+                                    /week and return it anytime!
+                                  </p>
+                                </div>
                               </div>
                             )}
-
                             {book.forDonation && (
-                              <div className="p-4 bg-green-50 rounded-lg">
-                                <h3 className="font-medium text-green-800 mb-2">
-                                  Donation Information
-                                </h3>
-                                <p className="text-gray-700">
-                                  This book is being generously offered by{" "}
-                                  {book?.addedBy?.profile?.firstName ||
-                                    "the owner"}
-                                  . You will only need to pay the ₹50 delivery
-                                  charge.
-                                </p>
+                              <div className="p-4 bg-green-50 rounded-lg flex">
+                                <FaHandHoldingHeart className="text-green-700 w-5 h-5 mr-3 mt-1" />
+                                <div>
+                                  <h3 className="font-medium text-green-800 mb-2">
+                                    Donation Information
+                                  </h3>
+                                  <p className="text-gray-700">
+                                    This book is being generously offered by{" "}
+                                    {book?.addedBy?.profile?.firstName ||
+                                      "the owner"}. You will only need to pay the
+                                    ₹50 delivery charge.
+                                  </p>
+                                </div>
                               </div>
                             )}
                           </div>
                         )}
-
                         {activeTab === "ai-review" && (
                           <div className="space-y-4">
                             {renderSummaryContent()}
-
                             {aiReview && (
                               <div className="mt-4 p-3 bg-gray-50 rounded-md text-xs text-gray-500">
                                 <p>

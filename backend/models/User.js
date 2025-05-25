@@ -88,6 +88,19 @@ const userSchema = new mongoose.Schema(
         },
       },
     ],
+
+    resetPasswordOTP: {
+      code: String,
+      expiry: Date,
+      attempts: {
+        type: Number,
+        default: 0,
+      },
+      verified: {
+        type: Boolean,
+        default: false,
+      },
+    },
   },
   {
     timestamps: true,
@@ -132,5 +145,7 @@ userSchema.methods.toJSON = function () {
   delete obj.refreshToken;
   return obj;
 };
+
+
 
 module.exports = mongoose.model("User", userSchema);

@@ -57,3 +57,20 @@ export async function getSalesPerformanceReport(params = {}) {
 
   return customAxios.get(url);
 }
+
+export async function geBookReport(params = {}) {
+  const { startDate, endDate, groupBy } = params;
+
+  let url = "admin/book-activity-report";
+
+  const queryParams = new URLSearchParams();
+  if (startDate) queryParams.append("startDate", startDate);
+  if (endDate) queryParams.append("endDate", endDate);
+  if (groupBy) queryParams.append("groupBy", groupBy);
+
+  if (queryParams.toString()) {
+    url = `${url}?${queryParams.toString()}`;
+  }
+
+  return customAxios.get(url);
+}
