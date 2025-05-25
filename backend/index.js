@@ -36,6 +36,7 @@ app.use(
       "https://pustakbazzar.mandipkk.com.np",
       "http://192.168.100.236:5173",
       "http://192.168.100.64:5173",
+      "http://localhost:8089",
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],

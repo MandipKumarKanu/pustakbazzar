@@ -102,7 +102,7 @@ const createBook = async (req, res) => {
 const getAllBooks = async (req, res) => {
   try {
     const { page = 1, limit = 10, minPrice, maxPrice } = req.query;
-
+    console.log("called");
     const { order = {} } = req.body;
 
     const fetchLimit = Math.min(parseInt(limit, 10), 50);
