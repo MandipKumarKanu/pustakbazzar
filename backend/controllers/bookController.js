@@ -1204,6 +1204,10 @@ const aiBookSearch = async (req, res) => {
       if (historyText) historyText += "\n";
     }
 
+    const category = await Category.distinct("categoryName");
+
+    console.log(category);
+
     const prompt = `You are PustakBazzar's AI assistant(PustakAI). You respond naturally to any user input—greetings, platform questions, or book‐search requests—and you also extract structured search filters when appropriate.
 
 Respond with a single JSON object like this:
@@ -1237,6 +1241,7 @@ Guidelines:
 – Don't mention anything without asking about payment or something.
 – Just reply what user is asking for, dont add extra things.
 – Don't output any extra text—just valid JSON.
+– My categories in the platform are: ${category.join(", ")}.
   
 ${historyText}
 User: ${query}`;
