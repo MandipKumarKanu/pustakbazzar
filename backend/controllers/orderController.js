@@ -4,6 +4,8 @@ const Book = require("../models/Book");
 const { khaltiRequest } = require("../utils/khaltiRequest");
 const Transaction = require("../models/Transaction");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const { sendEmail } = require("./authController");
+const User = require("../models/User");
 
 const createOrder = async (req, res) => {
   try {
@@ -61,6 +63,30 @@ const createOrder = async (req, res) => {
       shippingAddress,
     });
     await newOrder.save();
+
+    // Add order confirmation email
+    const user = await User.findById(userId).select("profile");
+    const orderHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #333;">Order Confirmation</h2>
+        <p>Hello ${user.profile.firstName},</p>
+        <p>Your order #${newOrder._id} has been confirmed!</p>
+        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0;">
+          <h3>Order Details:</h3>
+          <p><strong>Total Amount:</strong> ₹${netTotal}</p>
+          <p><strong>Shipping Fee:</strong> ₹${shippingFee}</p>
+          <p><strong>Payment Method:</strong> ${payment}</p>
+        </div>
+        <p>We'll send you updates as your order is processed.</p>
+        <p>Thank you for shopping with PustakBazzar!</p>
+      </div>
+    `;
+
+    await sendEmail(
+      user.profile.email,
+      "Order Confirmation - PustakBazzar",
+      orderHtml
+    );
 
     if (payment === "khalti") {
       const payload = {

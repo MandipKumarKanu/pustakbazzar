@@ -3,28 +3,29 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const Book = require("../models/Book");
 const { recordUserSignup } = require("../controllers/statsController");
-const { OAuth2Client } = require('google-auth-library');
+const { OAuth2Client } = require("google-auth-library");
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-const nodemailer = require('nodemailer');
+const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  service: process.env.EMAIL_SERVICE, 
+  host: process.env.EMAIL_HOST,
+  port: process.env.EMAIL_PORT,
+  secure: false,
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD
-  }
+    pass: process.env.EMAIL_PASSWORD,
+  },
 });
 
-const sendEmail = 
-async (to, subject, htmlContent) => {
+const sendEmail = async (to, subject, htmlContent) => {
   try {
     const info = await transporter.sendMail({
-      from: `"PustakBazzar" <${process.env.EMAIL_USER}>`,
+      from: `"PustakBazzar" <${process.env.EMAIL_SENDER}>`,
       to: to,
       subject: subject,
-      html: htmlContent
+      html: htmlContent,
     });
-    
+
     console.log(`Email sent successfully to ${to}: ${info.messageId}`);
     return true;
   } catch (error) {
@@ -34,8 +35,9 @@ async (to, subject, htmlContent) => {
 };
 
 const generateOTP = () => {
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let otp = '';
+  const characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let otp = "";
   for (let i = 0; i < 6; i++) {
     otp += characters.charAt(Math.floor(Math.random() * characters.length));
   }
@@ -71,6 +73,30 @@ const register = async (req, res) => {
     const user = new User({ profile, password });
     await user.save();
     await recordUserSignup();
+
+    const welcomeHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <img src="${
+            user.profile.profileImg ||
+            "https://via.placeholder.com/80x80/007bff/ffffff?text=PB"
+          }" 
+               alt="Profile" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;">
+        </div>
+        <h2 style="color: #333; text-align: center;">Welcome to PustakBazzar!</h2>
+        <p>Hello ${user.profile.firstName} ${user.profile.lastName},</p>
+        <p>Welcome to PustakBazzar! Your account has been successfully created.</p>
+        <p>You can now browse and purchase books from our vast collection.</p>
+        <p>Happy reading!</p>
+        <p>Best regards,<br>PustakBazzar Team</p>
+      </div>
+    `;
+
+    await sendEmail(
+      user.profile.email,
+      "Welcome to PustakBazzar!",
+      welcomeHtml
+    );
 
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
@@ -323,7 +349,7 @@ const getUserAddresses = async (req, res) => {
 const googleLogin = async (req, res) => {
   try {
     const { token } = req.body;
-    
+
     const ticket = await client.verifyIdToken({
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID,
@@ -331,35 +357,35 @@ const googleLogin = async (req, res) => {
 
     const payload = ticket.getPayload();
     const { email, name, picture, sub } = payload;
-    
+
     let user = await User.findOne({ "profile.email": email });
 
     if (!user) {
-      const nameParts = name.split(' ');
+      const nameParts = name.split(" ");
       const firstName = nameParts[0];
-      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : "";
 
       user = new User({
         profile: {
           firstName,
-          lastName, 
+          lastName,
           email,
           profileImg: picture,
-          userName: email.split('@')[0],
+          userName: email.split("@")[0],
           role: "user",
         },
         password: await bcrypt.hash(sub + process.env.PASSWORD_SALT, 10),
         googleId: sub,
-        authProvider: "google"
+        authProvider: "google",
       });
-      
+
       await user.save();
       await recordUserSignup();
     }
 
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
-    
+
     user.refreshToken = refreshToken;
     await user.save();
 
@@ -370,13 +396,15 @@ const googleLogin = async (req, res) => {
       sameSite: process.env.NODE_ENV === "production" ? "None" : "lax",
     });
 
-    res.status(200).json({ 
+    res.status(200).json({
       accessToken,
-      message: "Google login successful" 
+      message: "Google login successful",
     });
   } catch (error) {
     console.error("Google login error:", error);
-    res.status(401).json({ message: "Google authentication failed", error: error.message });
+    res
+      .status(401)
+      .json({ message: "Google authentication failed", error: error.message });
   }
 };
 
@@ -389,20 +417,23 @@ const forgotPassword = async (req, res) => {
 
     const user = await User.findOne({ "profile.email": email });
     if (!user) {
-      return res.status(200).json({ message: "If your email exists in our system, you will receive a reset code." });
+      return res.status(200).json({
+        message:
+          "If your email exists in our system, you will receive a reset code.",
+      });
     }
 
     const otp = generateOTP();
-    
+
     user.resetPasswordOTP = {
       code: otp,
       expiry: new Date(Date.now() + 15 * 60 * 1000),
       attempts: 0,
-      verified: false
+      verified: false,
     };
-    
+
     await user.save();
-    
+
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e4e4e4; border-radius: 5px;">
         <h2 style="color: #333;">Password Reset Code</h2>
@@ -416,14 +447,13 @@ const forgotPassword = async (req, res) => {
         <p>Thank you,<br>PustakBazzar Team</p>
       </div>
     `;
-    
-    await sendEmail(
-      email, 
-      "Password Reset Code - PustakBazzar", 
-      htmlContent
-    );
-    
-    res.status(200).json({ message: "If your email exists in our system, you will receive a reset code." });
+
+    await sendEmail(email, "Password Reset Code - PustakBazzar", htmlContent);
+
+    res.status(200).json({
+      message:
+        "If your email exists in our system, you will receive a reset code.",
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -438,35 +468,43 @@ const verifyOTP = async (req, res) => {
 
     const user = await User.findOne({ "profile.email": email });
     if (!user || !user.resetPasswordOTP || !user.resetPasswordOTP.code) {
-      return res.status(400).json({ message: "OTP expired or invalid. Please request a new one." });
+      return res
+        .status(400)
+        .json({ message: "OTP expired or invalid. Please request a new one." });
     }
 
     const otpData = user.resetPasswordOTP;
-    
+
     otpData.attempts += 1;
-    user.markModified('resetPasswordOTP');
+    user.markModified("resetPasswordOTP");
     await user.save();
-    
+
     if (otpData.attempts > 5) {
       user.resetPasswordOTP = undefined;
       await user.save();
-      return res.status(400).json({ message: "Too many incorrect attempts. Please request a new OTP." });
+      return res.status(400).json({
+        message: "Too many incorrect attempts. Please request a new OTP.",
+      });
     }
 
     if (new Date() > new Date(otpData.expiry)) {
       user.resetPasswordOTP = undefined;
       await user.save();
-      return res.status(400).json({ message: "OTP expired. Please request a new one." });
+      return res
+        .status(400)
+        .json({ message: "OTP expired. Please request a new one." });
     }
 
     if (otpData.code !== otp) {
       await user.save();
-      return res.status(400).json({ message: "Invalid OTP. Please try again." });
+      return res
+        .status(400)
+        .json({ message: "Invalid OTP. Please try again." });
     }
 
     user.resetPasswordOTP.verified = true;
     await user.save();
-    
+
     res.status(200).json({ message: "OTP verified successfully." });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -477,7 +515,9 @@ const resetPassword = async (req, res) => {
   try {
     const { email, otp, password } = req.body;
     if (!email || !otp || !password) {
-      return res.status(400).json({ message: "Email, OTP and new password are required" });
+      return res
+        .status(400)
+        .json({ message: "Email, OTP and new password are required" });
     }
 
     const user = await User.findOne({ "profile.email": email });
@@ -486,14 +526,16 @@ const resetPassword = async (req, res) => {
     }
 
     if (user.resetPasswordOTP.code !== otp) {
-      return res.status(400).json({ message: "Invalid OTP. Please try again." });
+      return res
+        .status(400)
+        .json({ message: "Invalid OTP. Please try again." });
     }
 
     user.password = password;
     user.resetPasswordOTP = undefined;
-    
+
     await user.save();
-    
+
     const currentDate = new Date().toLocaleString();
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e4e4e4; border-radius: 5px;">
@@ -504,13 +546,9 @@ const resetPassword = async (req, res) => {
         <p>Thank you,<br>PustakBazzar Team</p>
       </div>
     `;
-    
-    await sendEmail(
-      email, 
-      "Password Changed - PustakBazzar", 
-      htmlContent
-    );
-    
+
+    await sendEmail(email, "Password Changed - PustakBazzar", htmlContent);
+
     res.status(200).json({ message: "Password reset successful." });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -537,4 +575,5 @@ module.exports = {
   forgotPassword,
   verifyOTP,
   resetPassword,
+  sendEmail,
 };

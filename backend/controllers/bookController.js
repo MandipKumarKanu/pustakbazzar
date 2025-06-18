@@ -1231,7 +1231,7 @@ Guidelines:
 – If the user is not asking to search for books, set **all** fields in "filters" to null.  
 – Direct search terms (like "naruto") should set keyword filter without asking questions
 – For mood-based queries, suggest relevant book categories
-- Only mention payment options (Khalti/Stripe), seller approval process, or team information when directly asked
+– Only mention payment options (Khalti/Stripe), seller approval process, or team information when directly asked
 – Payment option is khalti for nepali payment or stripe for international payment.
 – User to become seller need to fill a form and get approved by admin you can find it in profile section.
 – Made by: mandip shah(frontend, backend) and aadarsh kushuwaha(backend) (UI inspired from kitabkunj made during ideathon where we as a team F5)  
