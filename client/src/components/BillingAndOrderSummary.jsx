@@ -10,6 +10,7 @@ import {
   FiMail,
   FiPhone,
   FiHome,
+  FiLoader,
 } from "react-icons/fi";
 import { Wallet } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
@@ -60,6 +61,7 @@ function BillingAndOrderSummary() {
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState("khalti");
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   useEffect(() => {
     if (addresses && addresses.length > 0) {
@@ -95,8 +97,10 @@ function BillingAndOrderSummary() {
   };
 
   const handlePaymentConfirm = async () => {
+    setIsProcessingPayment(true);
+
     const dataToSave = {
-      shippingFee: shippingFee.toFixed(2),
+      shippingFee: (shippingFee && shippingFee.toFixed(2)) || 0,
       payment: paymentMethod,
       shippingAddress: {
         firstName: selectedAddress.firstName,
@@ -111,8 +115,8 @@ function BillingAndOrderSummary() {
     };
     localStorage.setItem("pendingOrder", JSON.stringify(dataToSave));
 
-    if (paymentMethod === "khalti") {
-      try {
+    try {
+      if (paymentMethod === "khalti") {
         console.log(dataToSave);
 
         const res = await customAxios.post(`${baseURL}order/`, {
@@ -124,58 +128,66 @@ function BillingAndOrderSummary() {
           const result = res?.data?.khaltiResponse;
           window.location.href = result.payment_url;
         }
-      } catch (error) {
-        console.error("Payment initiation failed:", error);
-        alert("Payment initiation failed. Please try again.");
+      } else if (paymentMethod === "stripe") {
+        const stripe = await loadStripe(
+          "pk_test_51RIJMdRtB48XzpAm9slu81fUQhYql4Siyf1hD6Cba5n4BiLxG4hqQPfvLbHBeHqKn7tfB9NEbsHWT8mYiHU2clvD00qfB6gYc8"
+        );
+        const body = {
+          shippingFee: shippingFee.toFixed(2),
+          products: cartData.carts,
+          shippingAddress: {
+            firstName: selectedAddress.firstName,
+            lastName: selectedAddress.lastName,
+            street: selectedAddress.street,
+            province: selectedAddress.province,
+            town: selectedAddress.town,
+            landmark: selectedAddress.landmark,
+            phone: selectedAddress.phone,
+            email: selectedAddress.email,
+          },
+        };
+
+        const response = await customAxios.post(`order/stripe-checkout`, body);
+
+        console.log(response);
+        const { sessionId } = response.data;
+
+        const stripeResponse = await stripe.redirectToCheckout({
+          sessionId,
+        });
+
+        if (stripeResponse.error) {
+          console.error("Stripe checkout error:", stripeResponse.error);
+          alert("Failed to redirect to Stripe checkout. Please try again.");
+        }
       }
+    } catch (error) {
+      console.error("Payment initiation failed:", error);
+      alert("Payment initiation failed. Please try again.");
+    } finally {
+      setIsProcessingPayment(false);
     }
-    //  else if (paymentMethod === "stripe") {
-    //   try {
-    //     const stripe = await loadStripe(
-    //       "pk_test_51RIJMdRtB48XzpAm9slu81fUQhYql4Siyf1hD6Cba5n4BiLxG4hqQPfvLbHBeHqKn7tfB9NEbsHWT8mYiHU2clvD00qfB6gYc8"
-    //     );
-    //     const body = {
-    //       shippingFee: shippingFee.toFixed(2),
-    //       products: cartData.carts,
-    //       shippingAddress: {
-    //         firstName: selectedAddress.firstName,
-    //         lastName: selectedAddress.lastName,
-    //         street: selectedAddress.street,
-    //         province: selectedAddress.province,
-    //         town: selectedAddress.town,
-    //         landmark: selectedAddress.landmark,
-    //         phone: selectedAddress.phone,
-    //         email: selectedAddress.email,
-    //       },
-    //     };
-
-    //     // console.log(body);
-
-    //     const response = await customAxios.post(`order/stripe-checkout`, body);
-
-    //     console.log(response);
-    //     const { sessionId } = response.data;
-
-    //     const stripeResponse = await stripe.redirectToCheckout({
-    //       sessionId,
-    //     });
-
-    //     if (stripeResponse.error) {
-    //       console.error("Stripe checkout error:", stripeResponse.error);
-    //       alert("Failed to redirect to Stripe checkout. Please try again.");
-    //     }
-    //   } catch (error) {
-    //     console.error("Failed to create order:", error);
-    //     alert("There was an error processing your order. Please try again.");
-    //   }
-    // }
 
     setIsPaymentDialogOpen(false);
   };
 
   const PaymentConfirmationDialog = () => (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg w-full max-w-md">
+      <div className="bg-white p-6 rounded-lg w-full max-w-md relative">
+        {isProcessingPayment && (
+          <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-lg z-10">
+            <div className="flex flex-col items-center gap-3">
+              <FiLoader className="animate-spin text-3xl text-primaryColor" />
+              <p className="text-lg font-medium text-gray-700">
+                Processing payment...
+              </p>
+              <p className="text-sm text-gray-500">
+                Please wait, do not close this window
+              </p>
+            </div>
+          </div>
+        )}
+
         <h3 className="text-xl font-bold mb-4">Confirm Payment</h3>
         <p className="mb-4">
           {paymentMethod === "credit" ? (
@@ -192,16 +204,25 @@ function BillingAndOrderSummary() {
         </p>
         <div className="flex justify-end gap-4">
           <button
-            className="px-4 py-2 bg-gray-500 text-white rounded"
+            className="px-4 py-2 bg-gray-500 text-white rounded disabled:opacity-50"
             onClick={() => setIsPaymentDialogOpen(false)}
+            disabled={isProcessingPayment}
           >
             Cancel
           </button>
           <button
-            className="px-4 py-2 bg-blue-500 text-white rounded"
+            className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50 flex items-center gap-2"
             onClick={handlePaymentConfirm}
+            disabled={isProcessingPayment}
           >
-            Confirm
+            {isProcessingPayment ? (
+              <>
+                <FiLoader className="animate-spin" />
+                Processing...
+              </>
+            ) : (
+              "Confirm"
+            )}
           </button>
         </div>
       </div>
@@ -378,7 +399,7 @@ function BillingAndOrderSummary() {
               </div>
               <div className="flex justify-between">
                 <span>Shipping:</span>
-                <span>Rs. {shippingFee.toFixed(2)}</span>
+                <span>Rs. {(shippingFee && shippingFee.toFixed(2)) || 0}</span>
               </div>
               <div className="flex justify-between">
                 <span>Platform Fee:</span>
@@ -444,7 +465,7 @@ function BillingAndOrderSummary() {
           </div>
         </div>
         <button
-          className="w-full py-3 mt-8 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-full text-white text-lg font-bold shadow-lg hover:from-primaryColor hover:to-primaryColor transition flex items-center justify-center gap-2"
+          className="w-full py-3 mt-8 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-full text-white text-lg font-bold shadow-lg hover:from-primaryColor hover:to-primaryColor transition flex items-center justify-center gap-2 disabled:opacity-50"
           onClick={() => {
             if (!selectedAddress) {
               alert("Please select a delivery address first.");
@@ -452,7 +473,7 @@ function BillingAndOrderSummary() {
             }
             setIsPaymentDialogOpen(true);
           }}
-          disabled={!selectedAddress}
+          disabled={!selectedAddress || isProcessingPayment}
         >
           <FiShoppingBag /> Place Order
         </button>

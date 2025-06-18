@@ -9,11 +9,13 @@ import {
   FiUser,
   FiMail,
   FiPhone,
+  FiPrinter, // Add this import
 } from "react-icons/fi";
 import StatusBadge from "./StatusBadge";
 
 const OrderDetail = ({ order, onClose, onPayNow }) => {
   const dialogRef = useRef(null);
+  const printRef = useRef(null); // Add this ref for print content
 
   useEffect(() => {
     // When component mounts, show dialog
@@ -43,6 +45,271 @@ const OrderDetail = ({ order, onClose, onPayNow }) => {
     if (e.target === dialogRef.current) {
       handleClose();
     }
+  };
+
+  // Add print function
+  const handlePrintInvoice = () => {
+    const printWindow = window.open('', '_blank');
+    
+    // Generate the books table HTML
+    const booksTableHTML = order.orders.flatMap((sellerOrder) =>
+      sellerOrder.books.map((item) => `
+        <tr>
+          <td>${item.bookId.title}</td>
+          <td>${item.bookId.author}</td>
+          <td>₹${parseFloat(item.price).toFixed(2)}</td>
+          <td>${Number(item.quantity)}</td>
+          <td>₹${(parseFloat(item.price) * Number(item.quantity)).toFixed(2)}</td>
+        </tr>
+      `).join('')
+    ).join('');
+
+    // Generate landmark HTML if it exists
+    const landmarkHTML = order.shippingAddress.landmark ? `
+      <div class="address-item">
+        <span class="address-label">Landmark:</span>
+        ${order.shippingAddress.landmark}
+      </div>
+    ` : '';
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Invoice - Order #${order._id.slice(-8)}</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              margin: 0;
+              padding: 20px;
+              color: #333;
+              line-height: 1.6;
+            }
+            .invoice-header {
+              text-align: center;
+              border-bottom: 2px solid #333;
+              padding-bottom: 20px;
+              margin-bottom: 30px;
+            }
+            .invoice-title {
+              font-size: 28px;
+              font-weight: bold;
+              margin-bottom: 10px;
+            }
+            .order-id {
+              font-size: 16px;
+              color: #666;
+            }
+            .section {
+              margin-bottom: 30px;
+            }
+            .section-title {
+              font-size: 18px;
+              font-weight: bold;
+              margin-bottom: 15px;
+              color: #333;
+            }
+            .info-grid {
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+              gap: 20px;
+              margin-bottom: 20px;
+            }
+            .info-item {
+              background: #f5f5f5;
+              padding: 15px;
+              border-radius: 8px;
+            }
+            .info-label {
+              font-size: 12px;
+              color: #666;
+              margin-bottom: 5px;
+              text-transform: uppercase;
+            }
+            .info-value {
+              font-weight: bold;
+              color: #333;
+            }
+            .books-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 20px;
+            }
+            .books-table th,
+            .books-table td {
+              padding: 12px;
+              text-align: left;
+              border-bottom: 1px solid #ddd;
+            }
+            .books-table th {
+              background-color: #f5f5f5;
+              font-weight: bold;
+            }
+            .address-section {
+              background: #f9f9f9;
+              padding: 20px;
+              border-radius: 8px;
+              margin-bottom: 20px;
+            }
+            .address-item {
+              margin-bottom: 10px;
+            }
+            .address-label {
+              font-weight: bold;
+              color: #666;
+              display: inline-block;
+              width: 80px;
+            }
+            .summary-section {
+              background: #333;
+              color: white;
+              padding: 20px;
+              border-radius: 8px;
+            }
+            .summary-row {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 10px;
+            }
+            .summary-label {
+              flex: 1;
+            }
+            .summary-value {
+              font-weight: bold;
+            }
+            .total-row {
+              border-top: 1px solid #666;
+              padding-top: 10px;
+              margin-top: 15px;
+              font-size: 18px;
+              font-weight: bold;
+            }
+            .status-badge {
+              display: inline-block;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 12px;
+              font-weight: bold;
+              text-transform: uppercase;
+            }
+            .status-pending { background: #fef3c7; color: #92400e; }
+            .status-processing { background: #dbeafe; color: #1e40af; }
+            .status-shipped { background: #d1fae5; color: #065f46; }
+            .status-delivered { background: #d1fae5; color: #065f46; }
+            .status-cancelled { background: #fee2e2; color: #991b1b; }
+            .status-paid { background: #d1fae5; color: #065f46; }
+            @media print {
+              body { margin: 0; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="invoice-header">
+            <div class="invoice-title">INVOICE</div>
+            <div class="order-id">Order #${order._id.slice(-8)}</div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Order Information</div>
+            <div class="info-grid">
+              <div class="info-item">
+                <div class="info-label">Date</div>
+                <div class="info-value">${formattedDate}</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Status</div>
+                <div class="info-value">
+                  <span class="status-badge status-${order.orderStatus.toLowerCase()}">${order.orderStatus}</span>
+                </div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Payment Method</div>
+                <div class="info-value">${order.payment}</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Payment Status</div>
+                <div class="info-value">
+                  <span class="status-badge status-${order.paymentStatus.toLowerCase()}">${order.paymentStatus}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Books Ordered</div>
+            <table class="books-table">
+              <thead>
+                <tr>
+                  <th>Book</th>
+                  <th>Author</th>
+                  <th>Price</th>
+                  <th>Quantity</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${booksTableHTML}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Shipping Address</div>
+            <div class="address-section">
+              <div class="address-item">
+                <span class="address-label">Name:</span>
+                ${order.shippingAddress.firstName} ${order.shippingAddress.lastName}
+              </div>
+              <div class="address-item">
+                <span class="address-label">Address:</span>
+                ${order.shippingAddress.street}, ${order.shippingAddress.town}, ${order.shippingAddress.province}
+              </div>
+              <div class="address-item">
+                <span class="address-label">Phone:</span>
+                ${order.shippingAddress.phone}
+              </div>
+              <div class="address-item">
+                <span class="address-label">Email:</span>
+                ${order.shippingAddress.email}
+              </div>
+              ${landmarkHTML}
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Order Summary</div>
+            <div class="summary-section">
+              <div class="summary-row">
+                <span class="summary-label">Subtotal</span>
+                <span class="summary-value">₹${parseFloat(order.totalPrice).toFixed(2)}</span>
+              </div>
+              <div class="summary-row">
+                <span class="summary-label">Shipping Fee</span>
+                <span class="summary-value">₹${parseFloat(order.shippingFee).toFixed(2)}</span>
+              </div>
+              <div class="summary-row">
+                <span class="summary-label">Discount</span>
+                <span class="summary-value">-₹${parseFloat(order.discount).toFixed(2)}</span>
+              </div>
+              <div class="summary-row total-row">
+                <span class="summary-label">Total</span>
+                <span class="summary-value">₹${parseFloat(order.netTotal).toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+        </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+    printWindow.focus();
+    
+    // Wait for content to load then print
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 250);
   };
 
   const renderShippingAddress = () => {
@@ -103,11 +370,17 @@ const OrderDetail = ({ order, onClose, onPayNow }) => {
     day: "numeric",
   });
 
+  // Helper function to get status badge class for print
+  const getStatusClass = (status, type = 'order') => {
+    const statusLower = status.toLowerCase();
+    return `status-badge status-${statusLower}`;
+  };
+
   return (
     <dialog
       ref={dialogRef}
       onClick={handleBackdropClick}
-      className="fixed inset-0 w-full bg-transparent backdrop:bg-black/60 backdrop:backdrop-blur-sm p-4 z-50 m-0 outline-none  overflow-hidden"
+      className="fixed inset-0 w-full bg-transparent backdrop:bg-black/60 backdrop:backdrop-blur-sm p-4 z-50 m-0 outline-none overflow-hidden"
     >
       <motion.div
         initial={{ scale: 0.9, y: 50, opacity: 0 }}
@@ -121,17 +394,31 @@ const OrderDetail = ({ order, onClose, onPayNow }) => {
             Order #{order._id.slice(-8)}
           </h2>
 
-          <motion.button
-            whileHover={{ scale: 1.1, rotate: 90 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={handleClose}
-            className="text-gray-500 hover:text-black bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors duration-200 cursor-pointer"
-          >
-            <FiX size={20} />
-          </motion.button>
+          <div className="flex items-center gap-3">
+            {/* Add Print Button */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handlePrintInvoice}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
+            >
+              <FiPrinter size={16} />
+              Print Invoice
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.1, rotate: 90 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={handleClose}
+              className="text-gray-500 hover:text-black bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors duration-200 cursor-pointer"
+            >
+              <FiX size={20} />
+            </motion.button>
+          </div>
         </div>
 
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+          {/* Original content remains the same */}
           <div className="mb-8">
             <div className="flex flex-wrap -mx-2">
               <div className="w-full sm:w-1/2 lg:w-1/4 px-2 mb-4">
@@ -208,7 +495,7 @@ const OrderDetail = ({ order, onClose, onPayNow }) => {
                     ),
                   0
                 )}{" "}
-                
+                items
               </div>
             </div>
 

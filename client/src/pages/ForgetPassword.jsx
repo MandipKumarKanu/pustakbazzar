@@ -11,7 +11,6 @@ const ForgetPassword = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -33,12 +32,8 @@ const ForgetPassword = () => {
       });
 
       setError("");
-      setSuccess("Reset code sent to your email address!");
       toast.success("Reset code sent successfully!");
-      setTimeout(() => {
-        setSuccess("");
-        setStep(2);
-      }, 2000);
+      setStep(2);
     } catch (error) {
       setError(error.response?.data?.message || "Failed to send reset code");
       toast.error(error.response?.data?.message || "Failed to send reset code");
@@ -102,12 +97,8 @@ const ForgetPassword = () => {
       });
 
       setError("");
-      setSuccess("Code verified successfully!");
       toast.success("Code verified successfully!");
-      setTimeout(() => {
-        setSuccess("");
-        setStep(3);
-      }, 2000);
+      setStep(3);
     } catch (error) {
       setError(error.response?.data?.message || "Failed to verify reset code");
       toast.error(
@@ -141,12 +132,8 @@ const ForgetPassword = () => {
       });
 
       setError("");
-      setSuccess("Password has been reset successfully!");
       toast.success("Password has been reset successfully!");
-
-      setTimeout(() => {
-        navigate("/auth");
-      }, 3000);
+      navigate("/auth");
     } catch (error) {
       setError(error.response?.data?.message || "Failed to reset password");
       toast.error(error.response?.data?.message || "Failed to reset password");
@@ -159,9 +146,7 @@ const ForgetPassword = () => {
     setLoading(true);
     try {
       const { data } = await customAxios.post("/auth/resend-otp", { email });
-      setSuccess("New code sent to your email address!");
       toast.success("New verification code sent!");
-      setTimeout(() => setSuccess(""), 2000);
     } catch (error) {
       setError(error.response?.data?.message || "Failed to send new code");
       toast.error(error.response?.data?.message || "Failed to send new code");
@@ -210,18 +195,6 @@ const ForgetPassword = () => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-8 shadow-xl rounded-2xl border-2">
-          {error && (
-            <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
-              {error}
-            </div>
-          )}
-
-          {success && (
-            <div className="mb-4 bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg">
-              {success}
-            </div>
-          )}
-
           {step === 1 && (
             <form className="space-y-6" onSubmit={handleEmailSubmit}>
               <div>
