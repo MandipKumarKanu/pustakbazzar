@@ -15,6 +15,7 @@ const transactionRoutes = require("./routes/transactionRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const contactRoutes = require("./routes/contactRoutes");
 const sellerRoutes = require("./routes/sellerRoutes");
+const healthCheckRoute = require("./routes/healthCheckRoute");
 
 const app = express();
 
@@ -68,6 +69,12 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/seller", sellerRoutes);
+app.use("/api/health", healthCheckRoute);
+
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: 'Something went wrong!' });
+});
 
 const PORT = process.env.PORT || 8000;
 

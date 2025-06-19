@@ -359,8 +359,10 @@ const googleLogin = async (req, res) => {
     const { email, name, picture, sub } = payload;
 
     let user = await User.findOne({ "profile.email": email });
+    let isNewUser = false;
 
     if (!user) {
+      isNewUser = true;
       const nameParts = name.split(" ");
       const firstName = nameParts[0];
       const lastName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : "";
@@ -381,6 +383,57 @@ const googleLogin = async (req, res) => {
 
       await user.save();
       await recordUserSignup();
+
+      const welcomeHtml = `
+        <div style="font-family: 'Times New Roman', serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e4e4e4; border-radius: 8px;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <div style="background: linear-gradient(135deg, #531d99, #8b30ff); color: white; padding: 20px; border-radius: 8px 8px 0 0; margin: -20px -20px 20px -20px;">
+              <h1 style="margin: 0; font-size: 24px; font-family: 'Times New Roman', serif;">Welcome to PustakBazzar!</h1>
+              <p style="margin: 5px 0 0 0; opacity: 0.9;">Your account has been created successfully</p>
+            </div>
+          </div>
+          
+          <div style="text-align: center; margin-bottom: 20px;">
+            <img src="${user.profile.profileImg || 'https://via.placeholder.com/80x80/531d99/ffffff?text=PB'}" 
+                 alt="Profile Picture" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #531d99;">
+          </div>
+          
+          <div style="text-align: center; margin-bottom: 25px;">
+            <h2 style="color: #531d99; margin-bottom: 10px; font-family: 'Times New Roman', serif;">Hello ${user.profile.firstName}!</h2>
+            <p style="color: #666; font-size: 16px;">Thank you for joining PustakBazzar using Google Sign-In</p>
+          </div>
+
+          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 6px; margin-bottom: 25px;">
+            <h3 style="color: #333; margin: 0 0 15px 0; font-family: 'Times New Roman', serif;">What's Next?</h3>
+            <ul style="color: #666; line-height: 1.6; margin: 0; padding-left: 20px;">
+              <li>Browse our vast collection of books</li>
+              <li>Add your favorite books to your wishlist</li>
+              <li>Make secure purchases with multiple payment options</li>
+              <li>Apply to become a seller and upload your own books</li>
+              <li>Participate in our donation program</li>
+            </ul>
+          </div>
+
+          <div style="background-color: #f0ebff; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #8b30ff;">
+            <h4 style="color: #531d99; margin: 0 0 10px 0; font-family: 'Times New Roman', serif;">Quick Start</h4>
+            <p style="margin: 0; color: #531d99;">Your account is ready to use! Start exploring our book collection and find your next great read.</p>
+          </div>
+
+          <div style="text-align: center; padding-top: 20px; border-top: 1px solid #dee2e6;">
+            <p style="color: #666; margin: 10px 0;">Happy reading!</p>
+            <p style="color: #531d99; font-weight: bold; margin: 5px 0; font-family: 'Times New Roman', serif;">PustakBazzar Team</p>
+            <p style="color: #999; font-size: 12px; margin: 15px 0 0 0;">
+              Account created on ${new Date().toLocaleDateString()} via Google Sign-In
+            </p>
+          </div>
+        </div>
+      `;
+
+      await sendEmail(
+        user.profile.email,
+        "Welcome to PustakBazzar! 📚",
+        welcomeHtml
+      );
     }
 
     const accessToken = generateAccessToken(user);
@@ -398,7 +451,9 @@ const googleLogin = async (req, res) => {
 
     res.status(200).json({
       accessToken,
-      message: "Google login successful",
+      message: isNewUser 
+        ? "Google account created and login successful" 
+        : "Google login successful",
     });
   } catch (error) {
     console.error("Google login error:", error);
