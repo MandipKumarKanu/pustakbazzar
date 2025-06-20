@@ -24,7 +24,7 @@ const platformEarningSchema = new mongoose.Schema(
     date: {
       type: Date,
       default: Date.now,
-    }
+    },
   },
   {
     timestamps: true,
@@ -35,6 +35,9 @@ const platformEarningSchema = new mongoose.Schema(
 platformEarningSchema.index({ date: 1 });
 platformEarningSchema.index({ sellerId: 1 });
 
-const PlatformEarning = mongoose.model('PlatformEarning', platformEarningSchema);
+const PlatformEarning = mongoose.model(
+  'PlatformEarning',
+  platformEarningSchema
+);
 
 module.exports = PlatformEarning;

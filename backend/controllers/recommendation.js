@@ -1,5 +1,5 @@
-const Book = require("../models/Book");
-const { recordVisit } = require("./statsController");
+const Book = require('../models/Book');
+const { recordVisit } = require('./statsController');
 
 const publicRecommendation = async (req, res) => {
   try {
@@ -19,7 +19,7 @@ const publicRecommendation = async (req, res) => {
         categories[Math.floor(Math.random() * categories.length)];
 
       recommendedBooks = await Book.aggregate([
-        { $match: { category: randomCategory, status: "available" } },
+        { $match: { category: randomCategory, status: 'available' } },
         { $sample: { size: 12 } },
       ]);
 
@@ -37,25 +37,25 @@ const publicRecommendation = async (req, res) => {
     }
 
     recommendedBooks = await Book.aggregate([
-      { $match: { status: "available" } },
+      { $match: { status: 'available' } },
       { $sample: { size: 12 } },
     ]);
 
     if (recommendedBooks.length === 0) {
       return res.status(404).json({
-        message: "No available books found",
+        message: 'No available books found',
         data: [],
       });
     }
 
     return res.status(200).json({
-      message: "Random recommendations fetched successfully",
+      message: 'Random recommendations fetched successfully',
       data: recommendedBooks,
     });
   } catch (err) {
-    console.error("Error fetching recommendations:", err);
+    console.error('Error fetching recommendations:', err);
     return res.status(500).json({
-      message: "Error fetching recommendations",
+      message: 'Error fetching recommendations',
       error: err.message,
     });
   }

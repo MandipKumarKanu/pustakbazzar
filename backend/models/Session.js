@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const SessionSchema = new mongoose.Schema(
   {
@@ -6,41 +6,44 @@ const SessionSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
-      index: true
+      index: true,
     },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: null
+      ref: 'User',
+      default: null,
     },
     conversations: [
       {
         user: {
           type: String,
-          required: true
+          required: true,
         },
         ai: {
           type: String,
-          required: true
+          required: true,
         },
         timestamp: {
           type: Date,
-          default: Date.now
+          default: Date.now,
         },
         filters: {
           type: Object,
-          default: null
-        }
-      }
+          default: null,
+        },
+      },
     ],
     lastActive: {
       type: Date,
-      default: Date.now
-    }
+      default: Date.now,
+    },
   },
   { timestamps: true }
 );
 
-SessionSchema.index({ lastActive: 1 }, { expireAfterSeconds: 7*24*60*60 }); 
+SessionSchema.index(
+  { lastActive: 1 },
+  { expireAfterSeconds: 7 * 24 * 60 * 60 }
+);
 
-module.exports = mongoose.model("Session", SessionSchema);
+module.exports = mongoose.model('Session', SessionSchema);

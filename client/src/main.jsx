@@ -19,7 +19,7 @@ setupInterceptors(
 // });
 
 createRoot(document.getElementById("root")).render(
-  // <StrictMode>
+  <StrictMode>
   <BrowserRouter>
     <ClickSpark
       sparkColor="#000"
@@ -31,7 +31,7 @@ createRoot(document.getElementById("root")).render(
       <App />
     </ClickSpark>
   </BrowserRouter>
-  // </StrictMode>
+  </StrictMode>
 );
 
 // serviceWorkerRegistration.register();

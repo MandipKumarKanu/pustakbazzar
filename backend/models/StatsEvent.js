@@ -1,8 +1,8 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const StatsSchema = new mongoose.Schema({
   date: {
-    type: String, 
+    type: String,
     required: true,
     unique: true,
   },
@@ -28,4 +28,4 @@ const StatsSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("Stats", StatsSchema);
+module.exports = mongoose.model('Stats', StatsSchema);

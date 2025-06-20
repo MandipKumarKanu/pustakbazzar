@@ -1,5 +1,5 @@
-const Contact = require("../models/Contact");
-const { sendEmail } = require("./authController");
+const Contact = require('../models/Contact');
+const { sendEmail } = require('./authController');
 
 // Create a new contact message
 const createContact = async (req, res) => {
@@ -8,7 +8,7 @@ const createContact = async (req, res) => {
 
     // Validation
     if (!name || !email || !subject || !message) {
-      return res.status(400).json({ message: "All fields are required" });
+      return res.status(400).json({ message: 'All fields are required' });
     }
 
     // If user is logged in, add their userId
@@ -39,15 +39,15 @@ const createContact = async (req, res) => {
       </div>
     `;
 
-    await sendEmail(email, "Message Received - PustakBazzar", confirmationHtml);
+    await sendEmail(email, 'Message Received - PustakBazzar', confirmationHtml);
 
     res.status(201).json({
-      message: "Message sent successfully",
+      message: 'Message sent successfully',
       contact: newContact,
     });
   } catch (error) {
-    console.error("Error creating contact:", error);
-    res.status(500).json({ message: "Error sending message" });
+    console.error('Error creating contact:', error);
+    res.status(500).json({ message: 'Error sending message' });
   }
 };
 
@@ -60,7 +60,7 @@ const closeContact = async (req, res) => {
     const contact = await Contact.findById(id);
 
     if (!contact) {
-      return res.status(404).json({ message: "Contact message not found" });
+      return res.status(404).json({ message: 'Contact message not found' });
     }
 
     contact.isClosed = true;
@@ -68,7 +68,7 @@ const closeContact = async (req, res) => {
 
     if (responseMessage) {
       contact.responseMessage = responseMessage;
-      
+
       // Send reply email to the user
       const replyHtml = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e4e4e4; border-radius: 8px;">
@@ -108,8 +108,8 @@ const closeContact = async (req, res) => {
       `;
 
       await sendEmail(
-        contact.email, 
-        `Re: ${contact.subject} - PustakBazzar Support`, 
+        contact.email,
+        `Re: ${contact.subject} - PustakBazzar Support`,
         replyHtml
       );
     }
@@ -117,14 +117,14 @@ const closeContact = async (req, res) => {
     await contact.save();
 
     res.status(200).json({
-      message: responseMessage 
-        ? "Contact closed and reply sent successfully" 
-        : "Contact marked as closed",
+      message: responseMessage
+        ? 'Contact closed and reply sent successfully'
+        : 'Contact marked as closed',
       contact,
     });
   } catch (error) {
-    console.error("Error closing contact:", error);
-    res.status(500).json({ message: "Error marking contact as closed" });
+    console.error('Error closing contact:', error);
+    res.status(500).json({ message: 'Error marking contact as closed' });
   }
 };
 
@@ -138,7 +138,7 @@ const getAllContacts = async (req, res) => {
 
     // Add isClosed filter if provided
     if (isClosed !== undefined) {
-      filter.isClosed = isClosed === "true";
+      filter.isClosed = isClosed === 'true';
     }
 
     // Calculate pagination
@@ -149,7 +149,7 @@ const getAllContacts = async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit))
-      .populate("userId", "profile.userName profile.email");
+      .populate('userId', 'profile.userName profile.email');
 
     // Get total count for pagination
     const totalContacts = await Contact.countDocuments(filter);
@@ -164,8 +164,8 @@ const getAllContacts = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error getting contacts:", error);
-    res.status(500).json({ message: "Error retrieving contacts" });
+    console.error('Error getting contacts:', error);
+    res.status(500).json({ message: 'Error retrieving contacts' });
   }
 };
 
@@ -175,18 +175,18 @@ const getContactById = async (req, res) => {
     const { id } = req.params;
 
     const contact = await Contact.findById(id).populate(
-      "userId",
-      "profile.userName profile.email"
+      'userId',
+      'profile.userName profile.email'
     );
 
     if (!contact) {
-      return res.status(404).json({ message: "Contact not found" });
+      return res.status(404).json({ message: 'Contact not found' });
     }
 
     res.status(200).json({ contact });
   } catch (error) {
-    console.error("Error getting contact:", error);
-    res.status(500).json({ message: "Error retrieving contact details" });
+    console.error('Error getting contact:', error);
+    res.status(500).json({ message: 'Error retrieving contact details' });
   }
 };
 

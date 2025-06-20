@@ -7,33 +7,38 @@ const platformConfig = require('../config/platformConfig');
 const calculatePlatformFee = (bookPrice, quantity = 1) => {
   // Get the fixed platform fee percentage (10%)
   const feePercentage = platformConfig.platformFeePercentage;
-  
+
   // Calculate fee and earnings
   const platformFee = bookPrice * feePercentage * quantity;
   const sellerEarnings = bookPrice * (1 - feePercentage) * quantity;
-  
+
   return {
     feePercentage,
     platformFee,
-    sellerEarnings
+    sellerEarnings,
   };
 };
 
 /**
  * Records the platform fee earnings in the database for reporting
  */
-const recordPlatformFee = async (transactionId, orderId, platformFee, sellerId) => {
+const recordPlatformFee = async (
+  transactionId,
+  orderId,
+  platformFee,
+  sellerId
+) => {
   try {
     const PlatformEarning = require('../models/PlatformEarning');
-    
+
     await PlatformEarning.create({
       transactionId,
       orderId,
       platformFee,
       sellerId,
-      date: new Date()
+      date: new Date(),
     });
-    
+
     return true;
   } catch (error) {
     console.error('Error recording platform fee:', error);
@@ -43,5 +48,5 @@ const recordPlatformFee = async (transactionId, orderId, platformFee, sellerId) 
 
 module.exports = {
   calculatePlatformFee,
-  recordPlatformFee
+  recordPlatformFee,
 };

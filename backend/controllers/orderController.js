@@ -1,25 +1,25 @@
-const Order = require("../models/Order");
-const Cart = require("../models/Cart");
-const Book = require("../models/Book");
-const { khaltiRequest } = require("../utils/khaltiRequest");
-const Transaction = require("../models/Transaction");
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-const { sendEmail } = require("./authController");
-const User = require("../models/User");
+const Order = require('../models/Order');
+const Cart = require('../models/Cart');
+const Book = require('../models/Book');
+const { khaltiRequest } = require('../utils/khaltiRequest');
+const Transaction = require('../models/Transaction');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const { sendEmail } = require('./authController');
+const User = require('../models/User');
 
 const createOrder = async (req, res) => {
   try {
     const userId = req.user.id;
     const {
-      payment = "credit",
+      payment = 'credit',
       discount = 0,
       shippingFee,
       shippingAddress,
     } = req.body;
 
-    const cart = await Cart.findOne({ userId }).populate("carts.books.bookId");
+    const cart = await Cart.findOne({ userId }).populate('carts.books.bookId');
     if (!cart || !cart.carts || cart.carts.length === 0) {
-      return res.status(400).json({ error: "Cart is empty" });
+      return res.status(400).json({ error: 'Cart is empty' });
     }
 
     const orders = cart.carts.map((sellerCart) => {
@@ -38,7 +38,7 @@ const createOrder = async (req, res) => {
         sellerId: sellerCart.sellerId,
         books,
         shippingFee,
-        status: "pending",
+        status: 'pending',
       };
     });
 
@@ -58,14 +58,14 @@ const createOrder = async (req, res) => {
       discount,
       netTotal,
       payment,
-      orderStatus: "pending",
-      paymentStatus: "pending",
+      orderStatus: 'pending',
+      paymentStatus: 'pending',
       shippingAddress,
     });
     await newOrder.save();
 
     // Add order confirmation email
-    const user = await User.findById(userId).select("profile");
+    const user = await User.findById(userId).select('profile');
     const orderHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <h2 style="color: #333;">Order Confirmation</h2>
@@ -84,35 +84,35 @@ const createOrder = async (req, res) => {
 
     await sendEmail(
       user.profile.email,
-      "Order Confirmation - PustakBazzar",
+      'Order Confirmation - PustakBazzar',
       orderHtml
     );
 
-    if (payment === "khalti") {
+    if (payment === 'khalti') {
       const payload = {
         return_url: `${process.env.FRONTEND_URL}/payment/verify`,
         website_url: process.env.FRONTEND_URL,
         amount: netTotal * 100,
         purchase_order_id: newOrder._id,
-        purchase_order_name: "Book Purchase",
+        purchase_order_name: 'Book Purchase',
         customer_info: {
           name: `${shippingAddress.firstName} ${shippingAddress.lastName}`,
           email: shippingAddress.email,
-          phone: "9811209589",
+          phone: '9811209589',
         },
       };
 
-      const khaltiResponse = await khaltiRequest("initiate/", payload);
+      const khaltiResponse = await khaltiRequest('initiate/', payload);
 
       newOrder.khaltiPaymentId = khaltiResponse.pidx;
-      newOrder.paymentStatus = "pending";
+      newOrder.paymentStatus = 'pending';
       await newOrder.save();
 
       const transaction = new Transaction({
         orderId: newOrder._id,
         amount: netTotal,
         khaltiPaymentId: khaltiResponse.pidx,
-        paymentMethod: "khalti",
+        paymentMethod: 'khalti',
         khaltiResponse,
       });
       await transaction.save();
@@ -121,20 +121,20 @@ const createOrder = async (req, res) => {
       await cart.save();
 
       return res.status(201).json({
-        message: "Order created and Khalti transaction initiated successfully",
+        message: 'Order created and Khalti transaction initiated successfully',
         order: newOrder,
         khaltiResponse,
       });
     } else {
       return res.status(201).json({
-        message: "Order created successfully",
+        message: 'Order created successfully',
         order: newOrder,
       });
     }
   } catch (error) {
-    console.error("Error in createOrder:", error);
+    console.error('Error in createOrder:', error);
     return res.status(500).json({
-      error: "Failed to create order",
+      error: 'Failed to create order',
       details: error.message,
     });
   }
@@ -151,7 +151,7 @@ const createOrderWithStripe = async (req, res) => {
     const userId = req.user.id;
 
     if (!products || !Array.isArray(products) || products.length === 0) {
-      return res.status(400).json({ error: "No products provided" });
+      return res.status(400).json({ error: 'No products provided' });
     }
 
     let totalPrice = 0;
@@ -180,7 +180,7 @@ const createOrderWithStripe = async (req, res) => {
         sellerId: sellerId._id || sellerId,
         books: orderBooks,
         shippingFee,
-        status: "pending",
+        status: 'pending',
       });
     }
 
@@ -193,9 +193,9 @@ const createOrderWithStripe = async (req, res) => {
       shippingFee,
       discount,
       netTotal,
-      payment: "stripe",
-      orderStatus: "pending",
-      paymentStatus: "pending",
+      payment: 'stripe',
+      orderStatus: 'pending',
+      paymentStatus: 'pending',
       shippingAddress,
     });
     await newOrder.save();
@@ -207,7 +207,7 @@ const createOrderWithStripe = async (req, res) => {
 
         return {
           price_data: {
-            currency: "npr",
+            currency: 'npr',
             product_data: {
               name: book.bookId.title,
               images: [book.bookId.images[0]],
@@ -225,10 +225,10 @@ const createOrderWithStripe = async (req, res) => {
     if (shippingFee > 0) {
       lineItems.push({
         price_data: {
-          currency: "npr",
+          currency: 'npr',
           product_data: {
-            name: "Shipping Fee",
-            description: "Delivery charges",
+            name: 'Shipping Fee',
+            description: 'Delivery charges',
           },
           unit_amount: Math.round(shippingFee * 100),
         },
@@ -236,8 +236,8 @@ const createOrderWithStripe = async (req, res) => {
       });
     }
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      mode: "payment",
+      payment_method_types: ['card'],
+      mode: 'payment',
       line_items: lineItems,
       client_reference_id: newOrder._id.toString(),
       metadata: {
@@ -256,28 +256,28 @@ const createOrderWithStripe = async (req, res) => {
     const transaction = new Transaction({
       orderId: newOrder._id,
       amount: netTotal,
-      status: "initiated",
+      status: 'initiated',
       stripeSessionId: session.id,
-      paymentMethod: "stripe",
+      paymentMethod: 'stripe',
       paymentDetails: {
         sessionId: session.id,
         amount: netTotal,
-        currency: "npr",
+        currency: 'npr',
       },
     });
     await transaction.save();
 
     return res.status(201).json({
       success: true,
-      message: "Order created successfully",
+      message: 'Order created successfully',
       sessionId: session.id,
       orderId: newOrder._id,
       checkoutUrl: session.url,
     });
   } catch (error) {
-    console.error("Stripe order creation error:", error.stack || error.message);
+    console.error('Stripe order creation error:', error.stack || error.message);
     return res.status(500).json({
-      error: "Failed to create order with Stripe",
+      error: 'Failed to create order with Stripe',
       details: error.message,
     });
   }
@@ -287,8 +287,8 @@ const getOrdersForUser = async (req, res) => {
   try {
     const userId = req.user.id;
     const orders = await Order.find({ userId })
-      .populate("orders.sellerId", "profile.userName _id")
-      .populate("orders.books.bookId")
+      .populate('orders.sellerId', 'profile.userName _id')
+      .populate('orders.books.bookId')
       .sort({ date: -1 })
       .lean();
 
@@ -298,9 +298,9 @@ const getOrdersForUser = async (req, res) => {
 
     return res.status(200).json({ orders });
   } catch (error) {
-    console.error("Error in getOrdersForUser:", error);
+    console.error('Error in getOrdersForUser:', error);
     return res.status(500).json({
-      error: "Failed to retrieve orders",
+      error: 'Failed to retrieve orders',
       details: error.message,
     });
   }
@@ -314,21 +314,21 @@ const getOrdersForSeller = async (req, res) => {
     const limitNum = parseInt(limit);
     const skip = (pageNum - 1) * limitNum;
 
-    const query = { "orders.sellerId": sellerId };
+    const query = { 'orders.sellerId': sellerId };
 
     if (
       status &&
-      ["pending", "approved", "rejected", "completed"].includes(status)
+      ['pending', 'approved', 'rejected', 'completed'].includes(status)
     ) {
-      query["orders.status"] = status;
+      query['orders.status'] = status;
     }
 
     const orders = await Order.find(query)
       .select(
-        "-totalPrice -deliveryPrice -discount -netTotal -payment -paymentStatus -orderStatus"
+        '-totalPrice -deliveryPrice -discount -netTotal -payment -paymentStatus -orderStatus'
       )
-      .populate("orders.sellerId", "profile.userName _id")
-      .populate("orders.books.bookId")
+      .populate('orders.sellerId', 'profile.userName _id')
+      .populate('orders.books.bookId')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limitNum);
@@ -337,7 +337,7 @@ const getOrdersForSeller = async (req, res) => {
 
     if (!orders || orders.length === 0) {
       return res.status(200).json({
-        message: "No orders found for this seller",
+        message: 'No orders found for this seller',
         orders: [],
         pagination: {
           totalOrders: 0,
@@ -364,9 +364,9 @@ const getOrdersForSeller = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error in getOrdersForSeller:", error);
+    console.error('Error in getOrdersForSeller:', error);
     return res.status(500).json({
-      error: "Failed to retrieve seller orders",
+      error: 'Failed to retrieve seller orders',
       details: error.message,
     });
   }
@@ -384,22 +384,22 @@ const getOrdersForAdmin = async (req, res) => {
     if (
       status &&
       [
-        "approved",
-        "rejected",
-        "completed",
-        "cancelled",
-        "confirmed",
-        "shipped",
-        "delivered",
+        'approved',
+        'rejected',
+        'completed',
+        'cancelled',
+        'confirmed',
+        'shipped',
+        'delivered',
       ].includes(status)
     ) {
       query.orderStatus = status;
     }
 
     const orders = await Order.find(query)
-      .populate("userId", "profile")
-      .populate("orders.sellerId", "profile isSeller _id")
-      .populate("orders.books.bookId")
+      .populate('userId', 'profile')
+      .populate('orders.sellerId', 'profile isSeller _id')
+      .populate('orders.books.bookId')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limitNum);
@@ -408,7 +408,7 @@ const getOrdersForAdmin = async (req, res) => {
 
     if (!orders || orders.length === 0) {
       return res.status(200).json({
-        message: "No orders found",
+        message: 'No orders found',
         orders: [],
         pagination: {
           totalOrders: 0,
@@ -427,9 +427,9 @@ const getOrdersForAdmin = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error in getOrdersForAdmin:", error);
+    console.error('Error in getOrdersForAdmin:', error);
     return res.status(500).json({
-      error: "Failed to retrieve orders",
+      error: 'Failed to retrieve orders',
       details: error.message,
     });
   }
@@ -440,15 +440,15 @@ const approveRejectOrder = async (req, res) => {
     const { orderId, status, message } = req.body;
     const sellerId = req.user.id;
 
-    if (!["approved", "rejected"].includes(status)) {
+    if (!['approved', 'rejected'].includes(status)) {
       return res
         .status(400)
         .json({ error: "Invalid status. Must be 'approved' or 'rejected'." });
     }
 
-    const order = await Order.findById(orderId).populate("orders.books.bookId");
+    const order = await Order.findById(orderId).populate('orders.books.bookId');
     if (!order) {
-      return res.status(404).json({ error: "Order not found" });
+      return res.status(404).json({ error: 'Order not found' });
     }
 
     const sellerSubOrder = order.orders.find(
@@ -457,21 +457,21 @@ const approveRejectOrder = async (req, res) => {
     if (!sellerSubOrder) {
       return res
         .status(403)
-        .json({ error: "Seller is not associated with this order." });
+        .json({ error: 'Seller is not associated with this order.' });
     }
 
     sellerSubOrder.status = status;
 
-    if (status === "rejected") {
-      order.orderStatus = "cancelled by seller";
+    if (status === 'rejected') {
+      order.orderStatus = 'cancelled by seller';
       order.cancellationMessage =
-        message || "Order was cancelled by one of the sellers.";
+        message || 'Order was cancelled by one of the sellers.';
 
       const bookUpdatePromises = order.orders.flatMap((subOrder) =>
         subOrder.books.map(async (bookItem) => {
           const book = await Book.findById(bookItem.bookId._id);
           if (book) {
-            book.status = "available";
+            book.status = 'available';
             await book.save();
           }
         })
@@ -479,41 +479,41 @@ const approveRejectOrder = async (req, res) => {
       await Promise.all(bookUpdatePromises);
 
       order.orders.forEach((subOrder) => {
-        subOrder.status = "rejected";
+        subOrder.status = 'rejected';
       });
 
       await order.save();
 
       return res.status(200).json({
         message:
-          "Order has been cancelled by the seller. All books are now available.",
+          'Order has been cancelled by the seller. All books are now available.',
         order,
       });
     }
 
     const allApproved = order.orders.every(
-      (subOrder) => subOrder.status === "approved"
+      (subOrder) => subOrder.status === 'approved'
     );
     const anyApproved = order.orders.some(
-      (subOrder) => subOrder.status === "approved"
+      (subOrder) => subOrder.status === 'approved'
     );
 
     order.orderStatus = allApproved
-      ? "confirmed"
+      ? 'confirmed'
       : anyApproved
-      ? "partially approved"
-      : "pending";
+        ? 'partially approved'
+        : 'pending';
 
     await order.save();
 
     return res.status(200).json({
-      message: "Order updated successfully",
+      message: 'Order updated successfully',
       order,
     });
   } catch (error) {
-    console.error("Error in approveRejectOrder:", error);
+    console.error('Error in approveRejectOrder:', error);
     return res.status(500).json({
-      error: "Failed to update order",
+      error: 'Failed to update order',
       details: error.message,
     });
   }
@@ -526,38 +526,38 @@ const cancelOrder = async (req, res) => {
 
     const order = await Order.findById(orderId);
     if (!order) {
-      return res.status(404).json({ error: "Order not found" });
+      return res.status(404).json({ error: 'Order not found' });
     }
 
     if (order.userId.toString() !== userId.toString()) {
       return res
         .status(403)
-        .json({ error: "You are not authorized to cancel this order." });
+        .json({ error: 'You are not authorized to cancel this order.' });
     }
 
-    if (!["pending", "partially approved"].includes(order.orderStatus)) {
+    if (!['pending', 'partially approved'].includes(order.orderStatus)) {
       return res.status(400).json({
-        error: "Only pending or partially approved orders can be cancelled.",
+        error: 'Only pending or partially approved orders can be cancelled.',
       });
     }
-    if (order.paymentStatus === "paid") {
+    if (order.paymentStatus === 'paid') {
       return res.status(400).json({
         error:
-          "Paid orders cannot be cancelled directly. Please contact support.",
+          'Paid orders cannot be cancelled directly. Please contact support.',
       });
     }
 
-    order.orderStatus = "cancelled";
+    order.orderStatus = 'cancelled';
     await order.save();
 
     return res.status(200).json({
-      message: "Order cancelled successfully",
+      message: 'Order cancelled successfully',
       order,
     });
   } catch (error) {
-    console.error("Error in cancelOrder:", error);
+    console.error('Error in cancelOrder:', error);
     return res.status(500).json({
-      error: "Failed to cancel order",
+      error: 'Failed to cancel order',
       details: error.message,
     });
   }
@@ -569,7 +569,7 @@ const updateOrderStatus = async (req, res) => {
 
     const order = await Order.findById(orderId);
     if (!order) {
-      return res.status(404).json({ message: "Order not found." });
+      return res.status(404).json({ message: 'Order not found.' });
     }
 
     order.orderStatus = status;
@@ -577,11 +577,11 @@ const updateOrderStatus = async (req, res) => {
 
     res
       .status(200)
-      .json({ message: "Order status updated successfully.", order });
+      .json({ message: 'Order status updated successfully.', order });
   } catch (error) {
-    console.error("Error updating order status:", error);
+    console.error('Error updating order status:', error);
     res.status(500).json({
-      message: "Failed to update order status.",
+      message: 'Failed to update order status.',
       error: error.message,
     });
   }

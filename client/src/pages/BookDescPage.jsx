@@ -891,17 +891,19 @@ const BookDescPage = () => {
                         </div>
                       ) : (
                         <div className="space-y-0">
+                          {/* Add to Cart Button (remains for non-rentable items) */}
                           {book.availability !== "rent" && (
                             <button
                               onClick={handleAddToCart}
-                              disabled={isCartLoading}
+                              disabled={isCartLoading || isUnavailable || isOwner} // Ensure disabled if unavailable or owner
                               className={`w-full px-6 py-3 mb-3 rounded-3xl text-white text-xl font-bold shadow-lg transition-colors duration-300 ease-in-out cursor-pointer ${
-                                isCartLoading
-                                  ? "bg-gray-400"
+                                (isCartLoading || isUnavailable || isOwner)
+                                  ? "bg-gray-400 opacity-50 cursor-not-allowed"
                                   : !isInCart
                                   ? "bg-blue-500 hover:bg-blue-600"
                                   : "bg-gray-600 hover:bg-gray-700"
                               }`}
+                              title={isUnavailable ? "Book is unavailable" : isOwner ? "You own this book" : isInCart ? "Remove from cart" : "Add to cart"}
                             >
                               {isCartLoading ? (
                                 <FaSpinner className="animate-spin inline mr-2" />
@@ -912,24 +914,32 @@ const BookDescPage = () => {
                             </button>
                           )}
 
-                          <button
-                            className={`w-full px-6 py-3 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-3xl text-white text-xl font-bold shadow-lg transition-colors duration-300 ease-in-out hover:bg-gradient-to-t hover:from-secondaryColor hover:to-primaryColor cursor-not-allowed ${
-                              book.availability === "rent"
-                                ? ""
-                                : " cursor-not-allowed"
-                            }`}
-                            onClick={handleBuy}
-                            disabled={book.availability !== "rent"}
-                            title={
-                              book.availability !== "rent"
-                                ? "This feature is not available yet"
-                                : ""
-                            }
-                          >
-                            {book.availability === "rent"
-                              ? "Rent Now"
-                              : "Buy Now"}
-                          </button>
+                          {/* Conditional Rent Now / Buy Now Button */}
+                          {book.availability === "rent" ? (
+                            // Rent Now Button
+                            <button
+                              className={`w-full px-6 py-3 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-3xl text-white text-xl font-bold shadow-lg transition-colors duration-300 ease-in-out hover:bg-gradient-to-t hover:from-secondaryColor hover:to-primaryColor ${
+                                (isUnavailable || isOwner) ? "opacity-50 cursor-not-allowed" : ""
+                              }`}
+                              onClick={handleBuy} // Assuming handleBuy is generic enough for now
+                              disabled={isUnavailable || isOwner}
+                              title={isUnavailable ? "Book is unavailable" : isOwner ? "You own this book" : "Rent this book"}
+                            >
+                              Rent Now
+                            </button>
+                          ) : (
+                            // Buy Now Button (for non-rentable, non-donation items)
+                            <button
+                              className={`w-full px-6 py-3 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-3xl text-white text-xl font-bold shadow-lg transition-colors duration-300 ease-in-out hover:bg-gradient-to-t hover:from-secondaryColor hover:to-primaryColor ${
+                                (isUnavailable || isOwner) ? "opacity-50 cursor-not-allowed" : ""
+                              }`}
+                              onClick={handleBuy}
+                              disabled={isUnavailable || isOwner}
+                              title={isUnavailable ? "Book is unavailable" : isOwner ? "You own this book" : "Buy this book"}
+                            >
+                              Buy Now
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>

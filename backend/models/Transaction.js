@@ -1,10 +1,10 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const transactionSchema = new mongoose.Schema(
   {
     orderId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Order",
+      ref: 'Order',
       required: true,
     },
     amount: {
@@ -13,26 +13,26 @@ const transactionSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["initiated", "completed", "failed"],
-      default: "initiated",
+      enum: ['initiated', 'completed', 'failed'],
+      default: 'initiated',
     },
     // Make payment IDs optional based on payment method
     khaltiPaymentId: {
       type: String,
-      required: function() {
+      required: function () {
         return this.paymentMethod === 'khalti';
-      }
+      },
     },
     stripeSessionId: {
       type: String,
-      required: function() {
+      required: function () {
         return this.paymentMethod === 'stripe';
-      }
+      },
     },
     paymentMethod: {
       type: String,
-      enum: ["khalti", "stripe", "credit"],
-      required: true
+      enum: ['khalti', 'stripe', 'credit'],
+      required: true,
     },
     paymentDetails: {
       type: Object,
@@ -44,4 +44,4 @@ const transactionSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Transaction", transactionSchema);
+module.exports = mongoose.model('Transaction', transactionSchema);

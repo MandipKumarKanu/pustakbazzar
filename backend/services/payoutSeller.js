@@ -1,11 +1,11 @@
-const User = require("../models/User");
-const { initiatePayout } = require("../utils/payoutService");
+const User = require('../models/User');
+const { initiatePayout } = require('../utils/payoutService');
 
 const payoutSeller = async (sellerId) => {
   const seller = await User.findById(sellerId);
-  if (!seller) throw new Error("Seller not found");
+  if (!seller) throw new Error('Seller not found');
 
-  if (seller.balance <= 0) throw new Error("No balance to payout");
+  if (seller.balance <= 0) throw new Error('No balance to payout');
 
   const payoutAmount = seller.balance;
 
@@ -18,23 +18,23 @@ const payoutSeller = async (sellerId) => {
     seller.payoutHistory.push({
       payoutAmount,
       transactionId: payoutResponse.transactionId,
-      status: "success",
+      status: 'success',
     });
 
     await seller.save();
     return {
-      message: "Payout successful",
+      message: 'Payout successful',
       transactionId: payoutResponse.transactionId,
     };
   } else {
-    throw new Error("Payout failed");
+    throw new Error('Payout failed');
   }
 };
 
 const getAllSellersWithBalance = async () => {
   const sellers = await User.find({
     balance: { $gt: 0 },
-    "isSeller.status": "approved",
+    'isSeller.status': 'approved',
   });
 
   return sellers.map((seller) => ({
@@ -49,7 +49,7 @@ const getAllSellersWithBalance = async () => {
 
 const getSellerPayoutDetails = async (sellerId) => {
   const seller = await User.findById(sellerId);
-  if (!seller) throw new Error("Seller not found");
+  if (!seller) throw new Error('Seller not found');
 
   return {
     sellerId: seller._id,

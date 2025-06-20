@@ -3,7 +3,7 @@ const roleMiddleware = (roles) => {
     const { role } = req.user.profile;
 
     if (roles[0] !== role) {
-      return res.status(403).json({ error: "Access Denied" });
+      return res.status(403).json({ error: 'Access Denied' });
     }
 
     next();

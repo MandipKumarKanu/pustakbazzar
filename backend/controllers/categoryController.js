@@ -1,12 +1,12 @@
-const Category = require("../models/Category");
-const handleError = require("../utils/errorHandler");
+const Category = require('../models/Category');
+const handleError = require('../utils/errorHandler');
 
 const createCategory = async (req, res) => {
   const { categoryName } = req.body;
 
   if (!categoryName || categoryName.length < 3) {
     return res.status(400).json({
-      error: "Category name must be at least 3 characters long.",
+      error: 'Category name must be at least 3 characters long.',
     });
   }
 
@@ -17,7 +17,7 @@ const createCategory = async (req, res) => {
       categoryName: normalizedCategoryName,
     });
     if (existingCategory) {
-      return res.status(400).json({ error: "Category already exists" });
+      return res.status(400).json({ error: 'Category already exists' });
     }
 
     const category = await Category.create({
@@ -25,9 +25,9 @@ const createCategory = async (req, res) => {
     });
     res
       .status(201)
-      .json({ message: "Category created successfully", category });
+      .json({ message: 'Category created successfully', category });
   } catch (error) {
-    handleError(res, error, "Unable to create category");
+    handleError(res, error, 'Unable to create category');
   }
 };
 
@@ -36,18 +36,18 @@ const updateCategory = async (req, res) => {
 
   if (!categoryName || categoryName.length < 3) {
     return res.status(400).json({
-      error: "Category name must be at least 3 characters long.",
+      error: 'Category name must be at least 3 characters long.',
     });
   }
 
   try {
     if (!id) {
-      return res.status(400).json({ error: "ID is required" });
+      return res.status(400).json({ error: 'ID is required' });
     }
 
     const category = await Category.findById(id);
     if (!category) {
-      return res.status(404).json({ error: "Category not found" });
+      return res.status(404).json({ error: 'Category not found' });
     }
 
     const normalizedCategoryName = categoryName.toLowerCase();
@@ -57,7 +57,7 @@ const updateCategory = async (req, res) => {
         categoryName: normalizedCategoryName,
       });
       if (existingCategory) {
-        return res.status(400).json({ error: "Category name already exists" });
+        return res.status(400).json({ error: 'Category name already exists' });
       }
     }
 
@@ -66,9 +66,9 @@ const updateCategory = async (req, res) => {
 
     res
       .status(200)
-      .json({ message: "Category updated successfully", category });
+      .json({ message: 'Category updated successfully', category });
   } catch (error) {
-    handleError(res, error, "Unable to update category");
+    handleError(res, error, 'Unable to update category');
   }
 };
 
@@ -80,7 +80,7 @@ const getAllCategory = async (req, res) => {
       categories,
     });
   } catch (error) {
-    handleError(res, error, "Unable to fetch categories");
+    handleError(res, error, 'Unable to fetch categories');
   }
 };
 
@@ -90,12 +90,12 @@ const deleteCategory = async (req, res) => {
     const category = await Category.findByIdAndDelete(id);
 
     if (!category) {
-      return res.status(404).json({ error: "Category not found" });
+      return res.status(404).json({ error: 'Category not found' });
     }
 
-    res.status(200).json({ message: "Category deleted successfully" });
+    res.status(200).json({ message: 'Category deleted successfully' });
   } catch (error) {
-    handleError(res, error, "Unable to delete category");
+    handleError(res, error, 'Unable to delete category');
   }
 };
 

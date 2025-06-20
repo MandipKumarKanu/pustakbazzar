@@ -1,4 +1,4 @@
-const Stats = require("../models/StatsEvent");
+const Stats = require('../models/StatsEvent');
 
 const getTodayDate = () => {
   const now = new Date();
@@ -15,23 +15,23 @@ const incrementStat = async (field, amount = 1) => {
 };
 
 const recordSale = async (amount) => {
-  await incrementStat("totalSales", amount);
+  await incrementStat('totalSales', amount);
 };
 
 const recordDonation = async () => {
-  await incrementStat("totalDonations");
+  await incrementStat('totalDonations');
 };
 
 const recordBookAdded = async () => {
-  await incrementStat("booksAdded");
+  await incrementStat('booksAdded');
 };
 
 const recordUserSignup = async () => {
-  await incrementStat("usersCreated");
+  await incrementStat('usersCreated');
 };
 
 const recordVisit = async () => {
-  await incrementStat("visits");
+  await incrementStat('visits');
 };
 
 const getAllStats = async (req, res) => {
@@ -53,22 +53,22 @@ const getAllStats = async (req, res) => {
 
     const stats = await Stats.find({
       date: { $in: dateStrings },
-    }).select("-totalSales");
+    }).select('-totalSales');
 
     const sortedStats = stats.sort((a, b) => {
       const [dayA, monthA, yearA] = a.date.split('-').map(Number);
       const [dayB, monthB, yearB] = b.date.split('-').map(Number);
-      
+
       const dateA = new Date(yearA, monthA - 1, dayA);
       const dateB = new Date(yearB, monthB - 1, dayB);
-      
+
       return dateB - dateA;
     });
 
     res.json(sortedStats);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Unable to fetch stats" });
+    res.status(500).json({ error: 'Unable to fetch stats' });
   }
 };
 

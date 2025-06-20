@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const shippingAddressSchema = new mongoose.Schema({
   firstName: { type: String, required: true },
@@ -14,13 +14,13 @@ const shippingAddressSchema = new mongoose.Schema({
 const subOrderSchema = new mongoose.Schema({
   sellerId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+    ref: 'User',
   },
   books: [
     {
       bookId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Book",
+        ref: 'Book',
       },
       price: {
         type: Number,
@@ -39,8 +39,8 @@ const subOrderSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["pending", "approved", "rejected"],
-    default: "pending",
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending',
   },
   trackingNumber: {
     type: String,
@@ -51,7 +51,7 @@ const orderSchema = new mongoose.Schema({
   orders: [subOrderSchema],
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+    ref: 'User',
   },
   totalPrice: {
     type: Number,
@@ -69,25 +69,25 @@ const orderSchema = new mongoose.Schema({
   orderStatus: {
     type: String,
     enum: [
-      "pending",
-      "partially approved",
-      "confirmed",
-      "cancelled",
-      "cancelled by seller",
-      "shipped",
-      "delivered",
+      'pending',
+      'partially approved',
+      'confirmed',
+      'cancelled',
+      'cancelled by seller',
+      'shipped',
+      'delivered',
     ],
-    default: "pending",
+    default: 'pending',
   },
   paymentStatus: {
     type: String,
-    enum: ["pending", "paid"],
-    default: "pending",
+    enum: ['pending', 'paid'],
+    default: 'pending',
   },
   payment: {
     type: String,
-    enum: ["credit", "khalti","stripe"],
-    default: "credit",
+    enum: ['credit', 'khalti', 'stripe'],
+    default: 'credit',
   },
   date: {
     type: Date,
@@ -111,4 +111,4 @@ const orderSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("Order", orderSchema);
+module.exports = mongoose.model('Order', orderSchema);

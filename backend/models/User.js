@@ -1,5 +1,5 @@
-const mongoose = require("mongoose");
-const bcryptjs = require("bcryptjs");
+const mongoose = require('mongoose');
+const bcryptjs = require('bcryptjs');
 
 function arrayLimit(val) {
   return val.length <= 3;
@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema(
       },
       firstName: { type: String, required: true, trim: true },
       lastName: { type: String, trim: true },
-      profileImg: { type: String, default: "" },
+      profileImg: { type: String, default: '' },
       phNo: { type: String, trim: true },
       address: {
         type: [
@@ -34,9 +34,9 @@ const userSchema = new mongoose.Schema(
             isDefault: { type: Boolean, default: false },
           },
         ],
-        validate: [arrayLimit, "{PATH} exceeds the limit of 3"],
+        validate: [arrayLimit, '{PATH} exceeds the limit of 3'],
       },
-      role: { type: String, enum: ["user", "admin"], default: "user" },
+      role: { type: String, enum: ['user', 'admin'], default: 'user' },
     },
 
     password: { type: String, required: true },
@@ -45,17 +45,17 @@ const userSchema = new mongoose.Schema(
     googleId: { type: String },
     authProvider: {
       type: String,
-      enum: ["local", "google"],
-      default: "local",
+      enum: ['local', 'google'],
+      default: 'local',
     },
 
     isSeller: {
       status: {
         type: String,
-        enum: ["no", "applied", "approved", "rejected"],
-        default: "no",
+        enum: ['no', 'applied', 'approved', 'rejected'],
+        default: 'no',
       },
-      proofDoc: { type: String, default: "" },
+      proofDoc: { type: String, default: '' },
       rating: { type: Number, default: 0, min: 0 },
     },
 
@@ -63,15 +63,15 @@ const userSchema = new mongoose.Schema(
       type: [
         {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "Category",
+          ref: 'Category',
         },
       ],
     },
 
-    bought: [{ type: mongoose.Schema.Types.ObjectId, ref: "Book" }],
-    sold: [{ type: mongoose.Schema.Types.ObjectId, ref: "Book" }],
-    donated: [{ type: mongoose.Schema.Types.ObjectId, ref: "Book" }],
-    savedForLater: [{ type: mongoose.Schema.Types.ObjectId, ref: "Book" }],
+    bought: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Book' }],
+    sold: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Book' }],
+    donated: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Book' }],
+    savedForLater: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Book' }],
 
     balance: { type: Number, default: 0, min: 0 },
     earning: { type: Number, default: 0, min: 0 },
@@ -83,8 +83,8 @@ const userSchema = new mongoose.Schema(
         transactionId: { type: String },
         status: {
           type: String,
-          enum: ["success", "failed"],
-          default: "success",
+          enum: ['success', 'failed'],
+          default: 'success',
         },
       },
     ],
@@ -109,12 +109,12 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-userSchema.virtual("fullName").get(function () {
+userSchema.virtual('fullName').get(function () {
   return `${this.profile.firstName} ${this.profile.lastName}`;
 });
 
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
 
   try {
     const salt = await bcryptjs.genSalt(10);
@@ -125,7 +125,7 @@ userSchema.pre("save", async function (next) {
   }
 });
 
-userSchema.pre("findOneAndUpdate", async function (next) {
+userSchema.pre('findOneAndUpdate', async function (next) {
   const update = this.getUpdate();
   if (update.password) {
     try {
@@ -146,6 +146,4 @@ userSchema.methods.toJSON = function () {
   return obj;
 };
 
-
-
-module.exports = mongoose.model("User", userSchema);
+module.exports = mongoose.model('User', userSchema);

@@ -1,23 +1,23 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
 const {
   createContact,
   closeContact,
   getAllContacts,
   getContactById,
-} = require("../controllers/contactController");
-const userMiddleware = require("../middleware/optionalAuthmiddleware");
-const authMiddleware = require("../middleware/authMiddleware");
-const roleMiddleware = require("../middleware/roleMiddleware");
+} = require('../controllers/contactController');
+const userMiddleware = require('../middleware/optionalAuthmiddleware');
+const authMiddleware = require('../middleware/authMiddleware');
+const roleMiddleware = require('../middleware/roleMiddleware');
 
-router.post("/", userMiddleware, createContact);
+router.post('/', userMiddleware, createContact);
 router.patch(
-  "/:id/close",
+  '/:id/close',
   authMiddleware,
-  roleMiddleware(["admin"]),
+  roleMiddleware(['admin']),
   closeContact
 );
-router.get("/", authMiddleware, roleMiddleware(["admin"]), getAllContacts);
-router.get("/:id", authMiddleware, roleMiddleware(["admin"]), getContactById);
+router.get('/', authMiddleware, roleMiddleware(['admin']), getAllContacts);
+router.get('/:id', authMiddleware, roleMiddleware(['admin']), getContactById);
 
 module.exports = router;

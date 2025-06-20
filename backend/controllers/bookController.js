@@ -1,11 +1,11 @@
-const Book = require("../models/Book");
-const User = require("../models/User");
-const addCustomClassesToHtml = require("../utils/addCustomClass");
-const Donation = require("../models/Donation");
-const levenshtein = require("fast-levenshtein");
-const mongoose = require("mongoose");
-const Category = require("../models/Category");
-const Session = require("../models/Session");
+const Book = require('../models/Book');
+const User = require('../models/User');
+const addCustomClassesToHtml = require('../utils/addCustomClass');
+const Donation = require('../models/Donation');
+const levenshtein = require('fast-levenshtein');
+const mongoose = require('mongoose');
+const Category = require('../models/Category');
+const Session = require('../models/Session');
 
 // const fetch = require("node-fetch");
 // const { recordEvent } = require("../controllers/statsController");
@@ -15,7 +15,7 @@ const {
   recordBookAdded,
   recordUserSignup,
   recordVisit,
-} = require("./statsController");
+} = require('./statsController');
 
 const createBook = async (req, res) => {
   const {
@@ -37,13 +37,13 @@ const createBook = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
     if (!user) {
-      return res.status(404).json({ message: "User not found." });
+      return res.status(404).json({ message: 'User not found.' });
     }
 
-    if (!forDonation && user.isSeller.status !== "approved") {
+    if (!forDonation && user.isSeller.status !== 'approved') {
       return res
         .status(403)
-        .json({ message: "Only approved sellers can upload books for sale." });
+        .json({ message: 'Only approved sellers can upload books for sale.' });
     }
 
     const styledDesc = addCustomClassesToHtml(description);
@@ -70,7 +70,7 @@ const createBook = async (req, res) => {
       const donation = new Donation({
         book: book._id,
         donor: req.user._id,
-        status: "pending",
+        status: 'pending',
       });
       await donation.save();
 
@@ -102,13 +102,13 @@ const createBook = async (req, res) => {
 const getAllBooks = async (req, res) => {
   try {
     const { page = 1, limit = 10, minPrice, maxPrice } = req.query;
-    console.log("called");
+    console.log('called');
     const { order = {} } = req.body;
 
     const fetchLimit = Math.min(parseInt(limit, 10), 50);
     const skip = (parseInt(page, 10) - 1) * fetchLimit;
 
-    const query = { status: "available", forDonation: false };
+    const query = { status: 'available', forDonation: false };
 
     if (minPrice)
       query.sellingPrice = {
@@ -121,16 +121,16 @@ const getAllBooks = async (req, res) => {
         $lte: parseInt(maxPrice, 10),
       };
 
-    const sortField = order.type === "price" ? "sellingPrice" : "createdAt";
-    const sortOrder = order.order === "asc" ? 1 : -1;
+    const sortField = order.type === 'price' ? 'sellingPrice' : 'createdAt';
+    const sortOrder = order.order === 'asc' ? 1 : -1;
     const sortCriteria = { [sortField]: sortOrder };
 
     const books = await Book.find(query)
       .sort(sortCriteria)
       .skip(skip)
       .limit(fetchLimit)
-      .populate("category", "categoryName")
-      .populate("addedBy", "profile.userName")
+      .populate('category', 'categoryName')
+      .populate('addedBy', 'profile.userName')
       .lean();
 
     const filteredBooks = books.filter((book) => book.addedBy !== null);
@@ -143,20 +143,20 @@ const getAllBooks = async (req, res) => {
       currentPage: parseInt(page, 10),
     });
   } catch (error) {
-    console.error("Error fetching books:", error);
+    console.error('Error fetching books:', error);
     return res
       .status(500)
-      .json({ message: "Internal server error", error: error.message });
+      .json({ message: 'Internal server error', error: error.message });
   }
 };
 
 const getBookById = async (req, res) => {
   try {
     const book = await Book.findById(req.params.id)
-      .populate("category", "categoryName")
-      .populate("addedBy", "profile.userName");
+      .populate('category', 'categoryName')
+      .populate('addedBy', 'profile.userName');
 
-    if (!book) return res.status(404).json({ message: "Book not found." });
+    if (!book) return res.status(404).json({ message: 'Book not found.' });
 
     const categories = Array.isArray(book.category)
       ? book.category
@@ -174,10 +174,10 @@ const getBookById = async (req, res) => {
           { new: true }
         );
       } else {
-        console.log("No categories found for the book.");
+        console.log('No categories found for the book.');
       }
     } else {
-      console.log("User not found");
+      console.log('User not found');
     }
 
     const bookData = book.toObject();
@@ -188,8 +188,10 @@ const getBookById = async (req, res) => {
 
     res.status(200).json({ book: bookData });
   } catch (error) {
-    console.error("Error fetching book:", error);
-    res.status(500).json({ message: "Error fetching book." });
+    console.error('Error fetching book:', error);
+    res
+      .status(500)
+      .json({ message: 'Error fetching book.', error: error.message });
   }
 };
 
@@ -212,21 +214,21 @@ const updateBook = async (req, res) => {
 
   try {
     const book = await Book.findById(req.params.id);
-    if (!book) return res.status(404).json({ message: "Book not found." });
+    if (!book) return res.status(404).json({ message: 'Book not found.' });
 
     if (
       book.addedBy.toString() !== req.user._id.toString() &&
-      req.user.profile.role !== "admin"
+      req.user.profile.role !== 'admin'
     ) {
       return res
         .status(403)
-        .json({ message: "Unauthorized to update this book." });
+        .json({ message: 'Unauthorized to update this book.' });
     }
 
-    if (!forDonation && req.user.isSeller.status !== "approved") {
+    if (!forDonation && req.user.isSeller.status !== 'approved') {
       return res
         .status(403)
-        .json({ message: "Only approved sellers can upload books for sale." });
+        .json({ message: 'Only approved sellers can upload books for sale.' });
     }
 
     const styledDesc = addCustomClassesToHtml(description);
@@ -253,28 +255,28 @@ const updateBook = async (req, res) => {
     );
 
     res.status(200).json({
-      message: "Book updated successfully",
+      message: 'Book updated successfully',
       book: updatedBook,
     });
   } catch (error) {
     res
       .status(500)
-      .json({ message: "Error updating book.", error: error.message });
+      .json({ message: 'Error updating book.', error: error.message });
   }
 };
 
 const deleteBook = async (req, res) => {
   try {
     const book = await Book.findById(req.params.id);
-    if (!book) return res.status(404).json({ message: "Book not found." });
+    if (!book) return res.status(404).json({ message: 'Book not found.' });
 
     if (
       book.addedBy.toString() !== req.user._id.toString() &&
-      req.user.profile.role !== "admin"
+      req.user.profile.role !== 'admin'
     ) {
       return res
         .status(403)
-        .json({ message: "Unauthorized to delete this book." });
+        .json({ message: 'Unauthorized to delete this book.' });
     }
 
     const user = await User.findById(book.addedBy);
@@ -298,11 +300,11 @@ const deleteBook = async (req, res) => {
     }
 
     await book.deleteOne();
-    res.status(200).json({ message: "Book deleted successfully." });
+    res.status(200).json({ message: 'Book deleted successfully.' });
   } catch (error) {
-    console.error("Error deleting book:", error);
+    console.error('Error deleting book:', error);
     res.status(500).json({
-      message: "Error deleting book.",
+      message: 'Error deleting book.',
       error: error.message,
     });
   }
@@ -310,43 +312,43 @@ const deleteBook = async (req, res) => {
 
 const getBooksByCategory = async (req, res) => {
   try {
-    const cateId = req?.params?.categoryId || "all";
+    const cateId = req?.params?.categoryId || 'all';
     const page = parseInt(req.query.page, 10) || 1;
     const limit = Math.min(parseInt(req.query.limit, 10) || 10, 50);
     const skip = (page - 1) * limit;
 
     let books, totalBooks;
 
-    if (cateId === "all") {
+    if (cateId === 'all') {
       totalBooks = await Book.countDocuments({
-        status: "available",
+        status: 'available',
         forDonation: false,
       });
       books = await Book.find({
-        status: "available",
+        status: 'available',
         forDonation: false,
       })
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean()
-        .populate("addedBy", "profile.userName");
+        .populate('addedBy', 'profile.userName');
     } else {
       totalBooks = await Book.countDocuments({
         category: { $in: [cateId] },
-        status: "available",
+        status: 'available',
         forDonation: false,
       });
       books = await Book.find({
         category: { $in: [cateId] },
-        status: "available",
+        status: 'available',
         forDonation: false,
       })
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean()
-        .populate("addedBy", "profile.userName");
+        .populate('addedBy', 'profile.userName');
     }
     res.status(200).json({
       books,
@@ -355,7 +357,13 @@ const getBooksByCategory = async (req, res) => {
       totalBooks,
     });
   } catch (error) {
-    res.status(500).json({ message: "Error fetching books." });
+    console.error('Error fetching books by category:', error);
+    res
+      .status(500)
+      .json({
+        message: 'Error fetching books by category.',
+        error: error.message,
+      });
   }
 };
 
@@ -363,10 +371,16 @@ const getBooksBySeller = async (req, res) => {
   try {
     const books = await Book.find({ addedBy: req.params.sellerId })
       .lean()
-      .populate("category");
+      .populate('category');
     res.status(200).json({ books });
   } catch (error) {
-    res.status(500).json({ message: "Error fetching books." });
+    console.error('Error fetching books by seller:', error);
+    res
+      .status(500)
+      .json({
+        message: 'Error fetching books by seller.',
+        error: error.message,
+      });
   }
 };
 
@@ -381,12 +395,12 @@ const searchBooks = async (req, res) => {
     if (!query && !title && !author && !publishYear) {
       return res
         .status(400)
-        .json({ message: "At least one search parameter is required." });
+        .json({ message: 'At least one search parameter is required.' });
     }
 
     // Base query to only include available books that aren't for donation
     const baseQuery = {
-      status: "available",
+      status: 'available',
       forDonation: false,
     };
 
@@ -400,8 +414,8 @@ const searchBooks = async (req, res) => {
 
     const exactMatches = await Book.find(fullQuery)
       .lean()
-      .populate("category")
-      .populate("addedBy", "profile.userName")
+      .populate('category')
+      .populate('addedBy', 'profile.userName')
       .skip((page - 1) * limit)
       .limit(limit);
 
@@ -409,7 +423,7 @@ const searchBooks = async (req, res) => {
       // Add _fuzzyMatch to exact matches with distance 0
       const exactMatchesWithFuzzy = exactMatches.map((book) => {
         // Determine which field matched for better frontend display
-        let matchField = "";
+        let matchField = '';
         if (query) {
           // Check if it matched title or author
           const titleMatch = book.title
@@ -422,20 +436,20 @@ const searchBooks = async (req, res) => {
             ? book.isbn.toLowerCase().includes(query.toLowerCase())
             : false;
           matchField = titleMatch
-            ? "title"
+            ? 'title'
             : authorMatch
-            ? "author"
-            : isbnMatch
-            ? "isbn"
-            : "query";
+              ? 'author'
+              : isbnMatch
+                ? 'isbn'
+                : 'query';
         } else {
           matchField = title
-            ? "title"
+            ? 'title'
             : author
-            ? "author"
-            : publishYear
-            ? "publishYear"
-            : "isbn";
+              ? 'author'
+              : publishYear
+                ? 'publishYear'
+                : 'isbn';
         }
 
         return {
@@ -462,8 +476,8 @@ const searchBooks = async (req, res) => {
     // STEP 2: If no exact matches, get all available non-donation books and try flexible filtering
     const allBooks = await Book.find(baseQuery)
       .lean()
-      .populate("category")
-      .populate("addedBy", "profile.userName");
+      .populate('category')
+      .populate('addedBy', 'profile.userName');
 
     const filteredBooks = filterBooksWithFlexibleMatch(
       allBooks,
@@ -484,7 +498,7 @@ const searchBooks = async (req, res) => {
       // Add _fuzzyMatch to filtered books with distance 1
       const filteredBooksWithFuzzy = paginatedFilteredBooks.map((book) => {
         // Determine which field matched
-        let matchField = "";
+        let matchField = '';
         if (query) {
           const titleMatch =
             book.title.toLowerCase().includes(query.toLowerCase()) ||
@@ -513,20 +527,20 @@ const searchBooks = async (req, res) => {
             : false;
 
           matchField = titleMatch
-            ? "title"
+            ? 'title'
             : authorMatch
-            ? "author"
-            : isbnMatch
-            ? "isbn"
-            : "flexible";
+              ? 'author'
+              : isbnMatch
+                ? 'isbn'
+                : 'flexible';
         } else {
           matchField = title
-            ? "title"
+            ? 'title'
             : author
-            ? "author"
-            : publishYear
-            ? "publishYear"
-            : "isbn";
+              ? 'author'
+              : publishYear
+                ? 'publishYear'
+                : 'isbn';
         }
 
         return {
@@ -601,9 +615,10 @@ const searchBooks = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error searching books:", error);
+    console.error('Error searching books:', error);
     res.status(500).json({
-      message: "Error searching books.",
+      message: 'Error searching books.',
+      error: error.message, // Add error.message here
       pagination: {
         totalBooks: 0,
         totalPages: 0,
@@ -622,9 +637,9 @@ function buildMongoQuery(query, title, author, publishYear) {
   if (query) {
     // Search both title, author and ISBN with single query parameter
     mongoQuery.$or = [
-      { title: { $regex: query, $options: "i" } },
-      { author: { $regex: query, $options: "i" } },
-      { isbn: { $regex: query, $options: "i" } },
+      { title: { $regex: query, $options: 'i' } },
+      { author: { $regex: query, $options: 'i' } },
+      { isbn: { $regex: query, $options: 'i' } },
     ];
 
     // If the query looks like a year, also search in publishYear
@@ -635,11 +650,11 @@ function buildMongoQuery(query, title, author, publishYear) {
     const conditions = [];
 
     if (title) {
-      conditions.push({ title: { $regex: title, $options: "i" } });
+      conditions.push({ title: { $regex: title, $options: 'i' } });
     }
 
     if (author) {
-      conditions.push({ author: { $regex: author, $options: "i" } });
+      conditions.push({ author: { $regex: author, $options: 'i' } });
     }
 
     if (publishYear) {
@@ -711,7 +726,7 @@ function filterBooksWithFlexibleMatch(
       const queryLower = query.toLowerCase();
       const titleLower = book.title.toLowerCase();
       const authorLower = book.author.toLowerCase();
-      const isbn = book.isbn || "";
+      const isbn = book.isbn || '';
 
       const titleQueryMatch =
         titleLower.includes(queryLower) ||
@@ -750,13 +765,13 @@ function performFuzzySearch(
   return books
     .map((book) => {
       let minDistance = Infinity;
-      let matchField = "";
+      let matchField = '';
 
       if (query) {
         const queryLower = query.toLowerCase();
         const titleWords = book.title.toLowerCase().split(/\s+/);
         const authorWords = book.author.toLowerCase().split(/\s+/);
-        const isbn = book.isbn || "";
+        const isbn = book.isbn || '';
 
         const titleDistance = Math.min(
           ...titleWords.map((word) => levenshtein.get(word, queryLower))
@@ -782,10 +797,10 @@ function performFuzzySearch(
           minDistance = queryMinDistance;
           matchField =
             titleDistance <= authorDistance && titleDistance <= isbnDistance
-              ? "title"
+              ? 'title'
               : authorDistance <= isbnDistance
-              ? "author"
-              : "isbn";
+                ? 'author'
+                : 'isbn';
         }
       }
 
@@ -799,7 +814,7 @@ function performFuzzySearch(
 
         if (titleDistance < minDistance) {
           minDistance = titleDistance;
-          matchField = "title";
+          matchField = 'title';
         }
       }
 
@@ -813,7 +828,7 @@ function performFuzzySearch(
 
         if (authorDistance < minDistance) {
           minDistance = authorDistance;
-          matchField = "author";
+          matchField = 'author';
         }
       }
 
@@ -823,7 +838,7 @@ function performFuzzySearch(
         const searchYear = parseInt(publishYear, 10);
 
         if (bookYear !== searchYear) {
-          return { book, distance: Infinity, field: "" };
+          return { book, distance: Infinity, field: '' };
         }
       }
 
@@ -848,10 +863,13 @@ const filterBooks = async (req, res) => {
     if (maxPrice) filter.sellingPrice.$lte = maxPrice;
     if (condition) filter.condition = condition;
 
-    const books = await Book.find(filter).lean().populate("category");
+    const books = await Book.find(filter).lean().populate('category');
     res.status(200).json({ books });
   } catch (error) {
-    res.status(500).json({ message: "Error filtering books." });
+    console.error('Error filtering books:', error);
+    res
+      .status(500)
+      .json({ message: 'Error filtering books.', error: error.message });
   }
 };
 
@@ -860,7 +878,7 @@ const incrementBookViews = async (req, res) => {
     const { id: bookId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(bookId)) {
-      return res.status(400).json({ message: "Invalid book ID." });
+      return res.status(400).json({ message: 'Invalid book ID.' });
     }
 
     const book = await Book.findByIdAndUpdate(
@@ -868,11 +886,11 @@ const incrementBookViews = async (req, res) => {
       { $inc: { views: 1 } },
       { new: true }
     );
-    if (!book) return res.status(404).json({ message: "Book not found." });
+    if (!book) return res.status(404).json({ message: 'Book not found.' });
     res.status(200).json({ views: book.views });
   } catch (error) {
     res.status(500).json({
-      message: "Error incrementing book views.",
+      message: 'Error incrementing book views.',
       error: error.message,
     });
   }
@@ -885,7 +903,7 @@ const getWeeklyTopBooks = async (req, res) => {
 
     const topBooks = await Book.find({
       createdAt: { $gte: oneWeekAgo },
-      status: "available",
+      status: 'available',
     })
       .lean()
       .sort({ views: -1 })
@@ -904,7 +922,7 @@ const getMonthlyTopBooks = async (req, res) => {
 
     const topBooks = await Book.find({
       createdAt: { $gte: oneMonthAgo },
-      status: "available",
+      status: 'available',
     })
       .lean()
       .sort({ views: -1 })
@@ -924,7 +942,7 @@ const toggleFeaturedBook = async (req, res) => {
     if (!book) {
       return res
         .status(404)
-        .json({ success: false, message: "Book not found" });
+        .json({ success: false, message: 'Book not found' });
     }
 
     book.isFeatured = !book.isFeatured;
@@ -933,7 +951,7 @@ const toggleFeaturedBook = async (req, res) => {
 
     res.status(201).json({
       message: `Book ${
-        book.isFeatured ? "featured" : "unfeatured"
+        book.isFeatured ? 'featured' : 'unfeatured'
       } successfully`,
       data: book,
     });
@@ -946,7 +964,7 @@ const getFeaturedBooks = async (req, res) => {
   try {
     const featuredBooks = await Book.find({
       isFeatured: true,
-      status: "available",
+      status: 'available',
     })
       .lean()
       .sort({ featuredDate: -1 });
@@ -967,7 +985,7 @@ const getAllBooksForAdmin = async (req, res) => {
     const query = {};
     if (
       status &&
-      ["available", "sold", "donated", "pending"].includes(status)
+      ['available', 'sold', 'donated', 'pending'].includes(status)
     ) {
       query.status = status;
     }
@@ -976,8 +994,8 @@ const getAllBooksForAdmin = async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limitNum)
-      .populate("category", "categoryName")
-      .populate("addedBy", "profile.userName profile.email")
+      .populate('category', 'categoryName')
+      .populate('addedBy', 'profile.userName profile.email')
       .lean();
 
     const totalBooks = await Book.countDocuments(query);
@@ -991,9 +1009,9 @@ const getAllBooksForAdmin = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error fetching books for admin:", error);
+    console.error('Error fetching books for admin:', error);
     return res.status(500).json({
-      message: "Error fetching books",
+      message: 'Error fetching books',
       error: error.message,
     });
   }
@@ -1001,7 +1019,7 @@ const getAllBooksForAdmin = async (req, res) => {
 
 const getAuthors = async (req, res) => {
   try {
-    const authors = await Book.distinct("author").sort({ author: 1 });
+    const authors = await Book.distinct('author').sort({ author: 1 });
 
     return res.status(200).json({
       success: true,
@@ -1009,10 +1027,10 @@ const getAuthors = async (req, res) => {
       authors,
     });
   } catch (error) {
-    console.error("Error fetching unique authors:", error);
+    console.error('Error fetching unique authors:', error);
     return res.status(500).json({
       success: false,
-      message: "Error fetching unique authors",
+      message: 'Error fetching unique authors',
       error: error.message,
     });
   }
@@ -1025,12 +1043,12 @@ const generateBookDescription = async (req, res) => {
     if (!title || !author || !condition) {
       return res.status(400).json({
         message:
-          "Title, author, and condition are required to generate a description.",
+          'Title, author, and condition are required to generate a description.',
       });
     }
 
     const prompt = `
-Generate a detailed and accurate description for a second-hand book titled "<strong>${title}</strong>" authored by <em>${author}</em>. 
+Generate a detailed and accurate description for a second-hand book titled "<strong>${title}</strong>" authored by <em>${author}</em>.
 
 The description should:
 
@@ -1049,9 +1067,9 @@ Return only the formatted description, without any additional commentary or plac
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           contents: [
@@ -1075,7 +1093,7 @@ Return only the formatted description, without any additional commentary or plac
     const description = result?.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!description) {
-      throw new Error("Failed to generate description.");
+      throw new Error('Failed to generate description.');
     }
 
     res.status(200).json({
@@ -1085,7 +1103,7 @@ Return only the formatted description, without any additional commentary or plac
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Error generating book description.",
+      message: 'Error generating book description.',
       error: error.message,
     });
   }
@@ -1097,7 +1115,7 @@ const generateReviewSummary = async (req, res) => {
 
     if (!title || !author) {
       return res.status(400).json({
-        message: "Both title and author are required to generate a summary.",
+        message: 'Both title and author are required to generate a summary.',
       });
     }
 
@@ -1124,9 +1142,9 @@ Guidelines:
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           contents: [
@@ -1150,7 +1168,7 @@ Guidelines:
     const summary = result?.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!summary) {
-      throw new Error("Failed to generate review summary.");
+      throw new Error('Failed to generate review summary.');
     }
 
     res.status(200).json({
@@ -1160,7 +1178,7 @@ Guidelines:
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Error generating review summary.",
+      message: 'Error generating review summary.',
       error: error.message,
     });
   }
@@ -1171,17 +1189,17 @@ const aiBookSearch = async (req, res) => {
     const { sId, query } = req.body;
     const startTime = Date.now();
 
-    if (!query || typeof query !== "string" || query.trim() === "") {
+    if (!query || typeof query !== 'string' || query.trim() === '') {
       return res.status(400).json({
         success: false,
-        error: "Valid search query is required.",
+        error: 'Valid search query is required.',
       });
     }
 
-    if (!sId || typeof sId !== "string") {
+    if (!sId || typeof sId !== 'string') {
       return res.status(400).json({
         success: false,
-        error: "Missing or invalid session ID.",
+        error: 'Missing or invalid session ID.',
       });
     }
 
@@ -1195,16 +1213,16 @@ const aiBookSearch = async (req, res) => {
       });
     }
 
-    let historyText = "";
+    let historyText = '';
     if (Array.isArray(session.conversations)) {
       const recent = session.conversations.slice(-3);
       historyText = recent
         .map((c) => `User: ${c.user}\nAssistant: ${c.ai}`)
-        .join("\n");
-      if (historyText) historyText += "\n";
+        .join('\n');
+      if (historyText) historyText += '\n';
     }
 
-    const category = await Category.distinct("categoryName");
+    const category = await Category.distinct('categoryName');
 
     console.log(category);
 
@@ -1228,28 +1246,28 @@ Respond with a single JSON object like this:
 Guidelines:
 – Craft "reply" as if you're a real personal assistant on PustakBazzar, even when no search is performed.
 – Keep responses concise and polite
-– If the user is not asking to search for books, set **all** fields in "filters" to null.  
+– If the user is not asking to search for books, set **all** fields in "filters" to null.
 – Direct search terms (like "naruto") should set keyword filter without asking questions
 – For mood-based queries, suggest relevant book categories
 – Only mention payment options (Khalti/Stripe), seller approval process, or team information when directly asked
 – Payment option is khalti for nepali payment or stripe for international payment.
 – User to become seller need to fill a form and get approved by admin you can find it in profile section.
-– Made by: mandip shah(frontend, backend) and aadarsh kushuwaha(backend) (UI inspired from kitabkunj made during ideathon where we as a team F5)  
+– Made by: mandip shah(frontend, backend) and aadarsh kushuwaha(backend) (UI inspired from kitabkunj made during ideathon where we as a team F5)
 – (siddhartha singh  and mandip made UI there) (mention both when talk about UI)
 – Made in Nepal as of nepal
 – Project was supervised by Mr. Anish Ansari sir.
 – Don't mention anything without asking about payment or something.
 – Just reply what user is asking for, dont add extra things.
 – Don't output any extra text—just valid JSON.
-– My categories in the platform are: ${category.join(", ")}.
-  
+– My categories in the platform are: ${category.join(', ')}.
+
 ${historyText}
 User: ${query}`;
     const geminiResponse = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
       }
     );
@@ -1263,7 +1281,7 @@ User: ${query}`;
     const geminiData = await geminiResponse.json();
     const rawText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    if (!rawText) throw new Error("Empty response from AI service");
+    if (!rawText) throw new Error('Empty response from AI service');
 
     const cleanText = rawText
       .replace(
@@ -1276,8 +1294,8 @@ User: ${query}`;
     try {
       parsedResponse = JSON.parse(cleanText);
     } catch (err) {
-      console.error("JSON parsing error:", err, "\nRaw text:", rawText);
-      throw new Error("Failed to parse AI response.");
+      console.error('JSON parsing error:', err, '\nRaw text:', rawText);
+      throw new Error('Failed to parse AI response.');
     }
 
     const { reply, filters } = parsedResponse;
@@ -1318,10 +1336,10 @@ User: ${query}`;
       .sort(getSortOption(filters.sortBy))
       .limit(10)
       .select(
-        "title author sellingPrice images condition publishYear edition bookLanguage forDonation"
+        'title author sellingPrice images condition publishYear edition bookLanguage forDonation'
       )
-      .populate("category", "categoryName")
-      .populate("addedBy", "profile.userName")
+      .populate('category', 'categoryName')
+      .populate('addedBy', 'profile.userName')
       .lean();
 
     return res.status(200).json({
@@ -1341,10 +1359,10 @@ User: ${query}`;
       },
     });
   } catch (err) {
-    console.error("AI search error:", err);
+    console.error('AI search error:', err);
     return res.status(500).json({
       success: false,
-      error: "Failed to process your search request.",
+      error: 'Failed to process your search request.',
       details: err.message,
     });
   }
@@ -1360,7 +1378,7 @@ async function buildQueryFromFilters(filters) {
     return null;
   }
 
-  const query = { status: "available", forDonation: false };
+  const query = { status: 'available', forDonation: false };
 
   if (filters.category) {
     const categories = Array.isArray(filters.category)
@@ -1369,7 +1387,7 @@ async function buildQueryFromFilters(filters) {
 
     if (categories.length > 0) {
       const categoryDocs = await Category.find({
-        categoryName: { $in: categories.map((c) => new RegExp(c, "i")) },
+        categoryName: { $in: categories.map((c) => new RegExp(c, 'i')) },
       });
 
       if (categoryDocs.length > 0) {
@@ -1377,7 +1395,7 @@ async function buildQueryFromFilters(filters) {
         console.log(
           `Found categories: ${categoryDocs
             .map((c) => c.categoryName)
-            .join(", ")}`
+            .join(', ')}`
         );
       } else if (
         categoryDocs.length === 0 &&
@@ -1391,7 +1409,7 @@ async function buildQueryFromFilters(filters) {
         return null;
       } else {
         console.log(
-          `No matching categories found for: ${categories.join(", ")}`
+          `No matching categories found for: ${categories.join(', ')}`
         );
       }
     }
@@ -1406,18 +1424,18 @@ async function buildQueryFromFilters(filters) {
   }
 
   if (filters.condition) query.condition = filters.condition;
-  if (filters.language) query.bookLanguage = new RegExp(filters.language, "i");
+  if (filters.language) query.bookLanguage = new RegExp(filters.language, 'i');
 
   if (filters.keyword) {
     query.$or = [
-      { title: { $regex: filters.keyword, $options: "i" } },
-      { author: { $regex: filters.keyword, $options: "i" } },
+      { title: { $regex: filters.keyword, $options: 'i' } },
+      { author: { $regex: filters.keyword, $options: 'i' } },
     ];
   }
 
   if (filters.isbn) {
     if (!query.$or) query.$or = [];
-    query.$or.push({ isbn: { $regex: filters.isbn, $options: "i" } });
+    query.$or.push({ isbn: { $regex: filters.isbn, $options: 'i' } });
   }
 
   return query;

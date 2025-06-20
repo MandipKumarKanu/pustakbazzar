@@ -1,47 +1,47 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const contactSchema = new mongoose.Schema(
   {
-    name: { 
-      type: String, 
-      required: true,
-      trim: true 
-    },
-    email: { 
-      type: String, 
+    name: {
+      type: String,
       required: true,
       trim: true,
-      lowercase: true 
     },
-    subject: { 
-      type: String, 
+    email: {
+      type: String,
       required: true,
-      trim: true 
+      trim: true,
+      lowercase: true,
     },
-    message: { 
-      type: String, 
+    subject: {
+      type: String,
       required: true,
-      trim: true 
+      trim: true,
     },
-    userId: { 
-      type: mongoose.Schema.Types.ObjectId, 
-      ref: "User",
-      default: null
+    message: {
+      type: String,
+      required: true,
+      trim: true,
     },
-    isClosed: { 
-      type: Boolean, 
-      default: false 
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    isClosed: {
+      type: Boolean,
+      default: false,
     },
     closedAt: {
       type: Date,
-      default: null
+      default: null,
     },
     responseMessage: {
       type: String,
-      default: ""
-    }
+      default: '',
+    },
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Contact", contactSchema);
+module.exports = mongoose.model('Contact', contactSchema);

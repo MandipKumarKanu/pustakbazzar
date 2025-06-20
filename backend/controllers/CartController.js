@@ -1,5 +1,5 @@
-const Cart = require("../models/Cart");
-const Book = require("../models/Book");
+const Cart = require('../models/Cart');
+const Book = require('../models/Book');
 
 const addItemToCart = async (req, res) => {
   try {
@@ -9,13 +9,13 @@ const addItemToCart = async (req, res) => {
 
     const book = await Book.findById(bookId);
     if (!book) {
-      return res.status(404).json({ error: "Book not found" });
+      return res.status(404).json({ error: 'Book not found' });
     }
 
     if (book.forDonation) {
       return res
         .status(400)
-        .json({ error: "Cannot add donation book to cart" });
+        .json({ error: 'Cannot add donation book to cart' });
     }
 
     let sellerId = book.addedBy;
@@ -64,12 +64,12 @@ const addItemToCart = async (req, res) => {
 
     await cart.save();
 
-    res.json({ message: "Item added to cart", cart });
+    res.json({ message: 'Item added to cart', cart });
   } catch (error) {
-    console.error("Add item to cart error:", error.message);
+    console.error('Add item to cart error:', error.message);
     res
       .status(500)
-      .json({ error: "Failed to add item to cart", details: error.message });
+      .json({ error: 'Failed to add item to cart', details: error.message });
   }
 };
 
@@ -78,17 +78,17 @@ const getCart = async (req, res) => {
     const userId = req.user.id;
 
     const cart = await Cart.findOne({ userId })
-    .populate({
-      path: "carts.books.bookId",
-      select: "title author sellingPrice images status",
-    })
-    .populate({
-      path: "carts.sellerId",
-      select: "profile.userName",
-    });
+      .populate({
+        path: 'carts.books.bookId',
+        select: 'title author sellingPrice images status',
+      })
+      .populate({
+        path: 'carts.sellerId',
+        select: 'profile.userName',
+      });
 
     if (!cart) {
-      return res.status(404).json({ error: "No cart found for this user" });
+      return res.status(404).json({ error: 'No cart found for this user' });
     }
 
     let updatedCart = cart.toObject();
@@ -115,10 +115,10 @@ const getCart = async (req, res) => {
 
     res.json({ cart: updatedCart, totalPrice });
   } catch (error) {
-    console.error("Get cart error:", error.message);
+    console.error('Get cart error:', error.message);
     res
       .status(500)
-      .json({ error: "Failed to get cart", details: error.message });
+      .json({ error: 'Failed to get cart', details: error.message });
   }
 };
 
@@ -129,7 +129,7 @@ const removeItemFromCart = async (req, res) => {
 
     const book = await Book.findById(bookId);
     if (!book) {
-      return res.status(404).json({ error: "Book not found" });
+      return res.status(404).json({ error: 'Book not found' });
     }
 
     let sellerId = book.addedBy;
@@ -137,7 +137,7 @@ const removeItemFromCart = async (req, res) => {
     const cart = await Cart.findOne({ userId });
 
     if (!cart) {
-      return res.status(404).json({ error: "No cart found for this user" });
+      return res.status(404).json({ error: 'No cart found for this user' });
     }
 
     const sellerOrder = cart.carts.find(
@@ -145,7 +145,7 @@ const removeItemFromCart = async (req, res) => {
     );
 
     if (!sellerOrder) {
-      return res.status(404).json({ error: "No items found for this seller" });
+      return res.status(404).json({ error: 'No items found for this seller' });
     }
 
     const bookIndex = sellerOrder.books.findIndex(
@@ -153,7 +153,7 @@ const removeItemFromCart = async (req, res) => {
     );
 
     if (bookIndex === -1) {
-      return res.status(404).json({ error: "Book not found in cart" });
+      return res.status(404).json({ error: 'Book not found in cart' });
     }
 
     sellerOrder.books.splice(bookIndex, 1);
@@ -168,7 +168,7 @@ const removeItemFromCart = async (req, res) => {
     await cart.save();
 
     const updatedCart = await Cart.findOne({ userId }).populate(
-      "carts.books.bookId"
+      'carts.books.bookId'
     );
     let totalPrice = 0;
 
@@ -185,14 +185,14 @@ const removeItemFromCart = async (req, res) => {
     }
 
     res.json({
-      message: "Item removed from cart",
+      message: 'Item removed from cart',
       cart: updatedCart,
       totalPrice,
     });
   } catch (error) {
-    console.error("Remove item from cart error:", error.message);
+    console.error('Remove item from cart error:', error.message);
     res.status(500).json({
-      error: "Failed to remove item from cart",
+      error: 'Failed to remove item from cart',
       details: error.message,
     });
   }
@@ -205,7 +205,7 @@ const clearCart = async (req, res) => {
     const cart = await Cart.findOne({ userId });
 
     if (!cart) {
-      return res.status(404).json({ error: "No cart found for this user" });
+      return res.status(404).json({ error: 'No cart found for this user' });
     }
 
     cart.carts = [];
@@ -213,12 +213,12 @@ const clearCart = async (req, res) => {
 
     await cart.save();
 
-    res.json({ message: "Cart cleared", cart, totalPrice: 0 });
+    res.json({ message: 'Cart cleared', cart, totalPrice: 0 });
   } catch (error) {
-    console.error("Clear cart error:", error.message);
+    console.error('Clear cart error:', error.message);
     res
       .status(500)
-      .json({ error: "Failed to clear cart", details: error.message });
+      .json({ error: 'Failed to clear cart', details: error.message });
   }
 };
 
@@ -230,7 +230,7 @@ const removeSellerItemsFromCart = async (req, res) => {
     const cart = await Cart.findOne({ userId });
 
     if (!cart) {
-      return res.status(404).json({ error: "No cart found for this user" });
+      return res.status(404).json({ error: 'No cart found for this user' });
     }
 
     const sellerOrder = cart.carts.find(
@@ -238,7 +238,7 @@ const removeSellerItemsFromCart = async (req, res) => {
     );
 
     if (!sellerOrder) {
-      return res.status(404).json({ error: "No items found for this seller" });
+      return res.status(404).json({ error: 'No items found for this seller' });
     }
 
     const sellerIndex = cart.carts.findIndex(
@@ -249,7 +249,7 @@ const removeSellerItemsFromCart = async (req, res) => {
     await cart.save();
 
     const updatedCart = await Cart.findOne({ userId }).populate(
-      "carts.books.bookId"
+      'carts.books.bookId'
     );
     let totalPrice = 0;
 
@@ -266,7 +266,7 @@ const removeSellerItemsFromCart = async (req, res) => {
     }
 
     res.json({
-      message: "All items from this seller removed",
+      message: 'All items from this seller removed',
       cart: updatedCart,
       totalPrice,
     });
@@ -287,7 +287,7 @@ const isInCart = async (req, res) => {
     const cart = await Cart.findOne({ userId });
 
     if (!cart) {
-      return res.status(404).json({ error: "No cart found for this user" });
+      return res.status(404).json({ error: 'No cart found for this user' });
     }
 
     const isBookInCart = cart.carts.some((sellerOrder) =>
@@ -297,14 +297,14 @@ const isInCart = async (req, res) => {
     );
 
     if (isBookInCart) {
-      return res.json({ message: "Book is in cart", inCart: true });
+      return res.json({ message: 'Book is in cart', inCart: true });
     } else {
-      return res.json({ message: "Book is not in cart", inCart: false });
+      return res.json({ message: 'Book is not in cart', inCart: false });
     }
   } catch (error) {
-    console.error("Check if book is in cart error:", error.message);
+    console.error('Check if book is in cart error:', error.message);
     res.status(500).json({
-      error: "Failed to check if book is in cart",
+      error: 'Failed to check if book is in cart',
       details: error.message,
     });
   }

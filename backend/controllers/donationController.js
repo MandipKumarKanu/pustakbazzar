@@ -1,33 +1,33 @@
-const Donation = require("../models/Donation");
-const User = require("../models/User");
-const Book = require("../models/Book");
-const handleError = require("../utils/errorHandler");
+const Donation = require('../models/Donation');
+const User = require('../models/User');
+const Book = require('../models/Book');
+const handleError = require('../utils/errorHandler');
 
 const createDonation = async (req, res) => {
   try {
     const { bookId, message } = req.body;
     const book = await Book.findById(bookId);
 
-    if (!book) return res.status(404).json({ message: "Book not found." });
+    if (!book) return res.status(404).json({ message: 'Book not found.' });
     if (book.addedBy.toString() !== req.user._id.toString()) {
       return res
         .status(403)
-        .json({ message: "You can only donate books you own." });
+        .json({ message: 'You can only donate books you own.' });
     }
 
     const donation = new Donation({
       book: bookId,
       donor: req.user._id,
       message,
-      status: "pending",
+      status: 'pending',
     });
     await donation.save();
 
     await User.findByIdAndUpdate(req.user._id, { $push: { donated: bookId } });
 
-    res.status(201).json({ message: "Donation request submitted.", donation });
+    res.status(201).json({ message: 'Donation request submitted.', donation });
   } catch (error) {
-    handleError(res, error, "Error creating donation.");
+    handleError(res, error, 'Error creating donation.');
   }
 };
 
@@ -36,18 +36,17 @@ const getLatestDonations = async (req, res) => {
 
   try {
     const donations = await Donation.find({
-      status: { $in: ["approved", "completed"] },
+      status: { $in: ['approved', 'completed'] },
     })
       .lean()
-      .populate("book")
+      .populate('book')
       .populate(
-        "donor",
-        "profile.userName profile.email profile.profileImg donated profile.firstName profile.lastName createdAt"
+        'donor',
+        'profile.userName profile.email profile.profileImg donated profile.firstName profile.lastName createdAt'
       )
       .sort({ createdAt: -1 });
 
-
-     const uniqueDonations = [];
+    const uniqueDonations = [];
     const donorIds = new Set();
 
     for (const donation of donations) {
@@ -63,66 +62,66 @@ const getLatestDonations = async (req, res) => {
       donations: uniqueDonations,
     });
   } catch (error) {
-    handleError(res, error, "Error fetching latest donations.");
+    handleError(res, error, 'Error fetching latest donations.');
   }
 };
 
 const getAllDonors = async (req, res) => {
   try {
     const donors = await User.find({ donated: { $exists: true, $ne: [] } })
-      .select("profile.userName profile.email profile.phNo")
-      .populate("donated", "title");
+      .select('profile.userName profile.email profile.phNo')
+      .populate('donated', 'title');
 
     res.status(200).json({ donors });
   } catch (error) {
-    handleError(res, error, "Error fetching donors.");
+    handleError(res, error, 'Error fetching donors.');
   }
 };
 
 const updateDonationStatus = async (req, res) => {
   try {
-    if (req.user.profile.role !== "admin") {
+    if (req.user.profile.role !== 'admin') {
       return res
         .status(403)
-        .json({ message: "Only admins can update donation status." });
+        .json({ message: 'Only admins can update donation status.' });
     }
 
     const { donationId } = req.params;
     const { status } = req.body;
 
-    if (!["approved", "rejected", "completed"].includes(status)) {
-      return res.status(400).json({ message: "Invalid donation status." });
+    if (!['approved', 'rejected', 'completed'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid donation status.' });
     }
 
-    const donation = await Donation.findById(donationId).populate("book");
+    const donation = await Donation.findById(donationId).populate('book');
     if (!donation)
-      return res.status(404).json({ message: "Donation not found." });
+      return res.status(404).json({ message: 'Donation not found.' });
 
     donation.status = status;
     await donation.save();
 
-    if (status === "completed") {
+    if (status === 'completed') {
       const book = await Book.findById(donation.book._id);
       if (book) {
-        book.status = "donated";
+        book.status = 'donated';
         await book.save();
       }
     }
 
-    if (status === "rejected") {
+    if (status === 'rejected') {
       const book = await Book.findById(donation.book._id);
       if (book) {
-        book.status = "available";
+        book.status = 'available';
         await book.save();
       }
     }
 
-    res.status(200).json({ 
-      message: `Donation ${status} successfully.`, 
-      donation 
+    res.status(200).json({
+      message: `Donation ${status} successfully.`,
+      donation,
     });
   } catch (error) {
-    handleError(res, error, "Error updating donation status.");
+    handleError(res, error, 'Error updating donation status.');
   }
 };
 
@@ -134,13 +133,16 @@ const getAllDonations = async (req, res) => {
 
   try {
     const query = {};
-    if (status && ['pending', 'approved', 'rejected', 'completed'].includes(status)) {
+    if (
+      status &&
+      ['pending', 'approved', 'rejected', 'completed'].includes(status)
+    ) {
       query.status = status;
     }
 
     const donations = await Donation.find(query)
-      .populate("book")
-      .populate("donor", "profile.userName profile.email")
+      .populate('book')
+      .populate('donor', 'profile.userName profile.email')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limitNum);
@@ -156,7 +158,7 @@ const getAllDonations = async (req, res) => {
       },
     });
   } catch (error) {
-    handleError(res, error, "Error fetching donations.");
+    handleError(res, error, 'Error fetching donations.');
   }
 };
 
@@ -165,7 +167,7 @@ const getUserDonations = async (req, res) => {
 
   try {
     const donations = await Donation.find({ donor: req.user._id })
-      .populate("book")
+      .populate('book')
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit);
@@ -183,7 +185,7 @@ const getUserDonations = async (req, res) => {
       },
     });
   } catch (error) {
-    handleError(res, error, "Error fetching user donations.");
+    handleError(res, error, 'Error fetching user donations.');
   }
 };
 
@@ -193,21 +195,21 @@ const deleteDonation = async (req, res) => {
     const donation = await Donation.findById(donationId);
 
     if (!donation)
-      return res.status(404).json({ message: "Donation not found." });
+      return res.status(404).json({ message: 'Donation not found.' });
 
     if (
       donation.donor.toString() !== req.user._id.toString() &&
-      req.user.profile.role !== "admin"
+      req.user.profile.role !== 'admin'
     ) {
       return res
         .status(403)
-        .json({ message: "Unauthorized to delete this donation." });
+        .json({ message: 'Unauthorized to delete this donation.' });
     }
 
     await donation.deleteOne();
-    res.status(200).json({ message: "Donation deleted successfully." });
+    res.status(200).json({ message: 'Donation deleted successfully.' });
   } catch (error) {
-    handleError(res, error, "Error deleting donation.");
+    handleError(res, error, 'Error deleting donation.');
   }
 };
 
@@ -218,15 +220,15 @@ const getPendingDonations = async (req, res) => {
     const limitNum = parseInt(limit);
     const skip = (pageNum - 1) * limitNum;
 
-    const pendingDonations = await Donation.find({ status: "pending" })
-      .populate("book")
-      .populate("donor", "profile.userName profile.email")
+    const pendingDonations = await Donation.find({ status: 'pending' })
+      .populate('book')
+      .populate('donor', 'profile.userName profile.email')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limitNum);
 
     const totalPendingDonations = await Donation.countDocuments({
-      status: "pending",
+      status: 'pending',
     });
 
     res.status(200).json({
@@ -238,7 +240,7 @@ const getPendingDonations = async (req, res) => {
       },
     });
   } catch (error) {
-    handleError(res, error, "Error fetching pending donations.");
+    handleError(res, error, 'Error fetching pending donations.');
   }
 };
 

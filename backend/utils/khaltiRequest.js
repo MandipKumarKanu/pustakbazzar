@@ -1,13 +1,13 @@
 //const fetch = require("node-fetch");
 
-const KHALTI_API_URL = "https://a.khalti.com/api/v2/epayment/";
+const KHALTI_API_URL = 'https://a.khalti.com/api/v2/epayment/';
 
 const khaltiRequest = async (endpoint, payload) => {
   const response = await fetch(`${KHALTI_API_URL}${endpoint}`, {
-    method: "POST",
+    method: 'POST',
     headers: {
       Authorization: `Key ${process.env.KHALTI_SECRET_KEY}`,
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify(payload),
   });
@@ -22,4 +22,3 @@ const khaltiRequest = async (endpoint, payload) => {
 };
 
 module.exports = { khaltiRequest };
-

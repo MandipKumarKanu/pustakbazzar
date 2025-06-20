@@ -1,10 +1,10 @@
-const User = require("../models/User");
-const Book = require("../models/Book"); // Add this import
+const User = require('../models/User');
+const Book = require('../models/Book'); // Add this import
 
 const getUsers = async (req, res) => {
   try {
     const users = await User.find()
-      .select("-password -refreshToken")
+      .select('-password -refreshToken')
       .sort({ createdAt: -1 });
     res.status(200).json(users);
   } catch (error) {
@@ -15,12 +15,12 @@ const getUsers = async (req, res) => {
 const approveSeller = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ message: "User not found." });
+    if (!user) return res.status(404).json({ message: 'User not found.' });
 
-    user.isSeller.status = "approved";
+    user.isSeller.status = 'approved';
     await user.save();
 
-    res.status(200).json({ message: "Seller approved." });
+    res.status(200).json({ message: 'Seller approved.' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -29,12 +29,12 @@ const approveSeller = async (req, res) => {
 const rejectSeller = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ message: "User not found." });
+    if (!user) return res.status(404).json({ message: 'User not found.' });
 
-    user.isSeller.status = "rejected";
+    user.isSeller.status = 'rejected';
     await user.save();
 
-    res.status(200).json({ message: "Seller application rejected." });
+    res.status(200).json({ message: 'Seller application rejected.' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -47,14 +47,14 @@ const getApprovedSellers = async (req, res) => {
     const limitNum = parseInt(limit);
     const skip = (pageNum - 1) * limitNum;
 
-    const sellers = await User.find({ "isSeller.status": "approved" })
-      .select("-password -refreshToken")
+    const sellers = await User.find({ 'isSeller.status': 'approved' })
+      .select('-password -refreshToken')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limitNum);
 
     const totalSellers = await User.countDocuments({
-      "isSeller.status": "approved",
+      'isSeller.status': 'approved',
     });
 
     res.status(200).json({
@@ -89,47 +89,47 @@ const getPlatformFeeReport = async (req, res) => {
     let sortConfig = {};
 
     switch (groupBy) {
-      case "daily":
+      case 'daily':
         groupByConfig = {
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$date' } },
           period: {
-            $first: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
+            $first: { $dateToString: { format: '%Y-%m-%d', date: '$date' } },
           },
         };
         sortConfig = { _id: 1 };
         break;
-      case "weekly":
+      case 'weekly':
         groupByConfig = {
-          _id: { $week: "$date" },
+          _id: { $week: '$date' },
           period: {
             $first: {
-              $concat: ["Week ", { $toString: { $week: "$date" } }],
+              $concat: ['Week ', { $toString: { $week: '$date' } }],
             },
           },
         };
         sortConfig = { _id: 1 };
         break;
-      case "monthly":
+      case 'monthly':
       default:
         groupByConfig = {
           _id: {
-            year: { $year: "$date" },
-            month: { $month: "$date" },
+            year: { $year: '$date' },
+            month: { $month: '$date' },
           },
           period: {
             $first: {
-              $dateToString: { format: "%Y-%m", date: "$date" },
+              $dateToString: { format: '%Y-%m', date: '$date' },
             },
           },
         };
-        sortConfig = { "_id.year": 1, "_id.month": 1 };
+        sortConfig = { '_id.year': 1, '_id.month': 1 };
     }
 
-    groupByConfig.totalFees = { $sum: "$platformFee" };
+    groupByConfig.totalFees = { $sum: '$platformFee' };
     groupByConfig.transactionCount = { $sum: 1 };
-    groupByConfig.averageFee = { $avg: "$platformFee" };
+    groupByConfig.averageFee = { $avg: '$platformFee' };
 
-    const PlatformEarning = require("../models/PlatformEarning");
+    const PlatformEarning = require('../models/PlatformEarning');
     const report = await PlatformEarning.aggregate([
       { $match: matchStage },
       { $group: groupByConfig },
@@ -161,14 +161,14 @@ const getPlatformFeeReport = async (req, res) => {
       timeframe: {
         startDate: start,
         endDate: end,
-        groupBy: groupBy || "monthly",
+        groupBy: groupBy || 'monthly',
       },
     });
   } catch (error) {
-    console.error("Error generating platform fee report:", error);
+    console.error('Error generating platform fee report:', error);
     res.status(500).json({
       success: false,
-      message: "Failed to generate platform fee report",
+      message: 'Failed to generate platform fee report',
       error: error.message,
     });
   }
@@ -185,7 +185,7 @@ const getSalesPerformanceReport = async (req, res) => {
 
     end.setHours(23, 59, 59, 999);
 
-    const Order = require("../models/Order");
+    const Order = require('../models/Order');
 
     const totalOrdersInDb = await Order.countDocuments({});
 
@@ -194,10 +194,10 @@ const getSalesPerformanceReport = async (req, res) => {
         { date: { $gte: start, $lte: end } },
         { createdAt: { $gte: start, $lte: end } },
       ],
-      paymentStatus: "paid",
+      paymentStatus: 'paid',
     })
-      .populate("orders.books.bookId")
-      .populate("userId", "profile.userName")
+      .populate('orders.books.bookId')
+      .populate('userId', 'profile.userName')
       .lean();
 
     orders.forEach((order) => {
@@ -213,7 +213,7 @@ const getSalesPerformanceReport = async (req, res) => {
 
     let usingSampleData = false;
     if (orders.length === 0) {
-      console.log("No paid orders found within the specified date range.");
+      console.log('No paid orders found within the specified date range.');
 
       return res.status(200).json({
         success: true,
@@ -221,7 +221,7 @@ const getSalesPerformanceReport = async (req, res) => {
           timeframe: {
             startDate: start,
             endDate: end,
-            groupBy: group || "monthly",
+            groupBy: group || 'monthly',
           },
           summary: {
             totalOrders: 0,
@@ -231,7 +231,7 @@ const getSalesPerformanceReport = async (req, res) => {
           },
           timeSeriesData: [],
           categoryPerformance: [],
-          message: "No orders found for the specified date range",
+          message: 'No orders found for the specified date range',
         },
       });
     }
@@ -258,10 +258,10 @@ const getSalesPerformanceReport = async (req, res) => {
         }
 
         switch (groupType) {
-          case "daily":
-            key = date.toISOString().split("T")[0];
+          case 'daily':
+            key = date.toISOString().split('T')[0];
             break;
-          case "weekly":
+          case 'weekly':
             const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
             const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
             const weekNum = Math.ceil(
@@ -269,11 +269,11 @@ const getSalesPerformanceReport = async (req, res) => {
             );
             key = `${date.getFullYear()}-W${weekNum}`;
             break;
-          case "monthly":
+          case 'monthly':
           default:
             key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
               2,
-              "0"
+              '0'
             )}`;
         }
 
@@ -301,7 +301,7 @@ const getSalesPerformanceReport = async (req, res) => {
         acc[key].itemsSold += itemCount;
         acc[key].orders.push({
           id: order._id,
-          customer: order.userId?.profile?.userName || "Unknown",
+          customer: order.userId?.profile?.userName || 'Unknown',
           total: orderTotal,
           status: order.orderStatus,
           items: itemCount,
@@ -311,7 +311,7 @@ const getSalesPerformanceReport = async (req, res) => {
       }, {});
     };
 
-    const groupBy = group || "monthly";
+    const groupBy = group || 'monthly';
     const timeGroupedData = groupByTime(orders, groupBy);
 
     const timeSeriesData = Object.values(timeGroupedData).sort((a, b) =>
@@ -323,7 +323,7 @@ const getSalesPerformanceReport = async (req, res) => {
         subOrder.books?.forEach((book) => {
           if (!book.bookId) return;
 
-          const category = book.bookId.category || "Uncategorized";
+          const category = book.bookId.category || 'Uncategorized';
           if (!acc[category]) {
             acc[category] = {
               category,
@@ -394,10 +394,10 @@ const getSalesPerformanceReport = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error generating sales performance report:", error);
+    console.error('Error generating sales performance report:', error);
     res.status(500).json({
       success: false,
-      message: "Failed to generate sales performance report",
+      message: 'Failed to generate sales performance report',
       error: error.message,
     });
   }
@@ -405,7 +405,7 @@ const getSalesPerformanceReport = async (req, res) => {
 
 const getBookActivityReport = async (req, res) => {
   try {
-    const { startDate, endDate, groupBy = "monthly" } = req.query;
+    const { startDate, endDate, groupBy = 'monthly' } = req.query;
 
     const start = startDate
       ? new Date(startDate)
@@ -422,49 +422,49 @@ const getBookActivityReport = async (req, res) => {
     let sortConfig = {};
 
     switch (groupBy) {
-      case "daily":
+      case 'daily':
         groupByConfig = {
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
           period: {
             $first: {
-              $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+              $dateToString: { format: '%Y-%m-%d', date: '$createdAt' },
             },
           },
         };
         sortConfig = { _id: 1 };
         break;
-      case "weekly":
+      case 'weekly':
         groupByConfig = {
           _id: {
-            year: { $year: "$createdAt" },
-            week: { $week: "$createdAt" },
+            year: { $year: '$createdAt' },
+            week: { $week: '$createdAt' },
           },
           period: {
             $first: {
               $concat: [
-                { $toString: { $year: "$createdAt" } },
-                "-W",
-                { $toString: { $week: "$createdAt" } },
+                { $toString: { $year: '$createdAt' } },
+                '-W',
+                { $toString: { $week: '$createdAt' } },
               ],
             },
           },
         };
-        sortConfig = { "_id.year": 1, "_id.week": 1 };
+        sortConfig = { '_id.year': 1, '_id.week': 1 };
         break;
-      case "monthly":
+      case 'monthly':
       default:
         groupByConfig = {
           _id: {
-            year: { $year: "$createdAt" },
-            month: { $month: "$createdAt" },
+            year: { $year: '$createdAt' },
+            month: { $month: '$createdAt' },
           },
           period: {
             $first: {
-              $dateToString: { format: "%Y-%m", date: "$createdAt" },
+              $dateToString: { format: '%Y-%m', date: '$createdAt' },
             },
           },
         };
-        sortConfig = { "_id.year": 1, "_id.month": 1 };
+        sortConfig = { '_id.year': 1, '_id.month': 1 };
     }
 
     const saleBooks = await Book.aggregate([
@@ -481,9 +481,9 @@ const getBookActivityReport = async (req, res) => {
           categories: {
             $push: {
               $cond: [
-                { $ifNull: ["$category", false] },
-                "$category",
-                "Uncategorized",
+                { $ifNull: ['$category', false] },
+                '$category',
+                'Uncategorized',
               ],
             },
           },
@@ -506,9 +506,9 @@ const getBookActivityReport = async (req, res) => {
           categories: {
             $push: {
               $cond: [
-                { $ifNull: ["$category", false] },
-                "$category",
-                "Uncategorized",
+                { $ifNull: ['$category', false] },
+                '$category',
+                'Uncategorized',
               ],
             },
           },
@@ -517,86 +517,88 @@ const getBookActivityReport = async (req, res) => {
       { $sort: sortConfig },
     ]);
 
-    const Order = require("../models/Order");
-    
+    const Order = require('../models/Order');
+
     const orderDateMatchStage = {
       date: { $gte: start, $lte: end },
-      paymentStatus: "paid", 
+      paymentStatus: 'paid',
     };
-    
+
     let orderGroupByConfig = {};
-    
+
     switch (groupBy) {
-      case "daily":
+      case 'daily':
         orderGroupByConfig = {
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
-          period: { $first: { $dateToString: { format: "%Y-%m-%d", date: "$date" } } },
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$date' } },
+          period: {
+            $first: { $dateToString: { format: '%Y-%m-%d', date: '$date' } },
+          },
         };
         break;
-      case "weekly":
+      case 'weekly':
         orderGroupByConfig = {
           _id: {
-            year: { $year: "$date" },
-            week: { $week: "$date" },
+            year: { $year: '$date' },
+            week: { $week: '$date' },
           },
           period: {
             $first: {
               $concat: [
-                { $toString: { $year: "$date" } },
-                "-W",
-                { $toString: { $week: "$date" } },
+                { $toString: { $year: '$date' } },
+                '-W',
+                { $toString: { $week: '$date' } },
               ],
             },
           },
         };
         break;
-      case "monthly":
+      case 'monthly':
       default:
         orderGroupByConfig = {
           _id: {
-            year: { $year: "$date" },
-            month: { $month: "$date" },
+            year: { $year: '$date' },
+            month: { $month: '$date' },
           },
           period: {
-            $first: { $dateToString: { format: "%Y-%m", date: "$date" } },
+            $first: { $dateToString: { format: '%Y-%m', date: '$date' } },
           },
         };
     }
-    
+
     orderGroupByConfig.count = { $sum: 1 };
-    orderGroupByConfig.totalRevenue = { $sum: "$netTotal" };
-    orderGroupByConfig.itemsSold = { 
+    orderGroupByConfig.totalRevenue = { $sum: '$netTotal' };
+    orderGroupByConfig.itemsSold = {
       $sum: {
         $reduce: {
-          input: "$orders",
+          input: '$orders',
           initialValue: 0,
           in: {
             $add: [
-              "$$value",
+              '$$value',
               {
                 $reduce: {
-                  input: "$$this.books",
+                  input: '$$this.books',
                   initialValue: 0,
-                  in: { $add: ["$$value", "$$this.quantity"] }
-                }
-              }
-            ]
-          }
-        }
-      }
+                  in: { $add: ['$$value', '$$this.quantity'] },
+                },
+              },
+            ],
+          },
+        },
+      },
     };
 
     const salesData = await Order.aggregate([
       { $match: orderDateMatchStage },
       { $group: orderGroupByConfig },
-      { $sort: sortConfig }
+      { $sort: sortConfig },
     ]);
 
     const soldBooks = await Book.aggregate([
       {
         $match: {
           ...matchStage,
-          status: "sold",
+          status: 'sold',
         },
       },
       {
@@ -606,9 +608,9 @@ const getBookActivityReport = async (req, res) => {
           categories: {
             $push: {
               $cond: [
-                { $ifNull: ["$category", false] },
-                "$category",
-                "Uncategorized",
+                { $ifNull: ['$category', false] },
+                '$category',
+                'Uncategorized',
               ],
             },
           },
@@ -617,12 +619,16 @@ const getBookActivityReport = async (req, res) => {
       { $sort: sortConfig },
     ]);
 
-    const mergedSoldBooks = soldBooks.map(bookData => {
-      const matchingSalesData = salesData.find(sale => sale.period === bookData.period);
+    const mergedSoldBooks = soldBooks.map((bookData) => {
+      const matchingSalesData = salesData.find(
+        (sale) => sale.period === bookData.period
+      );
       return {
         ...bookData,
         revenue: matchingSalesData ? matchingSalesData.totalRevenue : 0,
-        itemsSold: matchingSalesData ? matchingSalesData.itemsSold : bookData.count,
+        itemsSold: matchingSalesData
+          ? matchingSalesData.itemsSold
+          : bookData.count,
       };
     });
 
@@ -632,9 +638,9 @@ const getBookActivityReport = async (req, res) => {
         ...donatedBooks.flatMap((period) => period.categories.flat()),
         ...soldBooks.flatMap((period) => period.categories.flat()),
       ]),
-    ].filter((id) => id !== "Uncategorized");
+    ].filter((id) => id !== 'Uncategorized');
 
-    const Category = require("../models/Category");
+    const Category = require('../models/Category');
     const categories = await Category.find({
       _id: { $in: categoryIds },
     }).lean();
@@ -647,7 +653,7 @@ const getBookActivityReport = async (req, res) => {
     const currentInventory = await Book.aggregate([
       {
         $group: {
-          _id: "$status",
+          _id: '$status',
           count: { $sum: 1 },
         },
       },
@@ -661,18 +667,18 @@ const getBookActivityReport = async (req, res) => {
     const processCategoryData = (data, includeRevenue = false) => {
       const processedData = data.map((period) => {
         const categoryCounts = period.categories.reduce((acc, catId) => {
-          const catIdStr = catId ? catId.toString() : "Uncategorized";
+          const catIdStr = catId ? catId.toString() : 'Uncategorized';
           acc[catIdStr] = (acc[catIdStr] || 0) + 1;
           return acc;
         }, {});
 
         const topCategories = Object.entries(categoryCounts)
           .map(([catId, count]) => ({
-            name: categoryMap[catId] || "Uncategorized",
+            name: categoryMap[catId] || 'Uncategorized',
             count,
           }))
           .sort((a, b) => b.count - a.count)
-          .slice(0, 5); 
+          .slice(0, 5);
 
         const result = {
           period: period.period,
@@ -696,18 +702,23 @@ const getBookActivityReport = async (req, res) => {
       const totalRevenue = includeRevenue
         ? processedData.reduce((sum, period) => sum + (period.revenue || 0), 0)
         : 0;
-        
+
       const totalItemsSold = includeRevenue
-        ? processedData.reduce((sum, period) => sum + (period.itemsSold || 0), 0)
+        ? processedData.reduce(
+            (sum, period) => sum + (period.itemsSold || 0),
+            0
+          )
         : 0;
 
       return {
         data: processedData,
         totalCount,
-        ...(includeRevenue ? { 
-          totalRevenue,
-          totalItemsSold: totalItemsSold > 0 ? totalItemsSold : totalCount
-        } : {}),
+        ...(includeRevenue
+          ? {
+              totalRevenue,
+              totalItemsSold: totalItemsSold > 0 ? totalItemsSold : totalCount,
+            }
+          : {}),
       };
     };
 
@@ -716,18 +727,18 @@ const getBookActivityReport = async (req, res) => {
     const processedSoldData = processCategoryData(mergedSoldBooks, true);
 
     const totalRevenue = await Order.aggregate([
-      { 
-        $match: { 
-          paymentStatus: "paid",
-          date: { $gte: start, $lte: end }
-        }
+      {
+        $match: {
+          paymentStatus: 'paid',
+          date: { $gte: start, $lte: end },
+        },
       },
       {
         $group: {
           _id: null,
-          totalRevenue: { $sum: "$netTotal" }
-        }
-      }
+          totalRevenue: { $sum: '$netTotal' },
+        },
+      },
     ]);
 
     const allPeriods = [
@@ -743,7 +754,9 @@ const getBookActivityReport = async (req, res) => {
       const donationEntry = donatedBooks.find(
         (entry) => entry.period === period
       );
-      const soldEntry = mergedSoldBooks.find((entry) => entry.period === period);
+      const soldEntry = mergedSoldBooks.find(
+        (entry) => entry.period === period
+      );
       const saleData = salesData.find((entry) => entry.period === period);
 
       return {
@@ -751,22 +764,25 @@ const getBookActivityReport = async (req, res) => {
         saleCount: saleEntry ? saleEntry.count : 0,
         donationCount: donationEntry ? donationEntry.count : 0,
         soldCount: soldEntry ? soldEntry.count : 0,
-        itemsSold: saleData ? saleData.itemsSold : (soldEntry ? soldEntry.count : 0),
+        itemsSold: saleData
+          ? saleData.itemsSold
+          : soldEntry
+            ? soldEntry.count
+            : 0,
         soldRevenue: saleData ? saleData.totalRevenue : 0,
-        totalCount: (saleEntry ? saleEntry.count : 0) + (donationEntry ? donationEntry.count : 0),
+        totalCount:
+          (saleEntry ? saleEntry.count : 0) +
+          (donationEntry ? donationEntry.count : 0),
       };
     });
 
     const availableBookCount = await Book.countDocuments({
-      status: "available",
+      status: 'available',
     });
-    const soldBookCount = await Book.countDocuments({ status: "sold" });
-    const pendingBookCount = await Book.countDocuments({ status: "pending" });
-    const donatedBookCount = await Book.countDocuments({ 
-      $or: [
-        { status: "donated" },
-        { forDonation: true }
-      ]
+    const soldBookCount = await Book.countDocuments({ status: 'sold' });
+    const pendingBookCount = await Book.countDocuments({ status: 'pending' });
+    const donatedBookCount = await Book.countDocuments({
+      $or: [{ status: 'donated' }, { forDonation: true }],
     });
 
     res.status(200).json({
@@ -777,11 +793,16 @@ const getBookActivityReport = async (req, res) => {
         groupBy,
       },
       summary: {
-        totalBooks: processedSaleData.totalCount + processedDonationData.totalCount,
+        totalBooks:
+          processedSaleData.totalCount + processedDonationData.totalCount,
         booksForSale: processedSaleData.totalCount,
         booksForDonation: processedDonationData.totalCount,
-        booksSold: processedSoldData.totalItemsSold || processedSoldData.totalCount,
-        soldRevenue: totalRevenue.length > 0 ? totalRevenue[0].totalRevenue : processedSoldData.totalRevenue,
+        booksSold:
+          processedSoldData.totalItemsSold || processedSoldData.totalCount,
+        soldRevenue:
+          totalRevenue.length > 0
+            ? totalRevenue[0].totalRevenue
+            : processedSoldData.totalRevenue,
         ratio:
           processedSaleData.totalCount + processedDonationData.totalCount > 0
             ? (
@@ -790,10 +811,14 @@ const getBookActivityReport = async (req, res) => {
                   processedDonationData.totalCount)
               ).toFixed(2)
             : 0,
-        averageRevenuePerBook: 
-          processedSoldData.totalItemsSold > 0 
-            ? ((totalRevenue.length > 0 ? totalRevenue[0].totalRevenue : processedSoldData.totalRevenue) / 
-               processedSoldData.totalItemsSold).toFixed(2)
+        averageRevenuePerBook:
+          processedSoldData.totalItemsSold > 0
+            ? (
+                (totalRevenue.length > 0
+                  ? totalRevenue[0].totalRevenue
+                  : processedSoldData.totalRevenue) /
+                processedSoldData.totalItemsSold
+              ).toFixed(2)
             : 0,
       },
       inventory: {
@@ -812,17 +837,21 @@ const getBookActivityReport = async (req, res) => {
       booksForDonation: processedDonationData.data,
       booksSold: processedSoldData.data,
       salesOverview: {
-        totalRevenue: totalRevenue.length > 0 ? totalRevenue[0].totalRevenue : 0,
+        totalRevenue:
+          totalRevenue.length > 0 ? totalRevenue[0].totalRevenue : 0,
         itemsSold: processedSoldData.totalItemsSold || 0,
-        completedOrders: salesData.reduce((sum, period) => sum + period.count, 0),
-        periodData: salesData
-      }
+        completedOrders: salesData.reduce(
+          (sum, period) => sum + period.count,
+          0
+        ),
+        periodData: salesData,
+      },
     });
   } catch (error) {
-    console.error("Error generating book activity report:", error);
+    console.error('Error generating book activity report:', error);
     res.status(500).json({
       success: false,
-      message: "Failed to generate book activity report",
+      message: 'Failed to generate book activity report',
       error: error.message,
     });
   }

@@ -14,5 +14,12 @@ export default defineConfig({
   },
   build:{
     chunkSizeWarningLimit: 5000,
-  }
+  },
+  // Add Vitest configuration
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/tests/setup.js', // Optional setup file
+    css: true, // If you want to process CSS during tests
+  },
 });
