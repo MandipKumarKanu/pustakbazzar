@@ -149,6 +149,14 @@ const AllBookPage = () => {
   };
 
   const handleApplyFilters = () => {
+    const min = parseFloat(minPrice) || 0;
+    const max = parseFloat(maxPrice) || Infinity;
+    
+    if (minPrice && maxPrice && min >= max) {
+      alert("Minimum price must be less than maximum price");
+      return;
+    }
+    
     const filters = [];
     if (minPrice) filters.push(`Min: $${minPrice}`);
     if (maxPrice) filters.push(`Max: $${maxPrice}`);
@@ -239,6 +247,7 @@ const AllBookPage = () => {
                     placeholder="Min"
                     value={minPrice}
                     onChange={(e) => setMinPrice(e.target.value)}
+                    min="0"
                   />
                   <span>to</span>
                   <Input
@@ -246,8 +255,15 @@ const AllBookPage = () => {
                     placeholder="Max"
                     value={maxPrice}
                     onChange={(e) => setMaxPrice(e.target.value)}
+                    min="0"
                   />
                 </div>
+                {/* Add validation message */}
+                {minPrice && maxPrice && parseFloat(minPrice) >= parseFloat(maxPrice) && (
+                  <p className="text-sm text-red-500 mb-2">
+                    Minimum price must be less than maximum price
+                  </p>
+                )}
                 <div className="flex justify-end gap-2">
                   <Button variant="outline" onClick={handleClearAllFilters}>
                     Reset
