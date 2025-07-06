@@ -164,7 +164,7 @@ const handleStripeWebhook = async (req, res) => {
     event = stripe.webhooks.constructEvent(
       req.body,
       sig,
-      process.env.STRIPE_WEBHOOK_SECRET
+      "whsec_4c0dd65d8d489392241c61539a750d785bdf0a3faf0698b7a51de76d203e3a08"
     );
   } catch (err) {
     return res.status(400).send(`Webhook Error: ${err.message}`);
@@ -173,48 +173,103 @@ const handleStripeWebhook = async (req, res) => {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
 
-    const transaction = await Transaction.findOne({
-      stripeSessionId: session.id,
-    });
+    try {
+      const order = await Order.findOne({ stripeSessionId: session.id });
 
-    if (transaction && transaction.status !== "completed") {
-      transaction.status = "completed";
-      await transaction.save();
+      if (!order) {
+        console.error(`No order found with session ID: ${session.id}`);
+        return res.json({ received: true });
+      }
 
-      const order = await Order.findById(transaction.orderId).populate(
-        "orders.sellerId"
+      order.paymentStatus = "paid";
+
+      const allApproved = order.orders.every(
+        (subOrder) => subOrder.status === "approved"
       );
+      if (allApproved) {
+        order.orderStatus = "confirmed";
+      }
+
+      await order.save();
 
       await recordSale(order.netTotal);
 
-      order.status = "confirmed";
-      await order.save();
+      await Transaction.updateOne(
+        { stripeSessionId: session.id },
+        { $set: { status: "completed" } }
+      );
+
+      const user = await User.findById(order.userId);
+      if (!user) {
+        console.error(`User not found with ID: ${order.userId}`);
+        return res.json({ received: true });
+      }
 
       for (const sellerOrder of order.orders) {
         for (const book of sellerOrder.books) {
-          const { sellerEarnings, platformFee } = calculatePlatformFee(
-            book.price,
-            book.quantity
-          );
-
           const seller = await User.findById(sellerOrder.sellerId);
           if (seller) {
-            seller.balance += sellerEarnings;
+            seller.balance += book.sellerEarnings;
             await seller.save();
+          }
 
-            await recordPlatformFee(
-              transaction._id,
-              order._id,
-              platformFee,
-              sellerOrder.sellerId
-            );
+          if (!user.bought.includes(book.bookId.toString())) {
+            user.bought.push(book.bookId);
+          }
+
+          const bookToUpdate = await Book.findById(book.bookId);
+          if (bookToUpdate) {
+            bookToUpdate.status = "sold";
+            await bookToUpdate.save();
           }
         }
       }
+
+      await user.save();
+    } catch (error) {
+      console.error("Error processing Stripe webhook:", error);
     }
   }
 
-  return res.status(200).json({ received: true });
+  // Handle failed payments
+  else if (
+    event.type === "checkout.session.expired" ||
+    event.type === "payment_intent.payment_failed"
+  ) {
+    try {
+      const session = event.data.object;
+      const sessionId = session.id;
+
+      // Find the order and mark it as failed
+      const order = await Order.findOne({
+        stripeSessionId: sessionId,
+      });
+
+      if (order) {
+        order.paymentStatus = "failed";
+        await order.save();
+
+        // Update transaction
+        await Transaction.updateOne(
+          { stripeSessionId: sessionId },
+          {
+            $set: {
+              status: "failed",
+              paymentDetails: {
+                error: "Payment failed or expired",
+                failedAt: new Date(),
+              },
+            },
+          }
+        );
+      }
+    } catch (error) {
+      console.error("Error processing failed payment:", error);
+    }
+  }
+
+  // Return a response to acknowledge receipt of the event
+  res.json({ received: true });
 };
 
 module.exports = {

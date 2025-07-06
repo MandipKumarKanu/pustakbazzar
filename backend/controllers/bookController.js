@@ -83,7 +83,7 @@ const createBook = async (req, res) => {
       await recordBookAdded();
     }
 
-    const platformFeePercentage = 0.1; // Flat 10%
+    const platformFeePercentage = 0.1;
 
     res.status(201).json({
       success: true,
@@ -424,18 +424,18 @@ const searchBooks = async (req, res) => {
           matchField = titleMatch
             ? "title"
             : authorMatch
-            ? "author"
-            : isbnMatch
-            ? "isbn"
-            : "query";
+              ? "author"
+              : isbnMatch
+                ? "isbn"
+                : "query";
         } else {
           matchField = title
             ? "title"
             : author
-            ? "author"
-            : publishYear
-            ? "publishYear"
-            : "isbn";
+              ? "author"
+              : publishYear
+                ? "publishYear"
+                : "isbn";
         }
 
         return {
@@ -515,18 +515,18 @@ const searchBooks = async (req, res) => {
           matchField = titleMatch
             ? "title"
             : authorMatch
-            ? "author"
-            : isbnMatch
-            ? "isbn"
-            : "flexible";
+              ? "author"
+              : isbnMatch
+                ? "isbn"
+                : "flexible";
         } else {
           matchField = title
             ? "title"
             : author
-            ? "author"
-            : publishYear
-            ? "publishYear"
-            : "isbn";
+              ? "author"
+              : publishYear
+                ? "publishYear"
+                : "isbn";
         }
 
         return {
@@ -784,8 +784,8 @@ function performFuzzySearch(
             titleDistance <= authorDistance && titleDistance <= isbnDistance
               ? "title"
               : authorDistance <= isbnDistance
-              ? "author"
-              : "isbn";
+                ? "author"
+                : "isbn";
         }
       }
 
@@ -1206,7 +1206,7 @@ const aiBookSearch = async (req, res) => {
 
     const category = await Category.distinct("categoryName");
 
-    console.log(category);
+    // console.log(category);
 
     const prompt = `You are PustakBazzar's AI assistant(PustakAI). You respond naturally to any user input—greetings, platform questions, or book‐search requests—and you also extract structured search filters when appropriate.
 
